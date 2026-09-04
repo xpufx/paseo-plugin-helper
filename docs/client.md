@@ -284,3 +284,25 @@ const { mutate, isPending } = useRpcMutation(updateSettingContract, {
   onSuccess: () => queryClient.invalidateQueries([myStatusContract.name]),
 });
 ```
+
+---
+
+## 6. Utilities
+
+### `copyToClipboard(text, options?)`
+Universal cross-platform copy function for Paseo plugins. Works reliably across React Native (Hermes / mobile webviews / touch events), desktop, and modern secure browsers.
+Automatically integrates with Paseo's `useToast()` to display a toast notification on success.
+
+```tsx
+import { copyToClipboard, useToast } from "paseo-plugin-helper/client";
+
+const toast = useToast();
+
+const handleCopy = async () => {
+  await copyToClipboard("192.168.1.50", {
+    toast,
+    toastMessage: "IP Address", // Displays "Copied IP Address to clipboard" or uses Paseo toast.copied
+  });
+};
+```
+
