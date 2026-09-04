@@ -50,11 +50,16 @@ import { registerComposerPill, ModalBody, Button } from "paseo-plugin-helper/cli
 
 export const contributeClient = (client) => {
   return registerComposerPill(client, {
-    id: "my-pill",
-    title: "Diagnostics",
-    icon: "Activity",
+    id: "top",
+    title: "Top",                         // Pill button label
+    modalTitle: "Host Resource Monitor",  // Descriptive modal header title (falls back to title)
+    icon: "Activity",                     // Pill Lucide icon name
+    modalIcon: "Cpu",                     // Modal header icon (name or ReactNode)
     flair: { radius: "rounded", accentColor: "#3b82f6" },
-    renderPill: ({ isSelected, isCompact }) => <CustomBadge />, // Optional custom pill content
+    // renderPill receives ({ isSelected, isCompact, isOpen, open, close, toggle })
+    renderPill: ({ isOpen, toggle }) => (
+      <Button label="CPU 14%" onPress={toggle} variant="ghost" />
+    ),
     renderModal: ({ agentId, close }) => (
       <ModalBody>
         <Text>Agent ID: {agentId}</Text>
@@ -164,9 +169,14 @@ Status indicator chip with automatic contrast styling.
 ```
 
 ### `<Card>`
-Adaptive container styled according to the active `VisualFlair.surfaceStyle` (`flat`, `tinted`, or `elevated`).
+Adaptive container styled according to the active `VisualFlair.surfaceStyle` (`flat`, `tinted`, or `elevated`). Includes a compound `<Card.Header>` for structured headers with titles, icons, and action chips.
 ```tsx
 <Card variant="tinted" padding="md">
+  <Card.Header
+    title="Host Metrics"
+    icon="Cpu"
+    badge={<Badge label="Active" variant="success" size="sm" />}
+  />
   <Text>Card Content</Text>
 </Card>
 ```
@@ -190,10 +200,15 @@ Monospace viewer with safe nested horizontal scrolling and a 1-tap clipboard cop
 <CodeBlock code={sourceCode} language="typescript" title="index.ts" maxHeight={240} />
 ```
 
-### `<KeyValue>`
-Displays key/value metadata. Automatically stacks vertically on compact/mobile screens and aligns horizontally on desktop.
+### `<KeyValue>` & `<KeyValueGroup>`
+Displays key/value metadata. Automatically stacks vertically on compact/mobile screens and aligns horizontally on desktop. Use `<KeyValueGroup>` for responsive multi-column metric grids.
 ```tsx
-<KeyValue label="IP Address" value="192.168.1.50" copyable mono />
+<KeyValueGroup columns={2}>
+  <KeyValue label="CPU Usage" value="14.2%" />
+  <KeyValue label="RAM Used" value="3.2 GB" />
+  <KeyValue label="IP Address" value="192.168.1.50" copyable mono />
+  <KeyValue label="Uptime" value="3d 4h" />
+</KeyValueGroup>
 ```
 
 ### `<ProgressBar>`

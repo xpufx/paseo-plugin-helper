@@ -34,12 +34,25 @@ export type GetMetricsOutput = RpcOutput<typeof getMetricsContract>;
 
 ## 2. Text & Metric Formatters
 
-### `formatBytes(bytes, decimals?)`
-Converts byte counts into human-readable data units (`B`, `KB`, `MB`, `GB`, `TB`).
+### `formatBytes(bytes, optionsOrDecimals?)`
+Converts byte counts into human-readable data units (`B`, `KB`, `MB`, `GB`, `TB`). Supports standard and compact notation (`"1.2K"`, `"5.3M"`, `"12.8G"`).
 ```ts
-formatBytes(0);             // "0 B"
-formatBytes(1024);          // "1.0 KB"
-formatBytes(4718592, 2);    // "4.50 MB"
+formatBytes(0);                       // "0 B"
+formatBytes(1024);                    // "1.0 KB"
+formatBytes(4718592, 2);              // "4.50 MB"
+formatBytes(13421772800, { compact: true }); // "12.5G"
+```
+
+### `resolveMetricStatus(value, thresholds?)`
+Calculates status variant (`"success" | "warning" | "danger"`) based on numeric thresholds. Supports inverted thresholds (`invert: true`) where higher values are safer.
+```ts
+// Standard gauge (default thresholds: warn at 75, danger at 90)
+resolveMetricStatus(45); // "success"
+resolveMetricStatus(82); // "warning"
+resolveMetricStatus(95); // "danger"
+
+// Inverted gauge (e.g. available battery/disk: lower is dangerous)
+resolveMetricStatus(15, { warn: 30, danger: 20, invert: true }); // "danger"
 ```
 
 ### `formatUptime(seconds)`
