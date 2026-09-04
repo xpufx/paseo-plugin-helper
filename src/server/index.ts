@@ -4,3 +4,4 @@ export * from "./redact.js";
 export * from "./process.js";
 export * from "./system.js";
 export * from "./logger.js";
+export * from "./define-plugin.js";

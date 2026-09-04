@@ -114,8 +114,7 @@ await client.close();
 ### 3. Server: Atomic Storage & Safe Process Execution
 
 ```ts
-import type { PluginContribution } from "@getpaseo/plugin";
-import { PluginStorage, safeSpawn, redactSecrets } from "paseo-plugin-helper/server";
+import { definePluginServer, PluginStorage, safeSpawn } from "paseo-plugin-helper/server";
 import { myStatusContract } from "./contracts.js";
 
 interface PluginState {
@@ -127,21 +126,29 @@ const storage = new PluginStorage<PluginState>("my-plugin", "state.json", {
   defaultData: { lastRun: "", runCount: 0 },
 });
 
-export const contributePlugin: PluginContribution = (plugin) => {
-  plugin.handle(myStatusContract, async (input) => {
-    const { stdout } = await safeSpawn("uptime", [], { timeoutMs: 3000 });
+export default definePluginServer({
+  name: "my-plugin",
+  version: "0.1.0",
+  // logging: false, // optional: opt-out of auto-banner & structured logs
+  setup(plugin, { log }) {
+    plugin.handle(myStatusContract, async (input) => {
+      log.info("Processing status request", { target: input.target });
+      const { stdout } = await safeSpawn("uptime", [], { timeoutMs: 3000 });
 
-    storage.update((prev) => ({
-      lastRun: new Date().toISOString(),
-      runCount: prev.runCount + 1,
-    }));
+      storage.update((prev) => ({
+        lastRun: new Date().toISOString(),
+        runCount: prev.runCount + 1,
+      }));
 
-    return {
-      uptime: stdout,
-      status: "online",
-    };
-  });
-};
+      return {
+        uptime: stdout,
+        status: "online",
+      };
+    });
+
+    return () => {};
+  },
+});
 ```
 
 ---
