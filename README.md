@@ -42,6 +42,32 @@ To guarantee compliance with Paseo's bundler and compiler rules (no Node builtin
 
 ---
 
+## Installation
+
+Install directly from GitHub:
+
+```bash
+# npm
+npm install github:xpufx/paseo-plugin-helper
+
+# pnpm
+pnpm add github:xpufx/paseo-plugin-helper
+```
+
+Or in your plugin's `package.json`:
+```json
+{
+  "dependencies": {
+    "paseo-plugin-helper": "github:xpufx/paseo-plugin-helper"
+  }
+}
+```
+
+> [!TIP]
+> The repository includes an automated `prepare` build lifecycle script. When npm/pnpm installs from GitHub, it automatically compiles the dual ESM/CJS bundles and TypeScript declaration maps on-the-fly.
+
+---
+
 ## Quickstart
 
 ### 1. Client: Composer Pill & UI Primitives
