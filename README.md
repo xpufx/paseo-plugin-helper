@@ -7,6 +7,9 @@
 
 `paseo-plugin-helper` provides drop-in solutions for building 3rd-party plugins for [Paseo](https://github.com/getpaseo/paseo). It eliminates boilerplate and provides native-feeling React Native UI components with **mobile-first responsiveness**, **configurable visual flairs**, **zero-dependency MCP client diagnostics**, and **daemon runtime utilities**.
 
+> [!NOTE]
+> **Compatibility**: This library currently targets **Paseo v0.7** plugin architecture (`@getpaseo/plugin@^0.7.2`). Paseo v0.8 introduces breaking changes to plugin surfaces and lifecycle APIs; a major version update (`v0.8.0`) of `paseo-plugin-helper` will follow once Paseo v0.8 is officially released.
+
 ---
 
 ## Features
