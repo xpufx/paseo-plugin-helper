@@ -1,8 +1,11 @@
 # paseo-plugin-helper
 
-> Developer toolkit, UI design system, and shared lifecycle primitives for building high-quality Paseo desktop & mobile plugins.
+> Developer toolkit, UI design system, and lifecycle primitives for building high-quality Paseo desktop & mobile plugins.
 
-`paseo-plugin-helper` provides drop-in solutions for building 3rd-party plugins for [Paseo](https://github.com/getpaseo/paseo). It eliminates boilerplate and provides native-feeling React Native UI components with **mobile-first responsiveness**, **configurable visual flairs**, and **daemon runtime utilities**.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
+
+`paseo-plugin-helper` provides drop-in solutions for building 3rd-party plugins for [Paseo](https://github.com/getpaseo/paseo). It eliminates boilerplate and provides native-feeling React Native UI components with **mobile-first responsiveness**, **configurable visual flairs**, **zero-dependency MCP client diagnostics**, and **daemon runtime utilities**.
 
 ---
 
@@ -10,7 +13,9 @@
 
 - 📱 **Mobile & Desktop First**: Automatically scales touch targets (min 44pt on iOS/Android or narrow panes), avoids bottom-bar clipping, and reflows layouts between desktop and mobile.
 - 🎨 **Configurable Visual Flair**: Authors can customize corner radii (`sharp`, `rounded`, `pill`), information density, surface treatments, and brand accents while honoring Paseo's light/dark themes.
-- 💊 **Composer Pill Lifecycle Engine**: Complete management of agent subscriptions, pill contributes, and modal states in one function call (`registerComposerPill`).
+- 💊 **Composer Pill Lifecycle Engine**: Complete management of agent subscriptions, pill contributions, and modal states in one function call (`registerComposerPill`).
+- 🖥️ **Panels & Surfaces**: One-line registration for sidebar surfaces (`registerSidebarSurface`) and panels (`registerWorkspacePanel`, `registerAgentPanel`) with automatic theme and flair propagation.
+- 🔌 **Zero-Dependency MCP Client**: Built-in stdio client (`McpClient`) with stderr ring buffering, non-JSON stdout line filtering, cross-platform process tree cleanup, and fallback ping readiness checks.
 - ⚡ **React Query RPC Bridge**: `useRpcQuery` & `useRpcMutation` with automatic caching, refetching, and input hashing.
 - 💾 **Daemon State & File Storage**: Atomic, temporary-swap file storage (`PluginStorage`) preventing corruption during power cuts or crashes.
 - 🔒 **Security & Redaction**: Deep secret masking for Bearer tokens, API keys, and connection credentials (`redactSecrets`).
@@ -22,18 +27,19 @@
 
 To guarantee compliance with Paseo's bundler and compiler rules (no Node builtins in client bundles), import through explicit subpaths:
 
-| Subpath | Target Platform | Description |
-| :--- | :--- | :--- |
-| `paseo-plugin-helper/client` | React Native / Hermes | UI components, visual flair provider, pill engine, React Query hooks |
-| `paseo-plugin-helper/server` | Node.js 20+ | Atomic `PluginStorage`, `safeSpawn`, `parseJsonc`, `redactSecrets` |
-| `paseo-plugin-helper/shared` | Universal | `defineContract`, formatters (`formatBytes`, `formatUptime`, `truncate`) |
-| `paseo-plugin-helper/testing` | Universal | Mock client and server contexts for unit and integration testing |
+| Subpath | Target Platform | Description | Docs |
+| :--- | :--- | :--- | :--- |
+| `paseo-plugin-helper/client` | React Native / Hermes | UI components, visual flair provider, pill engine, panels, React Query hooks | [docs/client.md](docs/client.md) |
+| `paseo-plugin-helper/server` | Node.js 20+ | Atomic `PluginStorage`, `safeSpawn`, `parseJsonc`, `redactSecrets` | [docs/server.md](docs/server.md) |
+| `paseo-plugin-helper/mcp` | Node.js 20+ | Zero-dependency stdio `McpClient`, ring buffer, process tree killer | [docs/mcp.md](docs/mcp.md) |
+| `paseo-plugin-helper/shared` | Universal | `defineContract`, formatters (`formatBytes`, `formatUptime`, `truncate`) | [docs/shared.md](docs/shared.md) |
+| `paseo-plugin-helper/testing` | Universal | Mock client and server contexts for unit and integration testing | [docs/testing.md](docs/testing.md) |
 
 ---
 
 ## Quickstart
 
-### 1. Client: Composer Pill & UI Components
+### 1. Client: Composer Pill & UI Primitives
 
 ```tsx
 import type { PluginClientContribution } from "@getpaseo/plugin";
@@ -44,6 +50,9 @@ import {
   Button,
   Badge,
   KeyValue,
+  TextInput,
+  Toggle,
+  Collapsible,
   useRpcQuery,
 } from "paseo-plugin-helper/client";
 import { myStatusContract } from "./contracts.js";
@@ -53,7 +62,6 @@ export const contributeClient: PluginClientContribution = (client) => {
     id: "my-plugin",
     title: "System Stats",
     icon: "Activity",
-    // Optional flair customization:
     flair: {
       radius: "rounded",          // "sharp" | "rounded" | "pill"
       density: "comfortable",     // "compact" | "comfortable" | "spacious"
@@ -79,7 +87,27 @@ export const contributeClient: PluginClientContribution = (client) => {
 
 ---
 
-### 2. Server: Atomic Storage & Safe Process Execution
+### 2. Zero-Dependency MCP Diagnostics
+
+```ts
+import { McpClient } from "paseo-plugin-helper/mcp";
+
+const client = McpClient.forStdio("uvx", ["mcp-server-sqlite", "--db-path", "test.db"]);
+
+const ping = await client.ping({ mode: "tools" });
+if (ping.healthy) {
+  const tools = await client.listTools();
+  console.log(`MCP server online. Tools: ${tools.map((t) => t.name).join(", ")}`);
+} else {
+  console.error(`MCP server offline: ${ping.error}\nStderr: ${ping.stderr}`);
+}
+
+await client.close();
+```
+
+---
+
+### 3. Server: Atomic Storage & Safe Process Execution
 
 ```ts
 import type { PluginContribution } from "@getpaseo/plugin";
@@ -97,10 +125,8 @@ const storage = new PluginStorage<PluginState>("my-plugin", "state.json", {
 
 export const contributePlugin: PluginContribution = (plugin) => {
   plugin.handle(myStatusContract, async (input) => {
-    // Safely run a command with timeout and buffer limits
     const { stdout } = await safeSpawn("uptime", [], { timeoutMs: 3000 });
 
-    // Atomic update of state
     storage.update((prev) => ({
       lastRun: new Date().toISOString(),
       runCount: prev.runCount + 1,
@@ -116,67 +142,18 @@ export const contributePlugin: PluginContribution = (plugin) => {
 
 ---
 
-### 3. Shared: Type-Safe RPC Contracts
+## Documentation
 
-```ts
-import { defineContract } from "paseo-plugin-helper/shared";
-import { z } from "zod";
+Comprehensive API and module documentation:
 
-export const myStatusContract = defineContract({
-  name: "my-plugin:get-status",
-  description: "Fetches system uptime and status",
-  input: z.object({
-    agentId: z.string(),
-  }),
-  output: z.object({
-    uptime: z.string(),
-    status: z.string(),
-  }),
-});
-```
-
----
-
-### 4. Testing: Mock Test Harness
-
-```ts
-import { describe, it, expect } from "vitest";
-import { createMockClientContext, createMockServerContext } from "paseo-plugin-helper/testing";
-import { contributeClient } from "./client.js";
-
-describe("My Plugin", () => {
-  it("registers composer pills when agents arrive", async () => {
-    const mockClient = createMockClientContext();
-    const cleanup = contributeClient(mockClient);
-
-    // Simulate an agent connecting in workspace
-    mockClient.simulateAgentAdded({ id: "agent-123", workspaceId: "ws-abc" });
-
-    expect(mockClient.registeredPills).toHaveLength(1);
-    expect(mockClient.registeredPills[0].agentId).toBe("agent-123");
-
-    cleanup();
-  });
-});
-```
-
----
-
-## Visual Flair Configuration
-
-The `<PluginThemeProvider>` automatically handles contrast, WCAG compliance, and mobile touch sizing based on your flair preset:
-
-| Property | Options | Description |
-| :--- | :--- | :--- |
-| `radius` | `"sharp"` \| `"rounded"` \| `"pill"` | 2px vs 8px vs full capsule |
-| `density` | `"compact"` \| `"comfortable"` \| `"spacious"` | Tight padding for tools vs relaxed cards |
-| `surfaceStyle` | `"flat"` \| `"tinted"` \| `"elevated"` | Clean outline vs tinted background wash |
-| `accentColor` | Hex code (e.g. `"#6366f1"`) | Custom brand tint overriding host accent |
-| `borderWidth` | `number` (default: `1`) | Border stroke width |
-| `headingTransform` | `"none"` \| `"uppercase"` | Standard vs uppercase header tracking |
+- 📖 [Client Design System & Lifecycles (`docs/client.md`)](docs/client.md)
+- 📖 [Server Daemon Utilities (`docs/server.md`)](docs/server.md)
+- 📖 [MCP Client & Transports (`docs/mcp.md`)](docs/mcp.md)
+- 📖 [Shared Types & Formatters (`docs/shared.md`)](docs/shared.md)
+- 📖 [Testing Harness (`docs/testing.md`)](docs/testing.md)
 
 ---
 
 ## License
 
-MIT
+MIT © [xpufx](LICENSE)
