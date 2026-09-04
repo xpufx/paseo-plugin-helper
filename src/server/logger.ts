@@ -1,10 +1,12 @@
 import { redactSecrets } from "./redact.js";
+import { resolvePluginVersion } from "./version.js";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface PluginLoggerOptions {
   /**
-   * Version of the plugin (e.g. "0.1.0" or imported from package.json).
+   * Version of the plugin.
+   * If omitted, automatically resolves from `package.json` (augmented by git tag/hash).
    */
   version?: string;
 
@@ -66,13 +68,16 @@ function formatData(data: unknown): string {
  * Creates a structured logger for Paseo plugins.
  * By default, displays the plugin name and version in startup logs and tags each line
  * for Paseo's log stream without fragmented multi-line JSON.
+ *
+ * If `options.version` is omitted, it automatically resolves the version from `package.json`
+ * augmented with git metadata.
  */
 export function createPluginLogger(
   pluginId: string,
   options: PluginLoggerOptions = {},
 ): PluginLogger {
+  const resolvedVer = options.version ?? resolvePluginVersion({ fallback: "" });
   const {
-    version,
     banner = true,
     subsystem,
     minLevel = "info",
@@ -82,7 +87,7 @@ export function createPluginLogger(
   const minSeverity = LEVEL_SEVERITY[minLevel];
 
   // Prefix format: "[name vX.Y.Z]" or "[name]" or "[name vX.Y.Z:subsystem]"
-  const versionTag = version ? ` v${version}` : "";
+  const versionTag = resolvedVer ? ` v${resolvedVer}` : "";
   const subTag = subsystem ? `:${subsystem}` : "";
   const baseTag = `[${pluginId}${versionTag}${subTag}]`;
 
@@ -129,8 +134,8 @@ export function createPluginLogger(
     child(subsystemOrOptions: string | Partial<PluginLoggerOptions>): PluginLogger {
       const childOptions: PluginLoggerOptions =
         typeof subsystemOrOptions === "string"
-          ? { ...options, banner: false, subsystem: subsystemOrOptions }
-          : { ...options, banner: false, ...subsystemOrOptions };
+          ? { ...options, version: resolvedVer, banner: false, subsystem: subsystemOrOptions }
+          : { ...options, version: resolvedVer, banner: false, ...subsystemOrOptions };
 
       return createPluginLogger(pluginId, childOptions);
     },
