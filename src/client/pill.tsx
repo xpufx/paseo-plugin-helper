@@ -134,10 +134,12 @@ export function registerComposerPill(
           onOpenChange={setOpen}
         >
           <Modal.Content>
-            {options.renderModal({
-              ...props,
-              close: () => setOpen(false),
-            })}
+            <PluginThemeProvider theme={props.theme} layout={props.layout} flair={options.flair}>
+              {options.renderModal({
+                ...props,
+                close: () => setOpen(false),
+              })}
+            </PluginThemeProvider>
           </Modal.Content>
         </Modal>
       </PluginThemeProvider>

@@ -20,14 +20,14 @@ export function ModalBody({
   contentContainerStyle,
   extraBottomInset = 0,
 }: ModalBodyProps) {
-  const { isCompact, padding } = usePluginTheme();
+  const { isCompact, padding, colors } = usePluginTheme();
 
   // On mobile/compact, we reserve generous bottom padding to clear navigation bars
   const bottomPadding = (isCompact ? 48 : 20) + extraBottomInset;
 
   return (
     <ScrollView
-      style={[styles.container, style]}
+      style={[{ backgroundColor: colors.surface0 }, styles.container, style]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={true}
       contentContainerStyle={[

@@ -9,8 +9,9 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { Icon } from "@getpaseo/plugin/react-native";
+import { Icon, useToast } from "@getpaseo/plugin/react-native";
 import { usePluginTheme } from "../theme/provider.js";
+import { copyToClipboard } from "../utils/clipboard.js";
 
 export interface KeyValueProps {
   label: string;
@@ -36,21 +37,21 @@ export function KeyValue({
   valueStyle,
 }: KeyValueProps) {
   const { colors, flair, isCompact, touchTargetMin } = usePluginTheme();
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
 
   const displayValue = value === null || value === undefined ? "—" : String(value);
 
   const handleCopy = async () => {
     if (!copyable || !value) return;
-    try {
-      const globalObj = typeof globalThis !== "undefined" ? (globalThis as any) : {};
-      const clipboard = globalObj.navigator?.clipboard;
-      if (clipboard?.writeText) {
-        await clipboard.writeText(String(value));
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch {}
+    const ok = await copyToClipboard(String(value), {
+      toast,
+      toastMessage: label,
+    });
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const fontFamily = mono

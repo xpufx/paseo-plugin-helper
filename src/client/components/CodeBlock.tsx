@@ -10,8 +10,9 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { Icon } from "@getpaseo/plugin/react-native";
+import { Icon, useToast } from "@getpaseo/plugin/react-native";
 import { usePluginTheme } from "../theme/provider.js";
+import { copyToClipboard } from "../utils/clipboard.js";
 
 export interface CodeBlockProps {
   code: string;
@@ -33,21 +34,19 @@ export function CodeBlock({
   textStyle,
 }: CodeBlockProps) {
   const { colors, resolveRadius, isCompact, touchTargetMin, alpha } = usePluginTheme();
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
 
   const radius = resolveRadius("md");
 
   const handleCopy = async () => {
-    try {
-      const globalObj = typeof globalThis !== "undefined" ? (globalThis as any) : {};
-      const clipboard = globalObj.navigator?.clipboard;
-      if (clipboard?.writeText) {
-        await clipboard.writeText(code);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch {
-      // Ignore clipboard failure in restricted runtimes
+    const ok = await copyToClipboard(code, {
+      toast,
+      toastMessage: title || "Code",
+    });
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
