@@ -183,19 +183,25 @@ const styles = StyleSheet.create({
   valueWrapper: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
     gap: 6,
   },
   rowValue: {
     justifyContent: "flex-end",
+    flexShrink: 1,
   },
   stackedValue: {
     justifyContent: "flex-start",
+    width: "100%",
   },
   value: {
     fontWeight: "600",
+    flexShrink: 1,
+    lineHeight: 18,
   },
   subValue: {
     fontWeight: "400",
+    lineHeight: 16,
   },
   copyBtn: {
     padding: 2,
