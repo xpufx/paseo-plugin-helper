@@ -15,8 +15,8 @@ It includes built-in defenses for common real-world desktop failure modes:
 ```ts
 import { McpClient } from "paseo-plugin-helper/mcp";
 
-// Connect to an MCP server via stdio
-const client = McpClient.forStdio("npx", ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "app.db"]);
+// Connect to a local or bundled MCP server via stdio
+const client = McpClient.forStdio("node", ["./dist/mcp-server.js"]);
 
 // Check health
 const ping = await client.ping({ mode: "tools" });

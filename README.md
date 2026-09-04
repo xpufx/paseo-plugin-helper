@@ -95,14 +95,15 @@ export const contributeClient: PluginClientContribution = (client) => {
 ```ts
 import { McpClient } from "paseo-plugin-helper/mcp";
 
-const client = McpClient.forStdio("uvx", ["mcp-server-sqlite", "--db-path", "test.db"]);
+// Connect to any local or bundled MCP server over stdio
+const client = McpClient.forStdio("node", ["./dist/mcp-server.js"]);
 
 const ping = await client.ping({ mode: "tools" });
 if (ping.healthy) {
   const tools = await client.listTools();
-  console.log(`MCP server online. Tools: ${tools.map((t) => t.name).join(", ")}`);
+  console.log(`MCP server online. Latency: ${ping.latencyMs}ms. Tools:`, tools);
 } else {
-  console.error(`MCP server offline: ${ping.error}\nStderr: ${ping.stderr}`);
+  console.error(`MCP server offline: ${ping.error}\nRecent stderr:\n${ping.stderr}`);
 }
 
 await client.close();
