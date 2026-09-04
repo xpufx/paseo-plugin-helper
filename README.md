@@ -14,6 +14,8 @@
 
 ## Features
 
+- 📝 **Structured Logging & Identity**: `createPluginLogger` automatically prints an informative startup banner with plugin identity/version in Paseo GUI logs and keeps log lines unfragmented.
+- 🏷️ **Version Resolution & Stamping**: Auto-extracts plugin version from `package.json` + Git tags (`resolvePluginVersion`) and generates static TypeScript versions for Hermes client bundles (`stampVersion`).
 - 📱 **Mobile & Desktop First**: Automatically scales touch targets (min 44pt on iOS/Android or narrow panes), avoids bottom-bar clipping, and reflows layouts between desktop and mobile.
 - 🎨 **Configurable Visual Flair**: Authors can customize corner radii (`sharp`, `rounded`, `pill`), information density, surface treatments, and brand accents while honoring Paseo's light/dark themes.
 - 💊 **Composer Pill Lifecycle Engine**: Complete management of agent subscriptions, pill contributions, and modal states in one function call (`registerComposerPill`).
@@ -33,9 +35,9 @@ To guarantee compliance with Paseo's bundler and compiler rules (no Node builtin
 | Subpath | Target Platform | Description | Docs |
 | :--- | :--- | :--- | :--- |
 | `paseo-plugin-helper/client` | React Native / Hermes | UI components, visual flair provider, pill engine, panels, React Query hooks | [docs/client.md](docs/client.md) |
-| `paseo-plugin-helper/server` | Node.js 20+ | Atomic `PluginStorage`, `safeSpawn`, `parseJsonc`, `redactSecrets` | [docs/server.md](docs/server.md) |
+| `paseo-plugin-helper/server` | Node.js 20+ | `createPluginLogger`, `resolvePluginVersion`, `stampVersion`, `getSystemMetrics`, `PluginStorage`, `safeSpawn`, `redactSecrets` | [docs/server.md](docs/server.md) |
 | `paseo-plugin-helper/mcp` | Node.js 20+ | Zero-dependency stdio `McpClient`, ring buffer, process tree killer | [docs/mcp.md](docs/mcp.md) |
-| `paseo-plugin-helper/shared` | Universal | `defineContract`, formatters (`formatBytes`, `formatUptime`, `truncate`) | [docs/shared.md](docs/shared.md) |
+| `paseo-plugin-helper/shared` | Universal | `defineContract`, formatters (`formatBytes`, `formatUptime`, `resolveMetricStatus`) | [docs/shared.md](docs/shared.md) |
 | `paseo-plugin-helper/testing` | Universal | Mock client and server contexts for unit and integration testing | [docs/testing.md](docs/testing.md) |
 
 ---
@@ -161,6 +163,14 @@ Comprehensive API and module documentation:
 - 📖 [MCP Client & Transports (`docs/mcp.md`)](docs/mcp.md)
 - 📖 [Shared Types & Formatters (`docs/shared.md`)](docs/shared.md)
 - 📖 [Testing Harness (`docs/testing.md`)](docs/testing.md)
+
+---
+
+## Known Users of the Library
+
+Plugins powered by `paseo-plugin-helper`:
+
+- 📊 [**`paseo-top`**](https://github.com/xpufx/paseo-top) – Real-time system resource monitor (CPU, memory, load average) for Paseo composers with responsive charts, cards, and warning thresholds.
 
 ---
 
