@@ -1,16 +1,81 @@
 # Server Module (`paseo-plugin-helper/server`)
 
-The `server` module provides runtime utilities for daemon-side plugin logic. It handles atomic state storage, shell-free process spawning, JSONC parsing, and sensitive credential masking.
+The `server` module provides runtime utilities for daemon-side plugin logic. It handles structured logging with auto-banners, system resource metrics, atomic state storage, shell-free process spawning, JSONC parsing, and sensitive credential masking.
 
 ---
 
-## 1. Atomic Storage: `PluginStorage<T>`
+## 1. Structured Logging: `createPluginLogger`
+
+Creates a structured logger tailored for Paseo plugins.
+
+By default, it automatically emits a **startup banner** containing the plugin's name, version, PID, and runtime info so the plugin log viewer in the Paseo GUI displays identity rather than just `[paseo] Plugin ready`.
+
+### Usage
+```ts
+import { createPluginLogger } from "paseo-plugin-helper/server";
+
+// Default: displays startup banner on initialization
+export const log = createPluginLogger("top", {
+  version: "0.1.0",
+  // Optional: banner: false, minLevel: "debug", subsystem: "poller"
+});
+
+log.info("System poll completed", { cpu: "12.4%", ram: "3.2G" });
+log.warn("Memory threshold reached", { used: "92%" });
+log.error("Failed to read metrics", error);
+```
+
+### Output in Paseo GUI Log Viewer
+```text
+2026-09-04T13:43:19.590Z stdout
+[paseo] Loading plugin
+
+2026-09-04T13:43:19.620Z stdout
+[top v0.1.0] Initializing plugin (pid 4016181, node v22.14.0)
+
+2026-09-04T13:43:19.874Z stdout
+[paseo] Plugin ready
+
+2026-09-04T13:43:22.100Z stdout
+[top v0.1.0] [INFO] System poll completed cpu=12.4% ram=3.2G
+
+2026-09-04T13:43:24.400Z stderr
+[top v0.1.0] [WARN] Memory threshold reached used=92%
+```
+
+### Features
+- **Auto-Banner**: Emits name, version, and process metadata on startup (can be disabled via `{ banner: false }`).
+- **Single-Line Formatting**: Key-values format as concise `key=val` pairs so lines don't get fragmented in the GUI.
+- **Automatic Secret Scrubbing**: All objects and data are passed through `redactSecrets()` to prevent leaking credentials.
+- **Child Loggers**: `const pollerLog = log.child("poller")` creates tagged logs: `[top v0.1.0:poller]`.
+- **Stream Routing**: `info` and `debug` output to `stdout`; `warn` and `error` output to `stderr`.
+
+---
+
+## 2. System Host Metrics: `getSystemMetrics` & `CpuSampler`
+
+Utilities for sampling instant CPU percentages, memory, and host details.
+
+```ts
+import { getSystemMetrics, CpuSampler } from "paseo-plugin-helper/server";
+
+// Get complete snapshot
+const metrics = getSystemMetrics();
+console.log(metrics.hostname, metrics.cpu.usagePercent, metrics.memory.usedPercent);
+
+// Or track CPU usage with custom sampling interval:
+const sampler = new CpuSampler();
+const sample = sampler.sample(); // { usagePercent: 12.5, perCore: [10, 15, 8, 17] }
+```
+
+---
+
+## 3. Atomic Storage: `PluginStorage<T>`
 
 `PluginStorage` provides atomic persistence for plugin settings, cache, and state.
 
 Writes are performed by writing to a temporary file (`.tmp`) and executing an atomic filesystem rename, ensuring files are never corrupted by unexpected crashes or system power loss.
 
-### Constructor
 ```ts
 import { PluginStorage } from "paseo-plugin-helper/server";
 
@@ -21,94 +86,38 @@ interface Config {
 
 const storage = new PluginStorage<Config>("my-plugin", "config.json", {
   defaultData: { apiKey: "", refreshInterval: 60 },
-  baseDir: "/custom/path", // Optional, defaults to ~/.paseo/plugins/my-plugin/config.json
 });
-```
 
-### Methods
-- `storage.read(): T`: Synchronously reads and parses stored data. Returns `defaultData` if missing or corrupted.
-- `storage.readAsync(): Promise<T>`: Asynchronous read.
-- `storage.write(data: T): void`: Synchronous atomic write.
-- `storage.writeAsync(data: T): Promise<void>`: Asynchronous atomic write.
-- `storage.update(updater: (prev: T) => T): T`: Reads, applies updater function, and atomically saves the result.
-- `storage.updateAsync(updater: (prev: T) => Promise<T> | T): Promise<T>`: Async update.
-- `storage.exists(): boolean`: Checks if backing file exists.
-- `storage.reset(): void`: Deletes stored file from disk.
+const config = storage.read();
+storage.write({ ...config, refreshInterval: 120 });
+```
 
 ---
 
-## 2. Safe Process Execution: `safeSpawn`
+## 4. Safe Process Execution: `safeSpawn`
 
 Executes commands directly without invoking a system shell, eliminating shell injection vulnerabilities. Supports buffer limits and timeout escalation (SIGTERM followed by SIGKILL).
 
 ```ts
 import { safeSpawn } from "paseo-plugin-helper/server";
 
-try {
-  const result = await safeSpawn("git", ["status", "--porcelain"], {
-    cwd: "/path/to/repo",
-    timeoutMs: 5000,     // Default: 15,000ms
-    maxBuffer: 1024 * 1024, // Default: 10MB
-  });
-
-  console.log("Stdout:", result.stdout);
-  console.log("Exit Code:", result.code);
-  console.log("Duration:", result.durationMs, "ms");
-} catch (err) {
-  console.error("Execution failed or timed out:", err.message);
-}
+const result = await safeSpawn("git", ["status", "--porcelain"], {
+  cwd: "/path/to/repo",
+  timeoutMs: 5000,
+});
 ```
 
 ---
 
-## 3. Secret Redaction: `redactSecrets`
+## 5. Secret Redaction: `redactSecrets`
 
 Deeply traverses objects, arrays, and strings to redact credentials before writing to logs or sending data over RPC channels.
 
-- Automatically redacts sensitive object keys (`token`, `apiKey`, `password`, `secret`, `authorization`, `privateKey`, etc.).
-- Keeps first 3 and last 3 characters for long tokens (`sec...678`) to allow identification without exposure.
-- Redacts `Bearer <token>` in authorization headers.
-- Redacts user/password credentials in URLs (`https://user:[REDACTED]@host/path`).
-
-```ts
-import { redactSecrets } from "paseo-plugin-helper/server";
-
-const config = {
-  server: "https://api.example.com",
-  apiKey: "sk-proj-1234567890abcdef",
-  nested: {
-    dbPassword: "SuperSecretPassword!",
-  },
-};
-
-const sanitized = redactSecrets(config);
-// {
-//   server: "https://api.example.com",
-//   apiKey: "sk-...def",
-//   nested: {
-//     dbPassword: "Sup...rd!"
-//   }
-// }
-```
+- Automatically redacts sensitive object keys (`token`, `apiKey`, `password`, `secret`, `authorization`, etc.).
+- Keeps first 3 and last 3 characters for long tokens (`sk-...345`).
 
 ---
 
-## 4. JSONC Parser: `parseJsonc` & `stripJsonComments`
+## 6. JSONC Parser: `parseJsonc` & `stripJsonComments`
 
-A resilient JSON parser that removes single-line (`//`) and multi-line (`/* */`) comments as well as trailing commas from JSON strings.
-
-Safe against URLs (`https://...`) and regexes containing slash characters.
-
-```ts
-import { parseJsonc, stripJsonComments } from "paseo-plugin-helper/server";
-
-const jsoncString = `
-{
-  // User preferences
-  "theme": "dark",
-  "notifications": true, /* enabled */
-}
-`;
-
-const data = parseJsonc<{ theme: string; notifications: boolean }>(jsoncString);
-```
+Resilient parser that removes single-line (`//`) and multi-line (`/* */`) comments and trailing commas from JSON.
