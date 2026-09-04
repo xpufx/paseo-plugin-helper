@@ -5,5 +5,7 @@ export * from "./pill.js";
 export * from "./surface.js";
 export * from "./panel.js";
 export * from "./query.js";
+export * from "./query-refresh.js";
 export * from "./utils/clipboard.js";
+export * from "./utils/haptics.js";
 export { Icon } from "@getpaseo/plugin/react-native";

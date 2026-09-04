@@ -9,5 +9,7 @@ export * from "./TextInput.js";
 export * from "./Toggle.js";
 export * from "./Collapsible.js";
 export * from "./ProgressBar.js";
+export * from "./MetricGauge.js";
+export * from "./DataTable.js";
 export * from "./KeyValue.js";
 export * from "./EmptyState.js";

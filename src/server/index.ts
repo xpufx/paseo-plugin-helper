@@ -5,3 +5,5 @@ export * from "./process.js";
 export * from "./system.js";
 export * from "./logger.js";
 export * from "./version.js";
+export * from "./network.js";
+export * from "./task.js";
