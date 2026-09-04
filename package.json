@@ -46,9 +46,14 @@
   ],
   "scripts": {
     "build": "NODE_OPTIONS=\"--max-old-space-size=1024\" tsup",
+    "prepare": "NODE_OPTIONS=\"--max-old-space-size=1024\" tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "dependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.8.2"
   },
   "peerDependencies": {
     "@getpaseo/plugin": ">=0.7.0",
@@ -73,8 +78,6 @@
     "@types/react": "^19.0.10",
     "react": "19.1.0",
     "react-native": "0.84.0",
-    "tsup": "^8.5.1",
-    "typescript": "^5.8.2",
     "vitest": "^3.0.8",
     "zod": "^4.5.4"
   }
