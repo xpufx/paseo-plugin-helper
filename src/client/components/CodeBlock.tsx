@@ -39,9 +39,10 @@ export function CodeBlock({
 
   const handleCopy = async () => {
     try {
-      const nav = typeof navigator !== "undefined" ? (navigator as any) : null;
-      if (nav?.clipboard?.writeText) {
-        await nav.clipboard.writeText(code);
+      const globalObj = typeof globalThis !== "undefined" ? (globalThis as any) : {};
+      const clipboard = globalObj.navigator?.clipboard;
+      if (clipboard?.writeText) {
+        await clipboard.writeText(code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }

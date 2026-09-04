@@ -43,9 +43,10 @@ export function KeyValue({
   const handleCopy = async () => {
     if (!copyable || !value) return;
     try {
-      const nav = typeof navigator !== "undefined" ? (navigator as any) : null;
-      if (nav?.clipboard?.writeText) {
-        await nav.clipboard.writeText(String(value));
+      const globalObj = typeof globalThis !== "undefined" ? (globalThis as any) : {};
+      const clipboard = globalObj.navigator?.clipboard;
+      if (clipboard?.writeText) {
+        await clipboard.writeText(String(value));
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
