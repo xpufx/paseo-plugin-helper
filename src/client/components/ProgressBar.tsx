@@ -1,11 +1,13 @@
 import React from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { usePluginTheme } from "../theme/provider.js";
+import { resolveMetricStatus, type MetricThresholds } from "../../shared/formatters.js";
 
 export interface ProgressBarProps {
   value: number; // 0 to 100
   color?: string;
   autoStatusColor?: boolean;
+  thresholds?: MetricThresholds;
   label?: string;
   showValueText?: boolean;
   height?: number;
@@ -16,6 +18,7 @@ export function ProgressBar({
   value,
   color,
   autoStatusColor = true,
+  thresholds,
   label,
   showValueText = false,
   height = 8,
@@ -28,9 +31,10 @@ export function ProgressBar({
 
   let barColor = color || colors.accent;
   if (!color && autoStatusColor) {
-    if (clamped >= 90) {
+    const status = resolveMetricStatus(clamped, thresholds);
+    if (status === "danger") {
       barColor = colors.statusDanger;
-    } else if (clamped >= 75) {
+    } else if (status === "warning") {
       barColor = colors.statusWarning;
     } else {
       barColor = colors.statusSuccess;
@@ -42,12 +46,22 @@ export function ProgressBar({
       {(label || showValueText) && (
         <View style={styles.labelRow}>
           {label ? (
-            <Text style={[styles.labelText, { color: colors.foregroundMuted, fontSize: isCompact ? 11 : 12 }]}>
+            <Text
+              style={[
+                styles.labelText,
+                { color: colors.foregroundMuted, fontSize: isCompact ? 11 : 12 },
+              ]}
+            >
               {label}
             </Text>
           ) : null}
           {showValueText ? (
-            <Text style={[styles.valueText, { color: colors.foreground, fontSize: isCompact ? 11 : 12 }]}>
+            <Text
+              style={[
+                styles.valueText,
+                { color: colors.foreground, fontSize: isCompact ? 11 : 12 },
+              ]}
+            >
               {Math.round(clamped)}%
             </Text>
           ) : null}
@@ -80,13 +94,12 @@ export function ProgressBar({
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
+    gap: 4,
   },
   labelRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
   },
   labelText: {
     fontWeight: "500",

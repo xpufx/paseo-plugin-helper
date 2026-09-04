@@ -1,15 +1,95 @@
+import type { StatusVariant } from "./types.js";
+
+export interface FormatBytesOptions {
+  /**
+   * Number of decimal places (default: 1).
+   */
+  decimals?: number;
+
+  /**
+   * If true, produces compact format with no space and single-character suffix
+   * (e.g. "5.3G", "320M", "1.2K"). Ideal for width-constrained composer pills.
+   */
+  compact?: boolean;
+
+  /**
+   * Fixes output unit (e.g. "GB" or "MB") regardless of value size.
+   */
+  fixedUnit?: "B" | "KB" | "MB" | "GB" | "TB";
+}
+
 /**
- * Formats a raw byte count into a human-readable string (e.g. "1.5 GB", "320 KB").
+ * Formats a raw byte count into a human-readable string.
+ * Supports standard ("1.5 GB", "320 KB") and compact ("1.5G", "320K") formats.
  */
-export function formatBytes(bytes: number, decimals = 1): string {
+export function formatBytes(
+  bytes: number,
+  optionsOrDecimals: FormatBytesOptions | number = 1,
+): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+
+  const options: FormatBytesOptions =
+    typeof optionsOrDecimals === "number"
+      ? { decimals: optionsOrDecimals }
+      : optionsOrDecimals;
+
+  const { decimals = 1, compact = false, fixedUnit } = options;
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const clampedIndex = Math.min(i, sizes.length - 1);
+  const compactSizes = ["B", "K", "M", "G", "T", "P"];
+
+  let unitIndex = Math.floor(Math.log(bytes) / Math.log(k));
+  if (fixedUnit) {
+    const found = sizes.indexOf(fixedUnit);
+    if (found !== -1) unitIndex = found;
+  }
+
+  const clampedIndex = Math.max(0, Math.min(unitIndex, sizes.length - 1));
   const value = bytes / Math.pow(k, clampedIndex);
+
+  if (compact) {
+    return `${value.toFixed(dm)}${compactSizes[clampedIndex]}`;
+  }
+
   return `${value.toFixed(dm)} ${sizes[clampedIndex]}`;
+}
+
+export interface MetricThresholds {
+  /**
+   * Threshold for warning status (default: 75).
+   */
+  warning?: number;
+
+  /**
+   * Threshold for danger status (default: 90).
+   */
+  danger?: number;
+
+  /**
+   * Inverts logic: lower values become worse (e.g. battery level, disk free space).
+   */
+  invert?: boolean;
+}
+
+/**
+ * Evaluates a numeric percentage metric (0 - 100) against warning and danger thresholds.
+ */
+export function resolveMetricStatus(
+  value: number,
+  thresholds: MetricThresholds = {},
+): StatusVariant {
+  const { warning = 75, danger = 90, invert = false } = thresholds;
+
+  if (!invert) {
+    if (value >= danger) return "danger";
+    if (value >= warning) return "warning";
+    return "success";
+  } else {
+    if (value <= danger) return "danger";
+    if (value <= warning) return "warning";
+    return "success";
+  }
 }
 
 /**

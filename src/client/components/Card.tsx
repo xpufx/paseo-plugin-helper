@@ -1,5 +1,6 @@
 import React, { type ReactNode } from "react";
-import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
+import { Icon } from "@getpaseo/plugin/react-native";
 import { usePluginTheme } from "../theme/provider.js";
 import type { SurfaceStyle } from "../theme/flair.js";
 
@@ -8,6 +9,78 @@ export interface CardProps {
   variant?: SurfaceStyle;
   style?: StyleProp<ViewStyle>;
   noPadding?: boolean;
+}
+
+export interface CardHeaderProps {
+  title: string;
+  subtitle?: string;
+  value?: string | number | ReactNode;
+  action?: ReactNode;
+  icon?: string;
+  style?: StyleProp<ViewStyle>;
+  titleStyle?: StyleProp<TextStyle>;
+}
+
+export function CardHeader({
+  title,
+  subtitle,
+  value,
+  action,
+  icon,
+  style,
+  titleStyle,
+}: CardHeaderProps) {
+  const { colors, flair, isCompact } = usePluginTheme();
+
+  return (
+    <View style={[styles.headerContainer, style]}>
+      <View style={styles.headerLeft}>
+        {icon ? <Icon name={icon} size={15} color={colors.foregroundMuted} /> : null}
+        <View style={styles.titleColumn}>
+          <Text
+            style={[
+              styles.headerTitle,
+              {
+                color: colors.foreground,
+                fontSize: isCompact ? 12 : 13,
+                textTransform:
+                  flair.headingTransform === "uppercase" ? "uppercase" : "none",
+              },
+              titleStyle,
+            ]}
+          >
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text
+              style={[
+                styles.headerSubtitle,
+                { color: colors.foregroundMuted, fontSize: 11 },
+              ]}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+
+      <View style={styles.headerRight}>
+        {typeof value === "string" || typeof value === "number" ? (
+          <Text
+            style={[
+              styles.headerValue,
+              { color: colors.foreground, fontSize: isCompact ? 12 : 13 },
+            ]}
+          >
+            {value}
+          </Text>
+        ) : (
+          value
+        )}
+        {action}
+      </View>
+    </View>
+  );
 }
 
 export function Card({ children, variant, style, noPadding = false }: CardProps) {
@@ -48,8 +121,40 @@ export function Card({ children, variant, style, noPadding = false }: CardProps)
   );
 }
 
+Card.Header = CardHeader;
+
 const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    gap: 8,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  titleColumn: {
+    gap: 1,
+  },
+  headerTitle: {
+    fontWeight: "600",
+  },
+  headerSubtitle: {
+    fontWeight: "400",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  headerValue: {
+    fontWeight: "600",
   },
 });

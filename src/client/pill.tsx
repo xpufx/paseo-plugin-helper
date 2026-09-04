@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type ReactNode } from "react";
+import React, { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type {
   PluginClientContext,
@@ -8,6 +8,13 @@ import type {
 import { Icon, Modal } from "@getpaseo/plugin/react-native";
 import { PluginThemeProvider } from "./theme/provider.js";
 import type { VisualFlair } from "./theme/flair.js";
+
+export interface RenderPillProps extends PluginComposerPillProps {
+  isOpen: boolean;
+  open: () => void;
+  close: () => void;
+  toggle: () => void;
+}
 
 export interface RenderModalProps extends PluginComposerPillProps {
   close: () => void;
@@ -20,9 +27,15 @@ export interface RegisterComposerPillOptions {
   id: string;
 
   /**
-   * Title shown in the composer bar and modal header.
+   * Title shown in the composer trackbar (keep concise, e.g. "top", "CPU 12%").
    */
   title: string;
+
+  /**
+   * Optional custom title shown in the modal header (defaults to `title`).
+   * Useful when the modal needs a full descriptive title (e.g. "Host System Resources").
+   */
+  modalTitle?: string;
 
   /**
    * Lucide icon name for the pill (e.g. "Cpu", "Server", "MessageSquare").
@@ -30,7 +43,8 @@ export interface RegisterComposerPillOptions {
   icon?: string;
 
   /**
-   * Optional custom icon for the modal header (defaults to `icon`).
+   * Optional custom icon for the modal header. Can be a Lucide icon name string or a JSX element.
+   * If omitted, falls back to `icon`.
    */
   modalIcon?: string | ReactNode;
 
@@ -40,14 +54,15 @@ export interface RegisterComposerPillOptions {
   flair?: Partial<VisualFlair>;
 
   /**
-   * Optional custom badge text shown inside the pill (e.g. "LIVE", "3").
+   * Optional custom badge text shown inside the default pill (e.g. "LIVE", "3").
    */
   badgeText?: string;
 
   /**
    * Custom pill body renderer if you want to replace the default pill layout.
+   * Receives `isOpen`, `open`, `close`, and `toggle` along with standard pill props.
    */
-  renderPill?: (props: PluginComposerPillProps) => ReactNode;
+  renderPill?: (props: RenderPillProps) => ReactNode;
 
   /**
    * Renders the content inside the controlled modal.
@@ -77,16 +92,32 @@ export function registerComposerPill(
       };
     }, [props.agentId]);
 
-    const modalIcon =
-      options.modalIcon ??
-      (options.icon ? (
-        <Icon name={options.icon} size={16} color={props.theme.colors.foreground} />
-      ) : undefined);
+    const effectiveModalTitle = options.modalTitle ?? options.title;
+
+    const modalIconElement = useMemo(() => {
+      if (React.isValidElement(options.modalIcon)) {
+        return options.modalIcon;
+      }
+      const iconName =
+        typeof options.modalIcon === "string" ? options.modalIcon : options.icon;
+      if (iconName) {
+        return <Icon name={iconName} size={16} color={props.theme.colors.foreground} />;
+      }
+      return undefined;
+    }, [options.modalIcon, options.icon, props.theme.colors.foreground]);
+
+    const renderPillProps: RenderPillProps = {
+      ...props,
+      isOpen: open,
+      open: () => setOpen(true),
+      close: () => setOpen(false),
+      toggle: () => setOpen((prev) => !prev),
+    };
 
     return (
       <PluginThemeProvider theme={props.theme} layout={props.layout} flair={options.flair}>
         {options.renderPill ? (
-          options.renderPill(props)
+          options.renderPill(renderPillProps)
         ) : (
           <DefaultPillBody
             title={options.title}
@@ -97,8 +128,8 @@ export function registerComposerPill(
         )}
 
         <Modal
-          title={options.title}
-          icon={modalIcon}
+          title={effectiveModalTitle}
+          icon={modalIconElement}
           open={open}
           onOpenChange={setOpen}
         >
@@ -163,46 +194,45 @@ export function registerComposerPill(
   };
 }
 
-function DefaultPillBody({
-  title,
-  icon,
-  badgeText,
-  theme,
-}: {
+interface DefaultPillBodyProps {
   title: string;
   icon?: string;
   badgeText?: string;
   theme: PluginComposerPillProps["theme"];
-}) {
+}
+
+function DefaultPillBody({ title, icon, badgeText, theme }: DefaultPillBodyProps) {
   return (
-    <View style={pillStyles.container}>
-      {icon ? <Icon name={icon} size={12} color={theme.colors.foregroundMuted} /> : null}
-      <Text style={[pillStyles.title, { color: theme.colors.foreground }]}>{title}</Text>
-      {badgeText ? (
-        <View style={[pillStyles.badge, { backgroundColor: theme.colors.surface2 }]}>
-          <Text style={[pillStyles.badgeText, { color: theme.colors.foregroundMuted }]}>
+    <View style={styles.pillContainer}>
+      {icon && <Icon name={icon} size={13} color={theme.colors.foreground} />}
+      <Text style={[styles.title, { color: theme.colors.foreground }]}>{title}</Text>
+      {badgeText && (
+        <View style={[styles.badge, { backgroundColor: theme.colors.surface1 }]}>
+          <Text style={[styles.badgeText, { color: theme.colors.foregroundMuted }]}>
             {badgeText}
           </Text>
         </View>
-      ) : null}
+      )}
     </View>
   );
 }
 
-const pillStyles = StyleSheet.create({
-  container: {
+const styles = StyleSheet.create({
+  pillContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   title: {
     fontSize: 12,
     fontWeight: "500",
   },
   badge: {
-    paddingHorizontal: 4,
+    borderRadius: 999,
+    paddingHorizontal: 5,
     paddingVertical: 1,
-    borderRadius: 4,
   },
   badgeText: {
     fontSize: 10,

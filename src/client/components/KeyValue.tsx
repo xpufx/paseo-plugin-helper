@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, type ReactNode } from "react";
 import {
   Platform,
   Pressable,
@@ -121,6 +121,42 @@ export function KeyValue({
   );
 }
 
+export interface KeyValueGroupProps {
+  children: ReactNode;
+  columns?: 1 | 2 | 3 | 4;
+  gap?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function KeyValueGroup({
+  children,
+  columns = 2,
+  gap = 12,
+  style,
+}: KeyValueGroupProps) {
+  const { isCompact } = usePluginTheme();
+  const effectiveColumns = isCompact ? 1 : columns;
+
+  const childArray = React.Children.toArray(children).filter(Boolean);
+
+  return (
+    <View style={[styles.groupContainer, { gap }, style]}>
+      {childArray.map((child, index) => (
+        <View
+          key={index}
+          style={{
+            flexGrow: 1,
+            flexShrink: 0,
+            flexBasis: `${Math.floor(100 / effectiveColumns) - 2}%`,
+          }}
+        >
+          {child}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 4,
@@ -134,6 +170,11 @@ const styles = StyleSheet.create({
   stackedContainer: {
     flexDirection: "column",
     gap: 2,
+  },
+  groupContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    width: "100%",
   },
   label: {
     fontWeight: "500",
