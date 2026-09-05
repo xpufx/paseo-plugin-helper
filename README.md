@@ -19,6 +19,7 @@
 - 📝 **Structured Logging & Identity**: `createPluginLogger` automatically prints an informative startup banner with plugin identity/version in Paseo GUI logs and keeps log lines unfragmented.
 - 🏷️ **Version Resolution & Stamping**: Auto-extracts plugin version from `package.json` + Git tags (`resolvePluginVersion`) and generates static TypeScript versions for Hermes client bundles (`stampVersion`).
 - 📱 **Mobile & Desktop First**: Automatically scales touch targets (min 44pt on iOS/Android or narrow panes), avoids bottom-bar clipping, and reflows layouts between desktop and mobile.
+- 📐 **Mobile Modal Gesture Architecture**: Solves nested horizontal scrolling and double-scroll issues inside Paseo mobile bottom sheets implicitly using `ModalBody` non-nested rendering and `Tabs` edge navigation.
 - 🎨 **Configurable Visual Flair**: Authors can customize corner radii (`sharp`, `rounded`, `pill`), information density, surface treatments, and brand accents while honoring Paseo's light/dark themes.
 - 💊 **Composer Pill Lifecycle Engine**: Complete management of agent subscriptions, pill contributions, and modal states in one function call (`registerComposerPill`).
 - 🖥️ **Panels & Surfaces**: One-line registration for sidebar surfaces (`registerSidebarSurface`) and panels (`registerWorkspacePanel`, `registerAgentPanel`) with automatic theme and flair propagation.
@@ -179,6 +180,51 @@ export const contributePlugin: PluginContribution = (plugin) => {
 
   return () => {};
 };
+```
+
+---
+
+## Mobile Modal Gesture Architecture & `<Tabs>`
+
+### The Challenge with Nested Scrolling in Paseo Modals
+
+On mobile viewports (`isCompact: true`), Paseo renders modal dialogs using an `@gorhom/bottom-sheet` component (`AdaptiveModalSheet`). Under the hood, this sheet attaches a root `PanGestureHandler` to manage dragging, detents, and swipe-to-dismiss behavior.
+
+In standard React Native, nesting a horizontal `<ScrollView>` inside a gesture-driven bottom sheet creates immediate conflicts:
+1. **Touch Hijacking**: The parent bottom sheet's gesture recognizer claims ownership of all touch streams. When a user attempts to swipe a nested horizontal ribbon, the parent gesture handler intercepts the touch events and cancels them.
+2. **Double ScrollView Trap**: Paseo's modal host already wraps plugin content in a `BottomSheetScrollView` on mobile. If a plugin wraps its modal content in another vertical `<ScrollView>`, the nested views fight for touch ownership, locking scrolling velocity and swallowing gestures.
+
+### How `paseo-plugin-helper` Solves This Automatically
+
+`paseo-plugin-helper` provides built-in defenses so plugin developers do not need to invent complex workarounds:
+
+1. **Non-Nested `<ModalBody>` on Mobile**:
+   [`ModalBody`](src/client/layout/ModalBody.tsx) checks `isCompact`. On desktop, it renders a standard React Native `<ScrollView>`. On mobile, it automatically renders a responsive `<View>` with safe bottom insets, deferring vertical scrolling directly to Paseo's host `BottomSheetScrollView` without creating a double-scroll trap.
+
+2. **Universal Edge Navigation in `<Tabs>`**:
+   [`Tabs`](src/client/components/Tabs.tsx) provides two responsive modes:
+   - **`mode="fit"` (Default)**: Tabs stretch to fit the viewport width. Authors can provide `shortLabel` on any tab item (e.g. `label: "Interactive Controls"`, `shortLabel: "Controls"`), allowing tabs to fit cleanly on narrow mobile screens without truncation.
+   - **`mode="scroll"`**: If tabs exceed the container width, elevated chevron buttons (`ChevronLeft` and `ChevronRight`) appear on the track edges on both desktop and mobile. Tapping an arrow smoothly advances the tab track by 70% of the visible viewport width.
+   - **Gesture Capture**: `<Tabs>` attaches a `PanResponder` configured with `onMoveShouldSetPanResponderCapture`. When horizontal movement is detected, it claims the gesture during the capture phase before the parent bottom sheet can cancel it.
+
+#### Usage Example:
+
+```tsx
+import { Tabs, type TabItem } from "paseo-plugin-helper/client";
+
+const tabs: TabItem[] = [
+  { id: "overview", label: "System Overview", shortLabel: "Overview", icon: "Cpu" },
+  { id: "storage", label: "Storage Volumes", shortLabel: "Storage", icon: "HardDrive" },
+  { id: "network", label: "Network Diagnostics", shortLabel: "Net", icon: "Activity" },
+  { id: "logs", label: "Realtime Logs", shortLabel: "Logs", icon: "Terminal", badge: 3 },
+];
+
+<Tabs
+  tabs={tabs}
+  activeTab={activeTab}
+  onTabChange={setActiveTab}
+  mode="auto" // "auto" fits on mobile with shortLabel; use "scroll" for ribbon navigation
+/>
 ```
 
 ---

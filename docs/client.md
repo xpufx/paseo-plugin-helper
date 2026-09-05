@@ -182,17 +182,27 @@ Adaptive container styled according to the active `VisualFlair.surfaceStyle` (`f
 ```
 
 ### `<Tabs>`
-Segmented horizontal tab selector with scroll support and active indicators.
+Segmented horizontal tab selector designed for Paseo modal and surface environments. Features automatic fitting on mobile with `shortLabel` support, elevated edge navigation chevrons when scrolling, and `PanResponder` gesture capture to prevent mobile bottom sheets from swallowing horizontal swipes.
+
 ```tsx
 <Tabs
   tabs={[
-    { id: "overview", label: "Overview", count: 3 },
-    { id: "logs", label: "Logs" },
+    { id: "overview", label: "System Overview", shortLabel: "Overview", icon: "Cpu" },
+    { id: "storage", label: "Storage Volumes", shortLabel: "Storage", icon: "HardDrive" },
+    { id: "network", label: "Network Diagnostics", shortLabel: "Net", icon: "Activity" },
+    { id: "logs", label: "Realtime Logs", shortLabel: "Logs", icon: "Terminal", badge: 3 },
   ]}
-  activeTab={currentTab}
-  onSelectTab={setCurrentTab}
+  activeTab={activeTab}
+  onTabChange={setActiveTab}
+  mode="auto" // "auto" (fits on mobile or <= 4 tabs) | "fit" | "scroll"
 />
 ```
+
+#### Properties:
+- `tabs`: Array of `TabItem` objects (`id`, `label`, `shortLabel?`, `icon?`, `badge?`).
+- `activeTab`: ID string of the currently selected tab.
+- `onTabChange`: Callback fired with the new tab ID on selection.
+- `mode`: `"auto"` (default), `"fit"` (stretches to fill container width), or `"scroll"` (horizontal ribbon with elevated edge chevron buttons and swipe capture).
 
 ### `<CodeBlock>`
 Monospace viewer with safe nested horizontal scrolling and a 1-tap clipboard copy button with visual checkmark feedback.
