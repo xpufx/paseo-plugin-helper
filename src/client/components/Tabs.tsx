@@ -66,17 +66,21 @@ export function Tabs({
     setCanScrollRight(scrollX + vWidth < cWidth - 4);
   };
 
-  // Accurately center the active tab inside the viewport
+  // Accurately center the active tab inside the viewport ONLY when activeTab changes
+  const prevActiveTab = useRef<string>(activeTab);
   useEffect(() => {
     if (!shouldFit && scrollRef.current && tabLayouts.current[activeTab] && viewportWidth > 0) {
-      const { x, width } = tabLayouts.current[activeTab];
-      const targetX = Math.max(0, x - (viewportWidth - width) / 2);
-      scrollRef.current.scrollTo({
-        x: targetX,
-        animated: true,
-      });
-      currentScrollX.current = targetX;
-      checkOverflow(contentWidth, viewportWidth, targetX);
+      if (prevActiveTab.current !== activeTab) {
+        prevActiveTab.current = activeTab;
+        const { x, width } = tabLayouts.current[activeTab];
+        const targetX = Math.max(0, x - (viewportWidth - width) / 2);
+        scrollRef.current.scrollTo({
+          x: targetX,
+          animated: true,
+        });
+        currentScrollX.current = targetX;
+        checkOverflow(contentWidth, viewportWidth, targetX);
+      }
     }
   }, [activeTab, shouldFit, viewportWidth, contentWidth]);
 
@@ -287,12 +291,7 @@ export function Tabs({
         scrollEventThrottle={16}
         showsHorizontalScrollIndicator={!isCompact}
         style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          // Add margin space if arrows are currently visible so text isn't covered
-          canScrollLeft && { paddingLeft: 24 },
-          canScrollRight && { paddingRight: 24 },
-        ]}
+        contentContainerStyle={styles.scrollContent}
       >
         {tabs.map((tab) => renderTab(tab))}
       </ScrollView>
