@@ -42,6 +42,9 @@ export interface DefineSettingsContractOptions<TSettings extends Record<string, 
  * during partial updates.
  */
 function stripDefaults(schema: any): any {
+  if (!schema || typeof schema !== "object") {
+    return schema;
+  }
   if (schema instanceof z.ZodDefault) {
     return stripDefaults(schema._def.innerType);
   }
@@ -51,15 +54,26 @@ function stripDefaults(schema: any): any {
   if (schema instanceof z.ZodNullable) {
     return stripDefaults(schema._def.innerType).nullable();
   }
+  // Handle ZodEffects, ZodBranded, ZodReadonly, ZodCatch
+  if (schema._def && schema._def.schema) {
+    return stripDefaults(schema._def.schema);
+  }
   if (schema instanceof z.ZodObject) {
     const shape = schema.shape;
     const newShape: Record<string, any> = {};
     for (const key of Object.keys(shape)) {
       newShape[key] = stripDefaults(shape[key]).optional();
     }
-    return z.object(newShape);
+    let res = z.object(newShape);
+    const unknownKeys = (schema._def as any)?.unknownKeys;
+    if (unknownKeys === "passthrough") {
+      res = res.passthrough() as any;
+    } else if (unknownKeys === "strict") {
+      res = res.strict() as any;
+    }
+    return res;
   }
-  return schema.optional();
+  return typeof schema.optional === "function" ? schema.optional() : schema;
 }
 
 /**

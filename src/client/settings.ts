@@ -13,6 +13,22 @@ export interface UsePluginSettingsOptions<TSettings> {
    */
   refetchOnWindowFocus?: boolean;
   /**
+   * Stale time in milliseconds before settings are considered stale.
+   * Defaults to 0 so that newly opened modals/components always verify fresh
+   * state against the daemon without waiting.
+   */
+  staleTime?: number;
+  /**
+   * Whether to refetch settings every time a component mounts.
+   * Defaults to "always".
+   */
+  refetchOnMount?: boolean | "always";
+  /**
+   * Optional background polling interval in milliseconds.
+   * When specified, keeps multi-window and mobile/desktop clients automatically in sync.
+   */
+  refetchInterval?: number | false;
+  /**
    * Callback invoked after a successful update.
    */
   onSuccess?: (updated: TSettings) => void;
@@ -82,8 +98,13 @@ export function usePluginSettings<TSettings extends Record<string, any>>(
       const res = await callGet(undefined as any);
       return res as TSettings;
     },
-    initialData: options.initialData ?? contract.defaultSettings,
+    // Use placeholderData so UI displays immediately without marking the cache as fresh forever
+    placeholderData: (options.initialData ?? contract.defaultSettings) as any,
+    // Ensure newly mounted components (e.g. Opening modal) immediately re-verify from daemon
+    staleTime: options.staleTime ?? 0,
+    refetchOnMount: options.refetchOnMount ?? "always",
     refetchOnWindowFocus: options.refetchOnWindowFocus ?? true,
+    refetchInterval: options.refetchInterval,
   });
 
   const updateMutation = useMutation({
