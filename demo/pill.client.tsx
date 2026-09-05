@@ -372,9 +372,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
+    width: "100%",
   },
   titleCol: {
     gap: 2,
+    flexShrink: 1,
   },
   headerTitle: {
     fontSize: 15,
