@@ -60,20 +60,85 @@ export function KeyValue({
 
   const shouldStack = stackOnCompact && isCompact;
 
-  return (
-    <View
-      style={[
-        styles.container,
-        shouldStack ? styles.stackedContainer : styles.rowContainer,
-        style,
-      ]}
+  const copyButton = copyable && value ? (
+    <Pressable
+      onPress={handleCopy}
+      hitSlop={Math.max(8, (touchTargetMin - 20) / 2)}
+      style={styles.copyBtn}
+      accessibilityRole="button"
+      accessibilityLabel={`Copy ${label}`}
     >
+      <Icon
+        name={copied ? "Check" : "Copy"}
+        size={isCompact ? 12 : 13}
+        color={copied ? colors.statusSuccess : colors.foregroundMuted}
+      />
+    </Pressable>
+  ) : null;
+
+  if (shouldStack) {
+    return (
+      <View style={[styles.container, styles.stackedContainer, style]}>
+        <View style={styles.stackedHeaderRow}>
+          <Text
+            style={[
+              styles.label,
+              {
+                color: colors.foregroundMuted,
+                fontSize: 11,
+                textTransform: flair.headingTransform === "uppercase" ? "uppercase" : "none",
+              },
+              labelStyle,
+            ]}
+          >
+            {label}
+          </Text>
+          {copyButton}
+        </View>
+
+        <Text
+          selectable
+          style={[
+            styles.stackedValueText,
+            {
+              color: colors.foreground,
+              fontSize: 13,
+              lineHeight: 19,
+              fontFamily,
+            },
+            valueStyle,
+          ]}
+        >
+          {displayValue}
+        </Text>
+
+        {subValue ? (
+          <Text
+            style={[
+              styles.subValue,
+              {
+                color: colors.foregroundMuted,
+                fontSize: 11,
+                lineHeight: 15,
+              },
+            ]}
+          >
+            {subValue}
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
+
+  // Horizontal layout for Desktop / Wide screens
+  return (
+    <View style={[styles.container, styles.rowContainer, style]}>
       <Text
         style={[
           styles.label,
           {
             color: colors.foregroundMuted,
-            fontSize: isCompact ? 11 : 12,
+            fontSize: 12,
             textTransform: flair.headingTransform === "uppercase" ? "uppercase" : "none",
           },
           labelStyle,
@@ -82,14 +147,14 @@ export function KeyValue({
         {label}
       </Text>
 
-      <View style={[styles.valueWrapper, shouldStack ? styles.stackedValue : styles.rowValue]}>
+      <View style={styles.rowValueWrapper}>
         <Text
           selectable
           style={[
-            styles.value,
+            styles.rowValueText,
             {
               color: colors.foreground,
-              fontSize: isCompact ? 12 : 13,
+              fontSize: 13,
               fontFamily,
             },
             valueStyle,
@@ -104,19 +169,7 @@ export function KeyValue({
           </Text>
         )}
 
-        {copyable && value ? (
-          <Pressable
-            onPress={handleCopy}
-            hitSlop={Math.max(0, (touchTargetMin - 24) / 2)}
-            style={styles.copyBtn}
-          >
-            <Icon
-              name={copied ? "Check" : "Copy"}
-              size={11}
-              color={copied ? colors.statusSuccess : colors.foregroundMuted}
-            />
-          </Pressable>
-        ) : null}
+        {copyButton}
       </View>
     </View>
   );
@@ -160,7 +213,7 @@ export function KeyValueGroup({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 4,
+    paddingVertical: 5,
   },
   rowContainer: {
     flexDirection: "row",
@@ -170,7 +223,29 @@ const styles = StyleSheet.create({
   },
   stackedContainer: {
     flexDirection: "column",
-    gap: 2,
+    gap: 3,
+    width: "100%",
+  },
+  stackedHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  stackedValueText: {
+    fontWeight: "600",
+    width: "100%",
+  },
+  rowValueWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flexShrink: 1,
+    gap: 6,
+  },
+  rowValueText: {
+    fontWeight: "600",
+    flexShrink: 1,
   },
   groupContainer: {
     flexDirection: "row",
@@ -180,30 +255,12 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: "500",
   },
-  valueWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  rowValue: {
-    justifyContent: "flex-end",
-    flexShrink: 1,
-  },
-  stackedValue: {
-    justifyContent: "flex-start",
-    width: "100%",
-  },
-  value: {
-    fontWeight: "600",
-    flexShrink: 1,
-    lineHeight: 18,
-  },
   subValue: {
     fontWeight: "400",
-    lineHeight: 16,
   },
   copyBtn: {
-    padding: 2,
+    padding: 3,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
