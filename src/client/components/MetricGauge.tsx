@@ -1,5 +1,5 @@
 import React, { type ReactNode } from "react";
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { usePluginTheme } from "../theme/provider.js";
 import { resolveMetricStatus, type MetricThresholds } from "../../shared/formatters.js";
 
@@ -17,13 +17,13 @@ export interface MetricGaugeProps {
 }
 
 /**
- * Clean circular metric gauge built with pure React Native components.
- * Displays a percentage meter with automated threshold coloring and center value slot.
+ * Clean circular metric gauge.
+ * Displays a proportional percentage ring with automated threshold coloring and center slot.
  */
 export function MetricGauge({
   value,
-  size = 80,
-  strokeWidth = 8,
+  size = 76,
+  strokeWidth = 7,
   thresholds,
   color,
   autoStatusColor = true,
@@ -49,45 +49,142 @@ export function MetricGauge({
   }
 
   const radius = size / 2;
-  const innerRadius = radius - strokeWidth;
+  const innerSize = Math.max(0, size - strokeWidth * 2);
+  const innerRadius = innerSize / 2;
+  const trackColor = colors.surface2;
 
-  return (
-    <View style={[styles.wrapper, style]}>
-      <View
-        style={[
-          styles.gaugeContainer,
-          {
-            width: size,
-            height: size,
-            borderRadius: radius,
-            borderColor: colors.surface2,
-            borderWidth: strokeWidth,
-          },
-        ]}
-      >
-        {/* Dynamic fill indicator */}
+  // Web & React Native Web: Conic gradient provides a pixel-perfect proportional ring arc
+  if (Platform.OS === "web") {
+    const webBackground = `conic-gradient(${gaugeColor} 0% ${clamped}%, ${trackColor} ${clamped}% 100%)`;
+
+    return (
+      <View style={[styles.wrapper, style]}>
         <View
           style={[
-            styles.fillIndicator,
+            styles.gaugeBox,
             {
               width: size,
               height: size,
               borderRadius: radius,
+            },
+            ({ background: webBackground } as any),
+          ]}
+        >
+          {/* Inner cutout mask */}
+          <View
+            style={[
+              styles.centerHole,
+              {
+                width: innerSize,
+                height: innerSize,
+                borderRadius: innerRadius,
+                backgroundColor: colors.surface0,
+              },
+            ]}
+          >
+            {centerSlot ? (
+              centerSlot
+            ) : showPercent ? (
+              <Text style={[styles.percentText, { color: colors.foreground }]}>
+                {Math.round(clamped)}%
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
+        {label ? (
+          <Text style={[styles.labelText, { color: colors.foregroundMuted }]}>
+            {label}
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
+
+  // Native (iOS/Android): Two-semicircle clipping approach
+  const firstHalfRotation = Math.min(180, clamped * 3.6);
+  const secondHalfRotation = clamped > 50 ? (clamped - 50) * 3.6 : 0;
+
+  return (
+    <View style={[styles.wrapper, style]}>
+      <View style={[styles.gaugeBox, { width: size, height: size }]}>
+        {/* Background track circle */}
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              borderRadius: radius,
               borderWidth: strokeWidth,
-              borderColor: gaugeColor,
-              opacity: clamped > 0 ? 1 : 0.2,
+              borderColor: trackColor,
             },
           ]}
         />
 
+        {/* First 180 degrees */}
+        <View
+          style={[
+            styles.halfCircleContainer,
+            {
+              width: size,
+              height: size,
+              transform: [{ rotate: `${firstHalfRotation}deg` }],
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.halfCircle,
+              {
+                width: size,
+                height: size,
+                borderRadius: radius,
+                borderWidth: strokeWidth,
+                borderColor: gaugeColor,
+                borderBottomColor: "transparent",
+                borderLeftColor: "transparent",
+              },
+            ]}
+          />
+        </View>
+
+        {/* Second 180 degrees */}
+        {clamped > 50 ? (
+          <View
+            style={[
+              styles.halfCircleContainer,
+              {
+                width: size,
+                height: size,
+                transform: [{ rotate: `${secondHalfRotation + 180}deg` }],
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.halfCircle,
+                {
+                  width: size,
+                  height: size,
+                  borderRadius: radius,
+                  borderWidth: strokeWidth,
+                  borderColor: gaugeColor,
+                  borderBottomColor: "transparent",
+                  borderLeftColor: "transparent",
+                },
+              ]}
+            />
+          </View>
+        ) : null}
+
         {/* Center Content Slot */}
         <View
           style={[
-            styles.centerSlot,
+            styles.centerHole,
             {
-              width: innerRadius * 2,
-              height: innerRadius * 2,
+              width: innerSize,
+              height: innerSize,
               borderRadius: innerRadius,
+              backgroundColor: colors.surface0,
             },
           ]}
         >
@@ -116,22 +213,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-  gaugeContainer: {
+  gaugeBox: {
     position: "relative",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
-  fillIndicator: {
+  centerHole: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
+  halfCircleContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    overflow: "hidden",
+  },
+  halfCircle: {
     position: "absolute",
     top: 0,
     left: 0,
   },
-  centerSlot: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
   percentText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
   },
   labelText: {
