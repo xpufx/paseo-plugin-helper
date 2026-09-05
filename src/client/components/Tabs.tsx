@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  PanResponder,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -53,6 +54,11 @@ export function Tabs({
   // On compact/mobile or with <= 4 tabs, auto mode defaults to full-width fitting track
   const shouldFit = mode === "fit" || (mode === "auto" && (isCompact || tabs.length <= 4));
 
+  // Current scroll position tracker
+  const currentScrollX = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
+  const dragStartScrollX = useRef<number>(0);
+
   // Accurately center the active tab inside the viewport
   useEffect(() => {
     if (!shouldFit && scrollRef.current && tabLayouts.current[activeTab] && viewportWidth > 0) {
@@ -62,6 +68,7 @@ export function Tabs({
         x: targetX,
         animated: true,
       });
+      currentScrollX.current = targetX;
     }
   }, [activeTab, shouldFit, viewportWidth]);
 
@@ -83,56 +90,46 @@ export function Tabs({
     setCanScrollRight(x + layoutMeasurement.width < contentSize.width - 4);
   };
 
-  const scrollByAmount = (offset: number) => {
+  const scrollByDelta = (delta: number) => {
+    const nextX = Math.max(0, currentScrollX.current + delta);
     scrollRef.current?.scrollTo({
-      x: Math.max(0, offset),
+      x: nextX,
       animated: true,
     });
+    currentScrollX.current = nextX;
   };
 
-  // Direct touch-swipe handling using incremental step tracking to avoid coordinate feedback loops
-  const lastTouchX = useRef<number>(0);
-  const totalDragDistance = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
-  const currentScrollX = useRef<number>(0);
-
-  const handleTouchStart = (e: any) => {
-    const touch = e.nativeEvent?.touches?.[0] || e.nativeEvent;
-    if (touch) {
-      // Use screenX or clientX (fixed viewport coordinates, never affected by element scroll)
-      lastTouchX.current = touch.clientX ?? touch.screenX ?? touch.pageX ?? 0;
-      totalDragDistance.current = 0;
-      isDragging.current = false;
-    }
-  };
-
-  const handleTouchMove = (e: any) => {
-    const touch = e.nativeEvent?.touches?.[0] || e.nativeEvent;
-    if (touch && lastTouchX.current !== 0) {
-      const currentX = touch.clientX ?? touch.screenX ?? touch.pageX ?? 0;
-      const step = lastTouchX.current - currentX;
-      lastTouchX.current = currentX;
-
-      totalDragDistance.current += Math.abs(step);
-      if (totalDragDistance.current > 6) {
-        isDragging.current = true;
-      }
-
-      if (isDragging.current && scrollRef.current && step !== 0) {
-        const nextX = Math.max(0, currentScrollX.current + step);
-        currentScrollX.current = nextX;
-        scrollRef.current.scrollTo({ x: nextX, animated: false });
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    lastTouchX.current = 0;
-    // Keep isDragging true briefly to suppress onPress on the released tab
-    setTimeout(() => {
-      isDragging.current = false;
-    }, 100);
-  };
+  // PanResponder to claim horizontal swipe gestures BEFORE parent BottomSheet cancels them
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        // Capture move events when motion is predominantly horizontal
+        onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+          const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+          return isHorizontal && Math.abs(gestureState.dx) > 6;
+        },
+        onPanResponderGrant: () => {
+          isDragging.current = true;
+          dragStartScrollX.current = currentScrollX.current;
+        },
+        onPanResponderMove: (_, gestureState) => {
+          if (scrollRef.current) {
+            const nextX = Math.max(0, dragStartScrollX.current - gestureState.dx);
+            currentScrollX.current = nextX;
+            scrollRef.current.scrollTo({ x: nextX, animated: false });
+          }
+        },
+        onPanResponderRelease: () => {
+          setTimeout(() => {
+            isDragging.current = false;
+          }, 80);
+        },
+        onPanResponderTerminate: () => {
+          isDragging.current = false;
+        },
+      }),
+    []
+  );
 
   const renderTab = (tab: TabItem) => {
     const isActive = tab.id === activeTab;
@@ -233,7 +230,7 @@ export function Tabs({
     );
   }
 
-  // 2. SCROLL MODE: Closed outer frame with internal horizontal scrolling and affordances
+  // 2. SCROLL MODE: Closed outer frame with PanResponder & Universal Navigation Arrows
   return (
     <View
       onLayout={handleContainerLayout}
@@ -246,12 +243,20 @@ export function Tabs({
         },
         style,
       ]}
+      {...panResponder.panHandlers}
     >
-      {/* Desktop Left Scroll Arrow */}
-      {!isCompact && canScrollLeft && (
+      {/* Left Scroll Arrow (Visible on both Desktop & Mobile when scrollable) */}
+      {canScrollLeft && (
         <Pressable
-          onPress={() => scrollByAmount(0)}
-          style={[styles.arrowButton, styles.arrowLeft, { backgroundColor: colors.surface2 }]}
+          onPress={() => scrollByDelta(-(viewportWidth * 0.7 || 140))}
+          style={[
+            styles.arrowButton,
+            styles.arrowLeft,
+            {
+              backgroundColor: alpha(colors.surface2, 0.92),
+              borderColor: colors.border,
+            },
+          ]}
           accessibilityLabel="Scroll tabs left"
         >
           <Icon name="ChevronLeft" size={14} color={colors.foreground} />
@@ -266,38 +271,30 @@ export function Tabs({
         keyboardShouldPersistTaps="handled"
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        showsHorizontalScrollIndicator={true}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onScrollBeginDrag={() => {
-          isDragging.current = true;
-        }}
-        onScrollEndDrag={() => {
-          setTimeout(() => {
-            isDragging.current = false;
-          }, 80);
-        }}
-        style={[
-          styles.scrollView,
-          // On Web, force native touch-action: pan-x and smooth touch scrolling
-          {
-            // @ts-ignore
-            touchAction: "pan-x",
-            overflowX: "auto",
-            WebkitOverflowScrolling: "touch",
-          },
+        showsHorizontalScrollIndicator={!isCompact}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          // Add margin space if arrows are currently visible so text isn't covered
+          canScrollLeft && { paddingLeft: 24 },
+          canScrollRight && { paddingRight: 24 },
         ]}
-        contentContainerStyle={styles.scrollContent}
       >
         {tabs.map((tab) => renderTab(tab))}
       </ScrollView>
 
-      {/* Desktop Right Scroll Arrow */}
-      {!isCompact && canScrollRight && (
+      {/* Right Scroll Arrow (Visible on both Desktop & Mobile when scrollable) */}
+      {canScrollRight && (
         <Pressable
-          onPress={() => scrollByAmount(9999)}
-          style={[styles.arrowButton, styles.arrowRight, { backgroundColor: colors.surface2 }]}
+          onPress={() => scrollByDelta(viewportWidth * 0.7 || 140)}
+          style={[
+            styles.arrowButton,
+            styles.arrowRight,
+            {
+              backgroundColor: alpha(colors.surface2, 0.92),
+              borderColor: colors.border,
+            },
+          ]}
           accessibilityLabel="Scroll tabs right"
         >
           <Icon name="ChevronRight" size={14} color={colors.foreground} />
@@ -362,13 +359,18 @@ const styles = StyleSheet.create({
   },
   arrowButton: {
     position: "absolute",
-    zIndex: 10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    zIndex: 20,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     top: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   arrowLeft: {
     left: 4,
