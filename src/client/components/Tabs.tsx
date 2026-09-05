@@ -160,8 +160,11 @@ export function Tabs({
     <ScrollView
       ref={scrollRef}
       horizontal
+      nestedScrollEnabled={true}
+      directionalLockEnabled={true}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={[styles.containerScroll, style]}
+      style={[styles.scrollView, style]}
+      contentContainerStyle={styles.containerScroll}
     >
       {renderTabList()}
     </ScrollView>
@@ -171,6 +174,11 @@ export function Tabs({
 const styles = StyleSheet.create({
   containerFit: {
     width: "100%",
+  },
+  scrollView: {
+    width: "100%",
+    maxWidth: "100%",
+    alignSelf: "stretch",
   },
   containerScroll: {
     flexDirection: "row",

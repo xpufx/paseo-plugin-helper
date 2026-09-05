@@ -48,6 +48,7 @@ export function ModalBody({
   return (
     <ScrollView
       style={[{ backgroundColor: colors.surface0 }, styles.container, style]}
+      nestedScrollEnabled={true}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={true}
       refreshControl={refreshControl}
@@ -70,8 +71,13 @@ export function ModalBody({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: 0,
+    width: "100%",
+    maxWidth: "100%",
   },
   content: {
     flexGrow: 1,
+    width: "100%",
+    maxWidth: "100%",
   },
 });
