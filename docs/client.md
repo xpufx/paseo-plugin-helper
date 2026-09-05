@@ -300,6 +300,35 @@ Responsive data table that automatically reflows to a structured card list on mo
 />
 ```
 
+### `<AboutSection>`
+Standardized, responsive plugin metadata and diagnostics view. Automatically pulls theme tokens and visual flair styling, displays external action buttons (`Repository`, `Issues`, `Documentation`), and provides a 1-tap "Copy Diagnostics" button for issue triage.
+
+```tsx
+import { AboutSection } from "paseo-plugin-helper/client";
+import { PLUGIN_VERSION } from "./version.js";
+
+<AboutSection
+  name="Host Resource Monitor"
+  description="Real-time system resource monitor (CPU, memory, load average) for Paseo composers."
+  version={PLUGIN_VERSION}
+  author="xpufx"
+  repository="https://github.com/xpufx/paseo-top"
+  issues="https://github.com/xpufx/paseo-top/issues"
+  license="MIT"
+  // Logo: image require, URL, Lucide icon name, or omitted to auto-resolve GitHub avatar!
+  logo="Activity" 
+  extraItems={[
+    { label: "Daemon Verified Port", value: "4280", copyable: true },
+    { label: "Host Uptime", value: "3h 12m" },
+  ]}
+/>
+```
+
+#### Logo Resolution:
+1. If `logo` is provided as an image require (`require("./logo.png")`) or image URL string (`"https://..."`), it renders directly with rounded corners matching the active visual flair.
+2. If `logo` is a Lucide icon string (e.g. `"Cpu"`, `"Sliders"`, `"Activity"`), it renders a centered theme icon.
+3. If `logo` is omitted, `<AboutSection>` automatically extracts the GitHub user/org from `repository` (or `author`) and resolves the official avatar: `https://github.com/:owner.png?size=128`!
+
 ### `<SearchInput>`
 Themed search input with magnifying glass icon and clear button.
 ```tsx

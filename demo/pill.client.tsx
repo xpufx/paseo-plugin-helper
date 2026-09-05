@@ -22,6 +22,7 @@ import {
   Toggle,
   FormRow,
   TextInput,
+  AboutSection,
   Responsive,
   triggerHaptic,
   usePluginTheme,
@@ -97,6 +98,7 @@ function DemoModal({ close, theme, layout }: RenderModalProps) {
     { id: "settings", label: "Plugin Settings", shortLabel: "Settings" },
     { id: "network", label: "Network Diagnostics", shortLabel: "Net" },
     { id: "logs", label: "System Logs", shortLabel: "Logs" },
+    { id: "about", label: "About Plugin", shortLabel: "About" },
   ];
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [liveStream, setLiveStream] = useState<boolean>(true);
@@ -691,6 +693,24 @@ function DemoModal({ close, theme, layout }: RenderModalProps) {
             code={`[INFO] Server running on ${data?.hostname} (${data?.platform})\n[INFO] Background task alive, uptime: ${Math.round(data?.uptimeSeconds ?? 0)}s\n[INFO] Periodic health check OK`}
           />
         </Card>
+      )}
+
+      {/* TAB 6: ABOUT PLUGIN */}
+      {activeTab === "about" && (
+        <AboutSection
+          name="Paseo Helper Demo"
+          description="Interactive design system showcase and daemon runtime verification suite for paseo-plugin-helper."
+          version={data?.version ?? PLUGIN_VERSION}
+          author="xpufx"
+          repository="https://github.com/xpufx/paseo-plugin-helper"
+          issues="https://github.com/xpufx/paseo-plugin-helper/issues"
+          license="MIT"
+          extraItems={[
+            { label: "Daemon Verified Port", value: `${data?.daemonPort ?? 4280}`, copyable: true },
+            { label: "Host Platform", value: `${data?.platform ?? "unknown"}`, copyable: true },
+            { label: "Background Uptime", value: `${Math.round(data?.uptimeSeconds ?? 0)}s` },
+          ]}
+        />
       )}
 
       {/* Footer */}
