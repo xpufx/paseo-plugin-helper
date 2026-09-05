@@ -37,6 +37,32 @@ export interface DefineSettingsContractOptions<TSettings extends Record<string, 
 }
 
 /**
+ * Strips `.default(...)` wrappers recursively from a Zod schema so that
+ * omitted fields remain undefined rather than being populated with default values
+ * during partial updates.
+ */
+function stripDefaults(schema: any): any {
+  if (schema instanceof z.ZodDefault) {
+    return stripDefaults(schema._def.innerType);
+  }
+  if (schema instanceof z.ZodOptional) {
+    return stripDefaults(schema._def.innerType).optional();
+  }
+  if (schema instanceof z.ZodNullable) {
+    return stripDefaults(schema._def.innerType).nullable();
+  }
+  if (schema instanceof z.ZodObject) {
+    const shape = schema.shape;
+    const newShape: Record<string, any> = {};
+    for (const key of Object.keys(shape)) {
+      newShape[key] = stripDefaults(shape[key]).optional();
+    }
+    return z.object(newShape);
+  }
+  return schema.optional();
+}
+
+/**
  * Defines a pair of typed Paseo RPC contracts (get, update, reset) for plugin settings.
  */
 export function defineSettingsContract<TSettings extends Record<string, any>>(
@@ -56,10 +82,13 @@ export function defineSettingsContract<TSettings extends Record<string, any>>(
     .toLowerCase()
     .replace(/[^a-z0-9._-]/g, "_");
 
-  const partialSchema =
-    typeof schema.partial === "function"
-      ? (schema.partial() as ZodType<Partial<TSettings>>)
-      : (z.record(z.string(), z.unknown()) as unknown as ZodType<Partial<TSettings>>);
+  const partialSchema = (
+    schema instanceof z.ZodObject
+      ? stripDefaults(schema)
+      : typeof (schema as any).partial === "function"
+        ? (schema as any).partial()
+        : z.record(z.string(), z.unknown())
+  ) as ZodType<Partial<TSettings>>;
 
   const getContract = defineContract({
     name: `${sanitizedName}.get`,

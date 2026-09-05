@@ -138,4 +138,31 @@ describe("Settings Architecture (Shared & Server)", () => {
     expect(resetEvent).toEqual(resetResult);
     expect(storage.read()).toEqual(resetResult);
   });
+  it("does not overwrite previously modified settings with schema defaults during partial update", async () => {
+    const server = createMockServerContext();
+    const contract = defineSettingsContract({
+      name: "test.settings",
+      schema: TestSettingsSchema,
+    });
+
+    const storage = new PluginStorage("test-plugin", "isolated.json", {
+      baseDir: testDir,
+      schema: contract.schema,
+    });
+
+    registerSettingsRpc(server, contract, storage);
+
+    // Initial state has showCpu: true
+    expect(storage.read().showCpu).toBe(true);
+
+    // Turn off showCpu
+    await server.callRpc(contract.update, { showCpu: false });
+    expect(storage.read().showCpu).toBe(false);
+
+    // Now update ONLY interval to 10. showCpu must NOT revert to schema default (true)
+    await server.callRpc(contract.update, { interval: 10 });
+    const current = storage.read();
+    expect(current.interval).toBe(10);
+    expect(current.showCpu).toBe(false);
+  });
 });
