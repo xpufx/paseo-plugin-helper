@@ -270,7 +270,7 @@ Displays key/value metadata. Automatically stacks vertically on compact/mobile s
 <KeyValueGroup columns={2}>
   <KeyValue label="CPU Usage" value="14.2%" />
   <KeyValue label="RAM Used" value="3.2 GB" />
-  <KeyValue label="IP Address" value="192.168.1.50" copyable mono />
+  <KeyValue label="Endpoint" value="https://api.example.com/v1" copyable mono />
   <KeyValue label="Uptime" value="3d 4h" />
 </KeyValueGroup>
 ```
@@ -465,9 +465,9 @@ import { copyToClipboard, useToast } from "paseo-plugin-helper/client";
 const toast = useToast();
 
 const handleCopy = async () => {
-  await copyToClipboard("192.168.1.50", {
+  await copyToClipboard("https://api.example.com/v1", {
     toast,
-    toastMessage: "IP Address", // Displays "Copied IP Address to clipboard" or uses Paseo toast.copied
+    toastMessage: "API Endpoint", // Displays "Copied API Endpoint to clipboard" or uses Paseo toast.copied
   });
 };
 ```
