@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  type LayoutChangeEvent,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -14,6 +15,11 @@ import { usePluginTheme } from "../theme/provider.js";
 export interface TabItem {
   id: string;
   label: string;
+  /**
+   * Optional abbreviated label for compact viewports in fit mode.
+   * e.g. label: "Interactive Controls", shortLabel: "Controls"
+   */
+  shortLabel?: string;
   icon?: string;
   badge?: string | number;
 }
@@ -34,17 +40,35 @@ export function Tabs({
   style,
 }: TabsProps) {
   const { colors, resolveRadius, touchTargetMin, isCompact, alpha } = usePluginTheme();
+  const scrollRef = useRef<ScrollView>(null);
+  const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});
 
   const radius = resolveRadius("sm");
 
-  // On compact/mobile or with <= 4 tabs, prefer a full-width fitting track so tabs don't overflow or require horizontal scroll
+  // On compact/mobile or with <= 4 tabs, auto mode defaults to full-width fitting track
   const shouldFit = mode === "fit" || (mode === "auto" && (isCompact || tabs.length <= 4));
+
+  // When in scroll mode, auto-scroll to center the active tab if it's selected
+  useEffect(() => {
+    if (!shouldFit && scrollRef.current && tabLayouts.current[activeTab]) {
+      const { x, width } = tabLayouts.current[activeTab];
+      scrollRef.current.scrollTo({
+        x: Math.max(0, x - 40),
+        animated: true,
+      });
+    }
+  }, [activeTab, shouldFit]);
+
+  const handleTabLayout = (tabId: string, event: LayoutChangeEvent) => {
+    const { x, width } = event.nativeEvent.layout;
+    tabLayouts.current[tabId] = { x, width };
+  };
 
   const renderTabList = () => (
     <View
       style={[
         styles.track,
-        shouldFit && styles.trackFit,
+        shouldFit ? styles.trackFit : styles.trackScroll,
         {
           backgroundColor: colors.surface1,
           borderRadius: radius,
@@ -54,15 +78,18 @@ export function Tabs({
     >
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab;
+        const displayLabel = shouldFit && isCompact && tab.shortLabel ? tab.shortLabel : tab.label;
+
         return (
           <Pressable
             key={tab.id}
             onPress={() => onTabChange(tab.id)}
+            onLayout={(e) => handleTabLayout(tab.id, e)}
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             style={({ pressed }) => [
               styles.tab,
-              shouldFit && styles.tabFit,
+              shouldFit ? styles.tabFit : styles.tabScroll,
               {
                 borderRadius: radius - 2,
                 minHeight: Math.max(30, touchTargetMin - 8),
@@ -71,8 +98,8 @@ export function Tabs({
                   : pressed
                     ? alpha(colors.surface2, 0.5)
                     : "transparent",
-                paddingHorizontal: isCompact ? 6 : 12,
-                paddingVertical: isCompact ? 5 : 6,
+                paddingHorizontal: shouldFit ? (isCompact ? 6 : 12) : 14,
+                paddingVertical: isCompact ? 5 : 7,
               },
             ]}
           >
@@ -94,7 +121,7 @@ export function Tabs({
                 },
               ]}
             >
-              {tab.label}
+              {displayLabel}
             </Text>
             {tab.badge !== undefined ? (
               <View
@@ -131,9 +158,10 @@ export function Tabs({
 
   return (
     <ScrollView
+      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={[styles.container, style]}
+      contentContainerStyle={[styles.containerScroll, style]}
     >
       {renderTabList()}
     </ScrollView>
@@ -141,12 +169,12 @@ export function Tabs({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
   containerFit: {
     width: "100%",
+  },
+  containerScroll: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   track: {
     flexDirection: "row",
@@ -157,6 +185,9 @@ const styles = StyleSheet.create({
   trackFit: {
     width: "100%",
   },
+  trackScroll: {
+    flexShrink: 0,
+  },
   tab: {
     flexDirection: "row",
     alignItems: "center",
@@ -165,6 +196,9 @@ const styles = StyleSheet.create({
   },
   tabFit: {
     flex: 1,
+  },
+  tabScroll: {
+    flexShrink: 0,
   },
   tabText: {
     textAlign: "center",

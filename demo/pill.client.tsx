@@ -60,6 +60,15 @@ function DemoPill({ isOpen }: RenderPillProps) {
 function DemoModal({ close }: RenderModalProps) {
   const { colors } = usePluginTheme();
   const [activeTab, setActiveTab] = useState<string>("gauges");
+  const [tabMode, setTabMode] = useState<"fit" | "scroll">("fit");
+
+  const showcaseTabs = [
+    { id: "gauges", label: "Gauges & Hardware", shortLabel: "Gauges" },
+    { id: "data", label: "Data Table", shortLabel: "Data" },
+    { id: "controls", label: "Interactive Controls", shortLabel: "Controls" },
+    { id: "network", label: "Network Diagnostics", shortLabel: "Net" },
+    { id: "logs", label: "System Logs", shortLabel: "Logs" },
+  ];
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [liveStream, setLiveStream] = useState<boolean>(true);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
@@ -136,20 +145,42 @@ function DemoModal({ close }: RenderModalProps) {
             />
           ))}
         </View>
+
+        {/* Tab Display Mode Selector */}
+        <View style={styles.rateControlRow}>
+          <Text style={[styles.rateLabel, { color: colors.foregroundMuted }]}>
+            Tab Mode:
+          </Text>
+          <Button
+            label="Fit (Screen)"
+            size="sm"
+            variant={tabMode === "fit" ? "primary" : "ghost"}
+            onPress={() => {
+              triggerHaptic("light");
+              setTabMode("fit");
+            }}
+          />
+          <Button
+            label="Scroll (Ribbon)"
+            size="sm"
+            variant={tabMode === "scroll" ? "primary" : "ghost"}
+            onPress={() => {
+              triggerHaptic("light");
+              setTabMode("scroll");
+            }}
+          />
+        </View>
       </Card>
 
       {/* Tabs */}
       <Tabs
+        mode={tabMode}
         activeTab={activeTab}
         onTabChange={(tab) => {
           triggerHaptic("light");
           setActiveTab(tab);
         }}
-        tabs={[
-          { id: "gauges", label: "Gauges & Hardware" },
-          { id: "data", label: "Data Table" },
-          { id: "controls", label: "Interactive Controls" },
-        ]}
+        tabs={showcaseTabs}
       />
 
       {/* TAB 1: GAUGES & HARDWARE */}
@@ -315,6 +346,42 @@ function DemoModal({ close }: RenderModalProps) {
             />
           </Card>
         </>
+      )}
+
+      {/* TAB 4: NETWORK DIAGNOSTICS */}
+      {activeTab === "network" && (
+        <Card variant="elevated">
+          <Card.Header
+            title="Network & Ports"
+            subtitle="Daemon network diagnostics"
+          />
+          <KeyValueGroup>
+            <KeyValue
+              label="Daemon TCP Port"
+              value={`${data?.daemonPort ?? 4280}`}
+              subValue="Local verified socket"
+              copyable
+            />
+            <KeyValue
+              label="Network Connectivity"
+              value="Active (Loopback)"
+            />
+          </KeyValueGroup>
+        </Card>
+      )}
+
+      {/* TAB 5: SYSTEM LOGS */}
+      {activeTab === "logs" && (
+        <Card variant="elevated">
+          <Card.Header
+            title="System Logs"
+            subtitle={`Background task tick #${data?.backgroundTicks ?? 0}`}
+          />
+          <CodeBlock
+            language="bash"
+            code={`[INFO] Server running on ${data?.hostname} (${data?.platform})\n[INFO] Background task alive, uptime: ${Math.round(data?.uptimeSeconds ?? 0)}s\n[INFO] Periodic health check OK`}
+          />
+        </Card>
       )}
 
       {/* Footer */}
