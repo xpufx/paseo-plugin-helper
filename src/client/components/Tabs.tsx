@@ -89,6 +89,45 @@ export function Tabs({
     });
   };
 
+  // Direct touch-swipe handling for environments where parent bottom-sheet suppresses native scroll
+  const touchStartX = useRef<number>(0);
+  const touchStartScrollX = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
+  const currentScrollX = useRef<number>(0);
+
+  const handleTouchStart = (e: any) => {
+    const touch = e.nativeEvent?.touches?.[0] || e.nativeEvent;
+    if (touch) {
+      touchStartX.current = touch.pageX || touch.clientX || 0;
+      touchStartScrollX.current = currentScrollX.current;
+      isDragging.current = false;
+    }
+  };
+
+  const handleTouchMove = (e: any) => {
+    const touch = e.nativeEvent?.touches?.[0] || e.nativeEvent;
+    if (touch && touchStartX.current > 0) {
+      const currentX = touch.pageX || touch.clientX || 0;
+      const deltaX = touchStartX.current - currentX;
+      if (Math.abs(deltaX) > 6) {
+        isDragging.current = true;
+      }
+      if (isDragging.current && scrollRef.current) {
+        const nextX = Math.max(0, touchStartScrollX.current + deltaX);
+        currentScrollX.current = nextX;
+        scrollRef.current.scrollTo({ x: nextX, animated: false });
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartX.current = 0;
+    // Keep isDragging flag true briefly to prevent accidental tab activation after a swipe
+    setTimeout(() => {
+      isDragging.current = false;
+    }, 80);
+  };
+
   const renderTab = (tab: TabItem) => {
     const isActive = tab.id === activeTab;
     const displayLabel = shouldFit && isCompact && tab.shortLabel ? tab.shortLabel : tab.label;
@@ -96,7 +135,11 @@ export function Tabs({
     return (
       <Pressable
         key={tab.id}
-        onPress={() => onTabChange(tab.id)}
+        onPress={() => {
+          if (!isDragging.current) {
+            onTabChange(tab.id);
+          }
+        }}
         onLayout={(e) => handleTabLayout(tab.id, e)}
         accessibilityRole="tab"
         accessibilityState={{ selected: isActive }}
@@ -218,6 +261,17 @@ export function Tabs({
         onScroll={handleScroll}
         scrollEventThrottle={16}
         showsHorizontalScrollIndicator={true}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onScrollBeginDrag={() => {
+          isDragging.current = true;
+        }}
+        onScrollEndDrag={() => {
+          setTimeout(() => {
+            isDragging.current = false;
+          }, 80);
+        }}
         style={[
           styles.scrollView,
           // On Web, force native touch-action: pan-x and smooth touch scrolling

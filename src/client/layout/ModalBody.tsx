@@ -3,6 +3,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  View,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -44,6 +45,27 @@ export function ModalBody({
       colors={[colors.accent]}
     />
   ) : undefined;
+
+  if (isCompact) {
+    return (
+      <View
+        style={[
+          styles.content,
+          {
+            backgroundColor: colors.surface0,
+            paddingHorizontal: padding.horizontal,
+            paddingTop: padding.vertical,
+            paddingBottom: bottomPadding,
+            gap: padding.gap,
+          },
+          style,
+          contentContainerStyle,
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
 
   return (
     <ScrollView
