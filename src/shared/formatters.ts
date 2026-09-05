@@ -134,3 +134,16 @@ export function truncate(text: string, maxLength: number, suffix = "…"): strin
   if (!text || text.length <= maxLength) return text;
   return text.slice(0, Math.max(0, maxLength - suffix.length)) + suffix;
 }
+
+/**
+ * Strips ANSI escape sequences (colors, text formatting, cursor controls) from terminal output strings.
+ */
+export function stripAnsi(text: string): string {
+  if (!text) return "";
+  // Matches 7-bit ASCII and 8-bit ANSI escape codes
+  return text.replace(
+    // eslint-disable-next-line no-control-regex
+    /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+    ""
+  );
+}

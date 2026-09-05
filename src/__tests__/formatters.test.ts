@@ -5,6 +5,7 @@ import {
   formatDuration,
   formatNumber,
   truncate,
+  stripAnsi,
   resolveMetricStatus,
 } from "../shared/formatters.js";
 
@@ -61,7 +62,14 @@ describe("Shared Formatters", () => {
 
   it("truncates long strings with ellipsis", () => {
     expect(truncate("hello", 10)).toBe("hello");
-    expect(truncate("hello world and universe", 10)).toBe("hello wor…");
+    expect(truncate("hello world", 8)).toBe("hello w…");
     expect(truncate("", 5)).toBe("");
+  });
+
+  it("strips ANSI escape codes from terminal strings", () => {
+    expect(stripAnsi("\u001b[32mOK\u001b[0m")).toBe("OK");
+    expect(stripAnsi("\u001b[1m\u001b[31mError:\u001b[0m failed")).toBe("Error: failed");
+    expect(stripAnsi("clean text")).toBe("clean text");
+    expect(stripAnsi("")).toBe("");
   });
 });

@@ -32,8 +32,9 @@ function isSensitiveKey(key: string, customKeys: string[] = []): boolean {
 
 function maskString(val: string, mask = "[REDACTED]"): string {
   if (val.length <= 8) return mask;
-  // Keep first 3 and last 3 characters if long enough
-  return `${val.slice(0, 3)}...${val.slice(-3)}`;
+  // Keep first 3 and last 3 characters if long enough, using custom mask if provided
+  const placeholder = mask === "[REDACTED]" ? "..." : mask;
+  return `${val.slice(0, 3)}${placeholder}${val.slice(-3)}`;
 }
 
 /**

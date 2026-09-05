@@ -109,6 +109,33 @@ formatNumber(12500);        // "12,500"
 formatNumber(1000000);      // "1,000,000"
 ```
 
+### `stripAnsi(text)`
+Strips ANSI escape codes (colors, styling, cursor controls) from terminal output strings.
+```ts
+import { stripAnsi } from "paseo-plugin-helper/shared";
+
+const clean = stripAnsi("\u001b[32mBuild Succeeded\u001b[0m"); // "Build Succeeded"
+```
+
+---
+
+## 4. Async Utilities
+
+### `withTimeout(promise, timeoutMs, label?)`
+Races a promise against a timeout in milliseconds. Rejects with `TimeoutError` if expired and cleanly cancels the internal timer.
+
+```ts
+import { withTimeout, TimeoutError } from "paseo-plugin-helper/shared";
+
+try {
+  const data = await withTimeout(fetchRemoteData(), 5000, "Remote API call");
+} catch (err) {
+  if (err instanceof TimeoutError) {
+    console.error(`Timed out after ${err.timeoutMs}ms`);
+  }
+}
+```
+
 ### `truncate(text, maxLength)`
 Truncates long strings cleanly with an ellipsis (`…`).
 ```ts

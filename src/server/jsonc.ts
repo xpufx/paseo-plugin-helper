@@ -64,3 +64,15 @@ export function parseJsonc<T = unknown>(text: string): T {
   const sanitized = stripJsonComments(text.trim());
   return JSON.parse(sanitized) as T;
 }
+
+/**
+ * Safely parses a JSONC string without throwing errors.
+ * Returns the provided fallback value if parsing fails.
+ */
+export function tryParseJsonc<T>(text: string, fallback: T): T {
+  try {
+    return parseJsonc<T>(text);
+  } catch {
+    return fallback;
+  }
+}

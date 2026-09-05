@@ -114,9 +114,19 @@ Deeply traverses objects, arrays, and strings to redact credentials before writi
 
 ---
 
-## 6. JSONC Parser: `parseJsonc` & `stripJsonComments`
+## 6. JSONC Parser: `parseJsonc`, `tryParseJsonc`, & `stripJsonComments`
 
 Resilient parser that removes single-line (`//`) and multi-line (`/* */`) comments and trailing commas from JSON.
+
+```ts
+import { parseJsonc, tryParseJsonc } from "paseo-plugin-helper/server";
+
+// Throws on syntax errors
+const config = parseJsonc<{ port: number }>("{ // custom port\n \"port\": 8080,\n}");
+
+// Non-throwing parser with fallback
+const safeConfig = tryParseJsonc(rawInput, { port: 3000 });
+```
 
 ---
 

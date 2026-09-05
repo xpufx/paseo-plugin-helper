@@ -39,7 +39,8 @@ describe("MCP Client & Ring Buffer", () => {
                 result: {
                   protocolVersion: '2024-11-05',
                   capabilities: { tools: {} },
-                  serverInfo: { name: 'mock-mcp-server', version: '1.2.3' }
+                  serverInfo: { name: 'mock-mcp-server', version: '1.2.3' },
+                  instructions: 'Always use test tools when available.'
                 }
               }) + '\\n');
             } else if (msg.method === 'ping') {
@@ -67,6 +68,9 @@ describe("MCP Client & Ring Buffer", () => {
     const ping = await client.ping();
     expect(ping.healthy).toBe(true);
     expect(ping.serverInfo?.name).toBe("mock-mcp-server");
+    expect(ping.instructions).toBe("Always use test tools when available.");
+    expect(client.instructions).toBe("Always use test tools when available.");
+    expect(client.protocolVersion).toBe("2024-11-05");
 
     const tools = await client.listTools();
     expect(tools).toHaveLength(1);

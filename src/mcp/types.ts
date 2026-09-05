@@ -30,6 +30,7 @@ export interface McpPingResult {
     name: string;
     version?: string;
   };
+  instructions?: string;
   error?: string;
   stderr?: string;
 }

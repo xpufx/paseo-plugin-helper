@@ -1,17 +1,19 @@
 # MCP Module (`paseo-plugin-helper/mcp`)
 
-The `mcp` module provides a zero-dependency Model Context Protocol (MCP) client designed specifically for Paseo plugins. It talks to MCP servers over stdio without requiring `@modelcontextprotocol/sdk` or heavy external dependencies.
+The `mcp` module provides a zero-dependency Model Context Protocol (MCP) client designed specifically for Paseo plugins. It talks to MCP servers over stdio, HTTP (Streamable HTTP), and Server-Sent Events (SSE) without requiring `@modelcontextprotocol/sdk` or heavy external dependencies.
 
 It includes built-in defenses for common real-world desktop failure modes:
 1. Non-JSON stdout line filtering (e.g. startup banners, Python deprecation warnings).
 2. Stderr circular ring buffering (preventing memory leaks while capturing diagnostic logs).
 3. Cross-platform process tree killing (handling `taskkill /T /F` on Windows and process group `-pid` on POSIX).
 4. Fallback ping mechanism (falling back to handshake verification if a server returns `-32601 Method not found`).
+5. Native HTTP and SSE support without third-party transport packages.
 
 ---
 
-## 1. Quick Example
+## 1. Quick Examples
 
+### Stdio Client
 ```ts
 import { McpClient } from "paseo-plugin-helper/mcp";
 
@@ -24,6 +26,7 @@ if (!ping.healthy) {
   console.error(`MCP server unhealthy: ${ping.error}\nRecent stderr:\n${ping.stderr}`);
 } else {
   console.log(`MCP server online. Latency: ${ping.latencyMs}ms`);
+  console.log("Instructions:", client.instructions);
 
   // Enumerate tools
   const tools = await client.listTools();
@@ -36,6 +39,20 @@ if (!ping.healthy) {
 
 // Cleanly terminate child process and descendants
 await client.close();
+```
+
+### HTTP / SSE Client
+```ts
+// Connect to a remote or daemon MCP server via HTTP / SSE
+const httpClient = McpClient.forHttp("http://localhost:8000/sse", {
+  headers: { Authorization: "Bearer sk-secret" },
+});
+
+const health = await httpClient.ping();
+console.log(`HTTP Server status: ${health.healthy ? "online" : "offline"}`);
+console.log("Instructions:", httpClient.instructions);
+
+await httpClient.close();
 ```
 
 ---
@@ -51,6 +68,19 @@ Creates an `McpClient` instance that manages a spawned subprocess.
 - `options` (`McpClientOptions`, optional):
   - `timeoutMs` (`number`, default: `10000`): Default timeout for requests.
   - `clientInfo` (`{ name: string; version: string }`): Client identification reported during handshake.
+
+### `McpClient.forHttp(url, options?)`
+Creates an `McpHttpClient` connecting to an MCP endpoint over Streamable HTTP or Server-Sent Events (SSE).
+- `url` (`string`): Target URL (e.g. `http://localhost:8000/mcp` or `http://localhost:8000/sse`).
+- `options` (`McpHttpOptions`, optional):
+  - `headers` (`Record<string, string>`): Custom headers such as Bearer tokens or API keys.
+  - `timeoutMs` (`number`, default: `10000`): Request timeout.
+
+### Server Metadata Accessors
+- `client.instructions`: Optional server system prompt guidance returned in `InitializeResult`.
+- `client.serverInfo`: Server name and version.
+- `client.capabilities`: Server capability flags.
+- `client.protocolVersion`: Negotiated protocol version string.
 
 ### `client.initialize()`
 Performs the MCP handshake (`initialize` request followed by `notifications/initialized`).

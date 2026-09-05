@@ -9,11 +9,27 @@ export interface EmptyStateProps {
   title: string;
   description?: string;
   action?: ButtonProps;
+  actionLabel?: string;
+  onAction?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
-export function EmptyState({ icon = "Inbox", title, description, action, style }: EmptyStateProps) {
+export function EmptyState({
+  icon = "Inbox",
+  title,
+  description,
+  action,
+  actionLabel,
+  onAction,
+  style,
+}: EmptyStateProps) {
   const { colors, isCompact } = usePluginTheme();
+
+  const resolvedAction: ButtonProps | undefined = action
+    ? action
+    : actionLabel && onAction
+      ? { label: actionLabel, onPress: onAction, variant: "secondary" }
+      : undefined;
 
   return (
     <View style={[styles.container, { padding: isCompact ? 20 : 32 }, style]}>
@@ -42,9 +58,9 @@ export function EmptyState({ icon = "Inbox", title, description, action, style }
         </Text>
       ) : null}
 
-      {action ? (
+      {resolvedAction ? (
         <View style={styles.actionRow}>
-          <Button size={isCompact ? "sm" : "md"} {...action} />
+          <Button size={isCompact ? "sm" : "md"} {...resolvedAction} />
         </View>
       ) : null}
     </View>

@@ -30,4 +30,14 @@ describe("redactSecrets", () => {
     const redactedUrl = redactSecrets(url);
     expect(redactedUrl).toBe("https://admin:[REDACTED]@my-host.internal/api");
   });
+
+  it("applies custom mask to long sensitive keys", () => {
+    const raw = {
+      token: "secret-token-12345678",
+      shortSecret: "1234",
+    };
+    const redacted = redactSecrets(raw, { mask: "•••" });
+    expect(redacted.token).toBe("sec•••678");
+    expect(redacted.shortSecret).toBe("•••");
+  });
 });

@@ -15,6 +15,7 @@ export interface CardHeaderProps {
   title: string;
   subtitle?: string;
   value?: string | number | ReactNode;
+  badge?: ReactNode;
   action?: ReactNode;
   icon?: string;
   style?: StyleProp<ViewStyle>;
@@ -25,6 +26,7 @@ export function CardHeader({
   title,
   subtitle,
   value,
+  badge,
   action,
   icon,
   style,
@@ -65,6 +67,7 @@ export function CardHeader({
       </View>
 
       <View style={styles.headerRight}>
+        {badge ? <View style={{ marginRight: 6 }}>{badge}</View> : null}
         {typeof value === "string" || typeof value === "number" ? (
           <Text
             style={[

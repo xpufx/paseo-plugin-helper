@@ -3,6 +3,7 @@ import readline from "node:readline";
 import crypto from "node:crypto";
 import { StderrRingBuffer } from "./ring-buffer.js";
 import { killProcessTree } from "./process-killer.js";
+import { McpHttpClient, type McpHttpOptions } from "./http-client.js";
 import type {
   McpClientOptions,
   McpPingOptions,
@@ -22,8 +23,39 @@ export class McpClient {
   private stderrBuffer = new StderrRingBuffer(30);
   private pendingRequests = new Map<string | number, PendingRequest>();
   private initialized = false;
-  private serverInfo?: { name: string; version?: string };
+  private _serverInfo?: { name: string; version?: string };
+  private _instructions?: string;
+  private _capabilities?: Record<string, unknown>;
+  private _protocolVersion?: string;
   private initPromise?: Promise<void>;
+
+  /**
+   * Server metadata returned during MCP initialize handshake.
+   */
+  get serverInfo(): { name: string; version?: string } | undefined {
+    return this._serverInfo;
+  }
+
+  /**
+   * Optional server instructions / system prompt guidance returned during MCP initialize handshake.
+   */
+  get instructions(): string | undefined {
+    return this._instructions;
+  }
+
+  /**
+   * Declared server capabilities returned during initialize handshake.
+   */
+  get capabilities(): Record<string, unknown> | undefined {
+    return this._capabilities;
+  }
+
+  /**
+   * Protocol version negotiated during initialize handshake.
+   */
+  get protocolVersion(): string | undefined {
+    return this._protocolVersion;
+  }
 
   private constructor(
     private readonly command: string,
@@ -42,6 +74,13 @@ export class McpClient {
     options?: McpClientOptions,
   ): McpClient {
     return new McpClient(command, args, env, options);
+  }
+
+  /**
+   * Creates an MCP client connecting to an HTTP or Server-Sent Events (SSE) MCP server.
+   */
+  static forHttp(url: string, options?: McpHttpOptions): McpHttpClient {
+    return new McpHttpClient(url, options);
   }
 
   private startProcess(): Promise<void> {
@@ -213,7 +252,10 @@ export class McpClient {
         },
       });
 
-      this.serverInfo = result?.serverInfo;
+      this._serverInfo = result?.serverInfo;
+      this._instructions = result?.instructions;
+      this._capabilities = result?.capabilities;
+      this._protocolVersion = result?.protocolVersion;
       this.sendNotification("notifications/initialized");
       this.initialized = true;
     })();
@@ -249,7 +291,8 @@ export class McpClient {
       return {
         healthy: true,
         latencyMs: Date.now() - start,
-        serverInfo: this.serverInfo,
+        serverInfo: this._serverInfo,
+        instructions: this._instructions,
         stderr: this.stderrBuffer.getRecentText(),
       };
     } catch (err: any) {
