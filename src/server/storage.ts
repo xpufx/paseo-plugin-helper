@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import type { ZodType } from "zod";
 
 export interface PluginStorageOptions<T> {
   defaultData?: T;
@@ -8,23 +9,29 @@ export interface PluginStorageOptions<T> {
    * Base directory override. Defaults to ~/.paseo
    */
   baseDir?: string;
+  /**
+   * Optional Zod schema to validate and parse data on read/write, automatically applying defaults.
+   */
+  schema?: ZodType<T>;
 }
 
 /**
  * Scoped, atomic filesystem-backed document storage for Paseo daemon plugins.
  * Automatically handles directory creation, atomic temporary file swaps,
- * and default state fallback.
+ * schema validation, and default state fallback.
  */
 export class PluginStorage<T extends Record<string, any>> {
   readonly pluginId: string;
   readonly filename: string;
   readonly filePath: string;
   readonly defaultData?: T;
+  readonly schema?: ZodType<T>;
 
   constructor(pluginId: string, filename = "state.json", options: PluginStorageOptions<T> = {}) {
     this.pluginId = pluginId;
     this.filename = filename;
     this.defaultData = options.defaultData;
+    this.schema = options.schema;
 
     const base = options.baseDir || path.join(os.homedir(), ".paseo");
     const pluginDir = path.join(base, pluginId);
@@ -38,6 +45,27 @@ export class PluginStorage<T extends Record<string, any>> {
     }
   }
 
+  private getDefault(): T {
+    if (this.schema) {
+      const result = this.schema.safeParse(this.defaultData ?? {});
+      if (result.success) {
+        return result.data;
+      }
+    }
+    return this.defaultData ? (JSON.parse(JSON.stringify(this.defaultData)) as T) : ({} as T);
+  }
+
+  private parseData(raw: unknown): T {
+    if (this.schema) {
+      const result = this.schema.safeParse(raw);
+      if (result.success) {
+        return result.data;
+      }
+      return this.getDefault();
+    }
+    return raw as T;
+  }
+
   /**
    * Checks if the backing state file exists.
    */
@@ -46,17 +74,17 @@ export class PluginStorage<T extends Record<string, any>> {
   }
 
   /**
-   * Reads data synchronously. If file does not exist, returns defaultData or an empty object.
+   * Reads data synchronously. If file does not exist, returns defaultData or schema defaults.
    */
   read(): T {
     try {
       if (!fs.existsSync(this.filePath)) {
-        return this.defaultData ? (JSON.parse(JSON.stringify(this.defaultData)) as T) : ({} as T);
+        return this.getDefault();
       }
       const raw = fs.readFileSync(this.filePath, "utf8");
-      return JSON.parse(raw) as T;
+      return this.parseData(JSON.parse(raw));
     } catch {
-      return this.defaultData ? (JSON.parse(JSON.stringify(this.defaultData)) as T) : ({} as T);
+      return this.getDefault();
     }
   }
 
@@ -66,12 +94,12 @@ export class PluginStorage<T extends Record<string, any>> {
   async readAsync(): Promise<T> {
     try {
       if (!fs.existsSync(this.filePath)) {
-        return this.defaultData ? (JSON.parse(JSON.stringify(this.defaultData)) as T) : ({} as T);
+        return this.getDefault();
       }
       const raw = await fs.promises.readFile(this.filePath, "utf8");
-      return JSON.parse(raw) as T;
+      return this.parseData(JSON.parse(raw));
     } catch {
-      return this.defaultData ? (JSON.parse(JSON.stringify(this.defaultData)) as T) : ({} as T);
+      return this.getDefault();
     }
   }
 
@@ -79,9 +107,10 @@ export class PluginStorage<T extends Record<string, any>> {
    * Writes data atomically using a temporary file and atomic rename.
    */
   write(data: T): void {
+    const validated = this.parseData(data);
     this.ensureDir();
     const tempPath = `${this.filePath}.tmp.${process.pid}.${Date.now()}`;
-    const serialized = JSON.stringify(data, null, 2);
+    const serialized = JSON.stringify(validated, null, 2);
     fs.writeFileSync(tempPath, serialized, "utf8");
     fs.renameSync(tempPath, this.filePath);
   }
@@ -90,9 +119,10 @@ export class PluginStorage<T extends Record<string, any>> {
    * Writes data atomically using async filesystem operations.
    */
   async writeAsync(data: T): Promise<void> {
+    const validated = this.parseData(data);
     this.ensureDir();
     const tempPath = `${this.filePath}.tmp.${process.pid}.${Date.now()}`;
-    const serialized = JSON.stringify(data, null, 2);
+    const serialized = JSON.stringify(validated, null, 2);
     await fs.promises.writeFile(tempPath, serialized, "utf8");
     await fs.promises.rename(tempPath, this.filePath);
   }
@@ -103,8 +133,9 @@ export class PluginStorage<T extends Record<string, any>> {
   update(updater: (prev: T) => T): T {
     const current = this.read();
     const updated = updater(current);
-    this.write(updated);
-    return updated;
+    const validated = this.parseData(updated);
+    this.write(validated);
+    return validated;
   }
 
   /**
@@ -113,8 +144,9 @@ export class PluginStorage<T extends Record<string, any>> {
   async updateAsync(updater: (prev: T) => Promise<T> | T): Promise<T> {
     const current = await this.readAsync();
     const updated = await updater(current);
-    await this.writeAsync(updated);
-    return updated;
+    const validated = this.parseData(updated);
+    await this.writeAsync(validated);
+    return validated;
   }
 
   /**

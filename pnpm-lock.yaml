@@ -7,6 +7,13 @@ settings:
 importers:
 
   .:
+    dependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(postcss@8.5.27)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
     devDependencies:
       '@getpaseo/client':
         specifier: 0.7.2
@@ -29,12 +36,6 @@ importers:
       react-native:
         specifier: 0.84.0
         version: 0.84.0(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.1.0)
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(postcss@8.5.27)(typescript@5.9.3)(yaml@2.9.0)
-      typescript:
-        specifier: ^5.8.2
-        version: 5.9.3
       vitest:
         specifier: ^3.0.8
         version: 3.2.7(@types/node@20.19.43)(terser@5.51.2)(yaml@2.9.0)

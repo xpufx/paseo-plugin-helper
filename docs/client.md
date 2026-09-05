@@ -324,6 +324,40 @@ const { data, rate, setRate, isPolling } = useAutoRefreshQuery(
 );
 ```
 
+### `usePluginSettings(contract, options?)`
+Reactive settings hook with **optimistic UI updates**, automatic error rollback, and background caching via React Query. Settings are never undefined (falls back to contract defaults).
+
+```tsx
+import { usePluginSettings, FormRow, Toggle, TextInput, Card } from "paseo-plugin-helper/client";
+import { topSettingsContract } from "../shared/settings.js";
+
+function SettingsTab() {
+  const { settings, updateSettings, isUpdating, resetSettings } = usePluginSettings(topSettingsContract);
+
+  return (
+    <Card>
+      <FormRow label="Show CPU & RAM" description="Display load in pill">
+        <Toggle
+          value={settings.showCpuRam}
+          onValueChange={(val) => updateSettings({ showCpuRam: val })}
+        />
+      </FormRow>
+
+      <FormRow label="Rotation Speed" description="Seconds between metric flips">
+        <TextInput
+          value={String(settings.rotationSeconds)}
+          onChangeText={(text) => {
+            const val = parseInt(text, 10);
+            if (!isNaN(val)) updateSettings({ rotationSeconds: val });
+          }}
+          keyboardType="numeric"
+        />
+      </FormRow>
+    </Card>
+  );
+}
+```
+
 ---
 
 ## 6. Utilities

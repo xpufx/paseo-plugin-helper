@@ -32,7 +32,37 @@ export type GetMetricsOutput = RpcOutput<typeof getMetricsContract>;
 
 ---
 
-## 2. Text & Metric Formatters
+## 2. Settings Contract: `defineSettingsContract`
+
+Generates typed `get`, `update`, and `reset` RPC contracts from a Zod schema in a single declaration:
+
+```ts
+import { defineSettingsContract } from "paseo-plugin-helper/shared";
+import { z } from "zod";
+
+export const TopSettingsSchema = z.object({
+  showCpuRam: z.boolean().default(true),
+  rotationSeconds: z.number().min(1).max(10).default(3),
+  warningThreshold: z.number().default(75),
+});
+
+export type TopSettings = z.infer<typeof TopSettingsSchema>;
+
+export const topSettingsContract = defineSettingsContract({
+  name: "top.settings",
+  schema: TopSettingsSchema,
+  description: "system monitor settings",
+});
+// Automatically generates:
+// - topSettingsContract.get (input: void, output: TopSettings)
+// - topSettingsContract.update (input: Partial<TopSettings>, output: TopSettings)
+// - topSettingsContract.reset (input: void, output: TopSettings)
+// - topSettingsContract.defaultSettings (inferred defaults)
+```
+
+---
+
+## 3. Text & Metric Formatters
 
 ### `formatBytes(bytes, optionsOrDecimals?)`
 Converts byte counts into human-readable data units (`B`, `KB`, `MB`, `GB`, `TB`). Supports standard and compact notation (`"1.2K"`, `"5.3M"`, `"12.8G"`).

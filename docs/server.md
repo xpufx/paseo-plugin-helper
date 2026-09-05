@@ -78,14 +78,10 @@ Writes are performed by writing to a temporary file (`.tmp`) and executing an at
 
 ```ts
 import { PluginStorage } from "paseo-plugin-helper/server";
+import { TopSettingsSchema } from "../shared/settings.js";
 
-interface Config {
-  apiKey: string;
-  refreshInterval: number;
-}
-
-const storage = new PluginStorage<Config>("my-plugin", "config.json", {
-  defaultData: { apiKey: "", refreshInterval: 60 },
+const storage = new PluginStorage("top", "settings.json", {
+  schema: TopSettingsSchema, // Validates disk state and automatically applies defaults!
 });
 
 const config = storage.read();
@@ -199,3 +195,30 @@ export function deactivate() {
   metricsWorker.stop();
 }
 ```
+
+---
+
+## 10. Settings RPC Registration: `registerSettingsRpc`
+
+Wires atomic file persistence and typed `get`, `update`, and `reset` RPC handlers to Paseo's daemon `PluginContext` in one line:
+
+```ts
+import { registerSettingsRpc, PluginStorage } from "paseo-plugin-helper/server";
+import { topSettingsContract } from "../shared/settings.js";
+
+export default function activate(context: PluginContext) {
+  const storage = new PluginStorage("top", "settings.json", {
+    schema: topSettingsContract.schema,
+  });
+
+  registerSettingsRpc(context, topSettingsContract, storage, {
+    onUpdate: (newSettings, prev) => {
+      log.info("Settings updated", newSettings);
+    },
+    onReset: (defaults) => {
+      log.info("Settings reset to defaults");
+    },
+  });
+}
+```
+
