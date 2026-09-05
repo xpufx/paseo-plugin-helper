@@ -57,9 +57,19 @@ Open the `demo` composer pill to explore the modal showcase:
 - **Live Updating**: Optimistic client cache updates with atomic disk persistence.
 - **Settings Reset**: One-click reset to factory defaults with warning haptics.
 
-### 6. 🌐 Network Diagnostics & 📜 Logs
+### 6. 🌐 Network Diagnostics
 - **Verified Daemon Sockets**: `findAvailablePort` verification and loopback interface inspection.
-- **Streaming Logs**: Background daemon tick count and formatted runtime logs.
+- **Connection Checks**: Real-time port ping and host reachability status.
+
+### 7. 📜 System Logs
+- **Streaming Daemon Ticks**: Displays real-time daemon background task tick counts and uptime metrics.
+- **Formatted Terminal Output**: Rendered via `<CodeBlock>` with syntax styling.
+
+### 8. ℹ️ About Plugin
+- **Auto-Resolved Branding**: Automatically fetches and renders the official GitHub avatar from the `repository` or `author` field with matching flair corner radius.
+- **Standardized Metadata**: Plugin name, semantic version badge, license tag, and description.
+- **External Action Buttons**: Pre-styled touchable buttons for `Repository`, `Report Issue`, and `Documentation`.
+- **1-Tap "Copy Diagnostics"**: One-click copying of full environment diagnostics formatted for GitHub issue triage.
 
 ---
 

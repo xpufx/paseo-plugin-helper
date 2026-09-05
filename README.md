@@ -21,6 +21,7 @@
 - 📱 **Mobile & Desktop First**: Automatically scales touch targets (min 44pt on iOS/Android or narrow panes), avoids bottom-bar clipping, and reflows layouts between desktop and mobile.
 - 📐 **Mobile Modal Gesture Architecture**: Solves nested horizontal scrolling and double-scroll issues inside Paseo mobile bottom sheets implicitly using `ModalBody` non-nested rendering and `Tabs` edge navigation.
 - 🎨 **Configurable Visual Flair**: Authors can customize corner radii (`sharp`, `rounded`, `pill`), information density, surface treatments, and brand accents while honoring Paseo's light/dark themes.
+- ℹ️ **Plugin About & Diagnostics Card**: `<AboutSection>` standardizes plugin branding, license tags, version badges, external navigation buttons, 1-tap "Copy Diagnostics" for issue triage, and auto-resolves official GitHub logos from author or repository URLs.
 - 💊 **Composer Pill Lifecycle Engine**: Complete management of agent subscriptions, pill contributions, and modal states in one function call (`registerComposerPill`).
 - 🖥️ **Panels & Surfaces**: One-line registration for sidebar surfaces (`registerSidebarSurface`) and panels (`registerWorkspacePanel`, `registerAgentPanel`) with automatic theme and flair propagation.
 - 🔌 **Zero-Dependency MCP Client**: Built-in stdio client (`McpClient`) with stderr ring buffering, non-JSON stdout line filtering, cross-platform process tree cleanup, and fallback ping readiness checks.
@@ -231,7 +232,7 @@ const tabs: TabItem[] = [
 
 ## Interactive Showcase Demo
 
-The repository includes a runnable reference plugin in [`demo/`](demo/README.md) (`helper-demo`) demonstrating all components, responsive mobile bottom-sheet behaviors, and an interactive Visual Flair Studio backed by atomic settings storage. See the [**Demo README**](demo/README.md) for installation and walkthrough details.
+The repository includes a runnable reference plugin in [`demo/`](demo/README.md) (`helper-demo`) demonstrating all components, responsive mobile bottom-sheet behaviors, an interactive Visual Flair Studio, and the `<AboutSection>` component with auto-resolved GitHub branding. See the [**Demo README**](demo/README.md) for installation and walkthrough details.
 
 ---
 
