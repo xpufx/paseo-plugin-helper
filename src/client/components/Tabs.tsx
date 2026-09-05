@@ -78,6 +78,7 @@ export function Tabs({
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
     const x = contentOffset.x;
+    currentScrollX.current = x;
     setCanScrollLeft(x > 4);
     setCanScrollRight(x + layoutMeasurement.width < contentSize.width - 4);
   };
@@ -89,31 +90,36 @@ export function Tabs({
     });
   };
 
-  // Direct touch-swipe handling for environments where parent bottom-sheet suppresses native scroll
-  const touchStartX = useRef<number>(0);
-  const touchStartScrollX = useRef<number>(0);
+  // Direct touch-swipe handling using incremental step tracking to avoid coordinate feedback loops
+  const lastTouchX = useRef<number>(0);
+  const totalDragDistance = useRef<number>(0);
   const isDragging = useRef<boolean>(false);
   const currentScrollX = useRef<number>(0);
 
   const handleTouchStart = (e: any) => {
     const touch = e.nativeEvent?.touches?.[0] || e.nativeEvent;
     if (touch) {
-      touchStartX.current = touch.pageX || touch.clientX || 0;
-      touchStartScrollX.current = currentScrollX.current;
+      // Use screenX or clientX (fixed viewport coordinates, never affected by element scroll)
+      lastTouchX.current = touch.clientX ?? touch.screenX ?? touch.pageX ?? 0;
+      totalDragDistance.current = 0;
       isDragging.current = false;
     }
   };
 
   const handleTouchMove = (e: any) => {
     const touch = e.nativeEvent?.touches?.[0] || e.nativeEvent;
-    if (touch && touchStartX.current > 0) {
-      const currentX = touch.pageX || touch.clientX || 0;
-      const deltaX = touchStartX.current - currentX;
-      if (Math.abs(deltaX) > 6) {
+    if (touch && lastTouchX.current !== 0) {
+      const currentX = touch.clientX ?? touch.screenX ?? touch.pageX ?? 0;
+      const step = lastTouchX.current - currentX;
+      lastTouchX.current = currentX;
+
+      totalDragDistance.current += Math.abs(step);
+      if (totalDragDistance.current > 6) {
         isDragging.current = true;
       }
-      if (isDragging.current && scrollRef.current) {
-        const nextX = Math.max(0, touchStartScrollX.current + deltaX);
+
+      if (isDragging.current && scrollRef.current && step !== 0) {
+        const nextX = Math.max(0, currentScrollX.current + step);
         currentScrollX.current = nextX;
         scrollRef.current.scrollTo({ x: nextX, animated: false });
       }
@@ -121,11 +127,11 @@ export function Tabs({
   };
 
   const handleTouchEnd = () => {
-    touchStartX.current = 0;
-    // Keep isDragging flag true briefly to prevent accidental tab activation after a swipe
+    lastTouchX.current = 0;
+    // Keep isDragging true briefly to suppress onPress on the released tab
     setTimeout(() => {
       isDragging.current = false;
-    }, 80);
+    }, 100);
   };
 
   const renderTab = (tab: TabItem) => {
