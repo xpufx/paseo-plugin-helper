@@ -7,8 +7,8 @@ A showcase plugin for [Paseo](https://github.com/getpaseo/paseo) exercising all 
 In Paseo:
 
 ```bash
-# Install directly from the v0.2 branch:
-paseo plugin add xpufx/paseo-plugin-helper:demo --ref v0.2
+# Install directly from main:
+paseo plugin add xpufx/paseo-plugin-helper:demo
 
 # Or install locally:
 paseo plugin add ./demo
