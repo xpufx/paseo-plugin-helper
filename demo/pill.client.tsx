@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Pressable } from "react-native";
 import type { PluginClientContext } from "@getpaseo/plugin";
 import {
   registerComposerPill,
+  PluginThemeProvider,
   ModalBody,
   ActionBar,
   Card,
@@ -30,6 +31,7 @@ import {
   usePluginSettings,
   type RenderModalProps,
   type RenderPillProps,
+  type VisualFlair,
 } from "paseo-plugin-helper/client";
 import { formatBytes, formatUptime } from "paseo-plugin-helper/shared";
 import {
@@ -81,7 +83,7 @@ function DemoPill({ isOpen }: RenderPillProps) {
   );
 }
 
-function DemoModal({ close }: RenderModalProps) {
+function DemoModal({ close, theme, layout }: RenderModalProps) {
   const { colors } = usePluginTheme();
   const { isCompact } = useResponsive();
   const [activeTab, setActiveTab] = useState<string>("gauges");
@@ -89,6 +91,7 @@ function DemoModal({ close }: RenderModalProps) {
 
   const showcaseTabs = [
     { id: "gauges", label: "Gauges & Hardware", shortLabel: "Gauges" },
+    { id: "flair", label: "Visual Flair Studio", shortLabel: "Flair" },
     { id: "data", label: "Data Table", shortLabel: "Data" },
     { id: "controls", label: "Interactive Controls", shortLabel: "Controls" },
     { id: "settings", label: "Plugin Settings", shortLabel: "Settings" },
@@ -135,14 +138,34 @@ function DemoModal({ close }: RenderModalProps) {
       item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const activeFlair: Partial<VisualFlair> = {
+    radius: settings.flairRadius,
+    density: settings.flairDensity,
+    surfaceStyle: settings.flairSurface,
+    borderWidth: settings.flairBorderWidth,
+    headingTransform: settings.flairUppercase ? "uppercase" : "none",
+    accentColor: settings.flairAccentColor,
+  };
+
   return (
-    <ModalBody
-      refreshing={isLoading}
-      onRefresh={async () => {
-        triggerHaptic("light");
-        await refetch();
+    <PluginThemeProvider
+      theme={{
+        ...theme,
+        colors: {
+          ...theme.colors,
+          accent: settings.flairAccentColor,
+        },
       }}
+      layout={layout}
+      flair={activeFlair}
     >
+      <ModalBody
+        refreshing={isLoading}
+        onRefresh={async () => {
+          triggerHaptic("light");
+          await refetch();
+        }}
+      >
       {/* Top Banner Card */}
       <Card variant="elevated">
         <View style={styles.headerRow}>
@@ -276,6 +299,167 @@ function DemoModal({ close }: RenderModalProps) {
               label="System Uptime"
               value={data ? formatUptime(data.uptimeSeconds) : "..."}
             />
+          </Card>
+        </>
+      )}
+
+      {/* TAB: VISUAL FLAIR STUDIO */}
+      {activeTab === "flair" && (
+        <>
+          <Card variant={settings.flairSurface}>
+            <Card.Header
+              title="Visual Flair Studio"
+              subtitle="Live theme & flair customizer backed by atomic settings"
+            />
+
+            {/* Corner Radius Selector */}
+            <FormRow
+              label="Corner Radius"
+              description={`Active preset: "${settings.flairRadius}"`}
+            >
+              <View style={styles.segmentRow}>
+                {(["sharp", "rounded", "pill"] as const).map((r) => (
+                  <Button
+                    key={r}
+                    size="sm"
+                    label={r.toUpperCase()}
+                    variant={settings.flairRadius === r ? "primary" : "ghost"}
+                    onPress={() => {
+                      triggerHaptic("light");
+                      updateSettings({ flairRadius: r });
+                    }}
+                  />
+                ))}
+              </View>
+            </FormRow>
+
+            {/* Information Density Selector */}
+            <FormRow
+              label="Layout Density"
+              description={`Active density: "${settings.flairDensity}"`}
+            >
+              <View style={styles.segmentRow}>
+                {(["compact", "comfortable", "spacious"] as const).map((d) => (
+                  <Button
+                    key={d}
+                    size="sm"
+                    label={d.charAt(0).toUpperCase() + d.slice(1)}
+                    variant={settings.flairDensity === d ? "primary" : "ghost"}
+                    onPress={() => {
+                      triggerHaptic("light");
+                      updateSettings({ flairDensity: d });
+                    }}
+                  />
+                ))}
+              </View>
+            </FormRow>
+
+            {/* Surface Styling Selector */}
+            <FormRow
+              label="Surface Treatment"
+              description={`Active surface: "${settings.flairSurface}"`}
+            >
+              <View style={styles.segmentRow}>
+                {(["flat", "tinted", "elevated"] as const).map((s) => (
+                  <Button
+                    key={s}
+                    size="sm"
+                    label={s.charAt(0).toUpperCase() + s.slice(1)}
+                    variant={settings.flairSurface === s ? "primary" : "ghost"}
+                    onPress={() => {
+                      triggerHaptic("light");
+                      updateSettings({ flairSurface: s });
+                    }}
+                  />
+                ))}
+              </View>
+            </FormRow>
+
+            {/* Border Width Stepper / Selector */}
+            <FormRow
+              label="Border Width"
+              description={`Container outline stroke: ${settings.flairBorderWidth}px`}
+            >
+              <View style={styles.segmentRow}>
+                {[0, 1, 2, 3].map((w) => (
+                  <Button
+                    key={w}
+                    size="sm"
+                    label={`${w}px`}
+                    variant={settings.flairBorderWidth === w ? "primary" : "ghost"}
+                    onPress={() => {
+                      triggerHaptic("light");
+                      updateSettings({ flairBorderWidth: w });
+                    }}
+                  />
+                ))}
+              </View>
+            </FormRow>
+
+            {/* Brand Accent Color Swatches */}
+            <FormRow
+              label="Brand Accent Color"
+              description={`Current accent: ${settings.flairAccentColor}`}
+            >
+              <View style={styles.swatchesRow}>
+                {[
+                  { label: "Indigo", color: "#6366f1" },
+                  { label: "Emerald", color: "#10b981" },
+                  { label: "Violet", color: "#8b5cf6" },
+                  { label: "Amber", color: "#f59e0b" },
+                  { label: "Rose", color: "#f43f5e" },
+                  { label: "Cyan", color: "#06b6d4" },
+                ].map((swatch) => {
+                  const isSelected = settings.flairAccentColor.toLowerCase() === swatch.color.toLowerCase();
+                  return (
+                    <Pressable
+                      key={swatch.color}
+                      onPress={() => {
+                        triggerHaptic("light");
+                        updateSettings({ flairAccentColor: swatch.color });
+                      }}
+                      style={[
+                        styles.colorSwatch,
+                        { backgroundColor: swatch.color },
+                        isSelected && styles.colorSwatchActive,
+                      ]}
+                      accessibilityLabel={`Select ${swatch.label} accent color`}
+                    />
+                  );
+                })}
+              </View>
+            </FormRow>
+
+            {/* Uppercase Header Switch */}
+            <FormRow
+              label="Uppercase Section Headings"
+              description="Transform component section titles to uppercase"
+            >
+              <Toggle
+                value={settings.flairUppercase}
+                onValueChange={(val) => {
+                  triggerHaptic("light");
+                  updateSettings({ flairUppercase: val });
+                }}
+              />
+            </FormRow>
+
+            {/* Live Component Preview Card */}
+            <Card variant={settings.flairSurface} style={{ marginTop: 8 }}>
+              <Card.Header
+                title="Live Component Preview"
+                subtitle="Reflects your active Visual Flair in real-time"
+              />
+              <KeyValueGroup columns={isCompact ? 1 : 2}>
+                <KeyValue label="Status" value="Production Ready" />
+                <KeyValue label="Radius Mode" value={settings.flairRadius} />
+              </KeyValueGroup>
+              <ActionBar align="flex-start">
+                <Button label="Primary Button" variant="primary" size="sm" />
+                <Button label="Secondary" variant="secondary" size="sm" />
+                <Badge label="Adaptive Badge" variant="accent" />
+              </ActionBar>
+            </Card>
           </Card>
         </>
       )}
@@ -527,6 +711,7 @@ function DemoModal({ close }: RenderModalProps) {
         </Text>
       </View>
     </ModalBody>
+    </PluginThemeProvider>
   );
 }
 
@@ -619,5 +804,29 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 10,
     fontFamily: "monospace",
+  },
+  segmentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  swatchesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flexWrap: "wrap",
+    paddingVertical: 4,
+  },
+  colorSwatch: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  colorSwatchActive: {
+    borderColor: "#ffffff",
+    transform: [{ scale: 1.15 }],
   },
 });

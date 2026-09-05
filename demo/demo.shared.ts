@@ -10,6 +10,13 @@ export const DemoSettingsSchema = z.object({
   accentPillLabel: z.string().default("demo"),
   pollingRate: z.enum(["1s", "2s", "5s", "paused"]).default("2s"),
   highCpuThreshold: z.number().default(80),
+  // Visual Flair Customization Studio (Persisted)
+  flairRadius: z.enum(["sharp", "rounded", "pill"]).default("rounded"),
+  flairDensity: z.enum(["compact", "comfortable", "spacious"]).default("comfortable"),
+  flairSurface: z.enum(["flat", "tinted", "elevated"]).default("flat"),
+  flairBorderWidth: z.number().default(1),
+  flairUppercase: z.boolean().default(false),
+  flairAccentColor: z.string().default("#6366f1"),
 });
 
 export type DemoSettings = z.infer<typeof DemoSettingsSchema>;
