@@ -51,3 +51,39 @@ export function registerSettingsRpc<TSettings extends Record<string, any>>(
     return fresh;
   });
 }
+
+/**
+ * Creates individual RPC handler functions (get, update, reset) for a SettingsContract.
+ * Useful when registering handlers in root index.ts via plugin.handle() so that
+ * Paseo's AST-based client compiler can cleanly strip all server registrations.
+ */
+export function createSettingsHandlers<TSettings extends Record<string, any>>(
+  contract: SettingsContract<TSettings>,
+  storage: PluginStorage<TSettings>,
+  options: RegisterSettingsRpcOptions<TSettings> = {},
+) {
+  return {
+    get: async () => {
+      return storage.readAsync();
+    },
+    update: async (input: unknown) => {
+      const prev = await storage.readAsync();
+      const updated = await storage.updateAsync((current) => {
+        return { ...current, ...(input as Partial<TSettings>) };
+      });
+      if (options.onUpdate) {
+        await options.onUpdate(updated, prev);
+      }
+      return updated;
+    },
+    reset: async () => {
+      const prev = await storage.readAsync();
+      storage.reset();
+      const fresh = await storage.readAsync();
+      if (options.onReset) {
+        await options.onReset(fresh, prev);
+      }
+      return fresh;
+    },
+  };
+}

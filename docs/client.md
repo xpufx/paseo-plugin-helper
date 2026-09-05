@@ -40,10 +40,62 @@ const {
 
 ---
 
-## 2. Lifecycle Registration Helpers
+## 2. Universal Responsive System
+
+Paseo runs on desktop monitors, split-screen desktop windows, and mobile devices (iOS / Android). Because Paseo's composer trackbar enforces `flexShrink: 1` on plugin pills, text will truncate on narrow tracks unless your plugin adapts its content.
+
+The responsive toolkit works across **every UI surface** (composer pills, modals, tabs, data tables, and workspace panels):
+
+### `useResponsive()`
+Universal hook giving access to current responsive state and branching helper:
+
+```tsx
+import { useResponsive } from "paseo-plugin-helper/client";
+
+function MyComponent() {
+  const { isCompact, isMobile, platform, touchTargetMin, select } = useResponsive();
+
+  // Branch cleanly with priority: platform override -> mobile -> compact -> wide -> desktop
+  const columns = select({
+    desktop: ["Name", "Category", "Status", "Load"],
+    compact: ["Name", "Load"],
+  });
+
+  return <DataTable columns={columns} ... />;
+}
+```
+
+### `<Responsive />`
+Declarative component for swapping layouts or render branches:
+
+```tsx
+import { Responsive } from "paseo-plugin-helper/client";
+
+<Responsive
+  desktop={<DesktopDashboard data={data} />}
+  compact={<MobileCardList data={data} />}
+/>
+```
+
+Or via render prop:
+```tsx
+<Responsive>
+  {({ isCompact, touchTargetMin }) => (
+    <View style={{ minHeight: touchTargetMin }}>
+      <Text>{isCompact ? "Compact" : "Full View"}</Text>
+    </View>
+  )}
+</Responsive>
+```
+
+---
+
+## 3. Lifecycle Registration Helpers
 
 ### `registerComposerPill(client, options)`
 Handles the complete lifecycle of injecting a composer pill for each active agent, subscribing to agent updates, opening modals, and unmounting cleanly.
+
+Supports declarative **compact props** so default pills automatically shrink to fit narrow mobile/split-screen tracks without truncating:
 
 ```tsx
 import { registerComposerPill, ModalBody, Button } from "paseo-plugin-helper/client";
@@ -51,9 +103,11 @@ import { registerComposerPill, ModalBody, Button } from "paseo-plugin-helper/cli
 export const contributeClient = (client) => {
   return registerComposerPill(client, {
     id: "top",
-    title: "Top",                         // Pill button label
+    title: "system · 14% CPU",             // Wide/desktop pill button label
+    compactTitle: "14%",                   // Swapped in when layout.compact is true (mobile/narrow)
     modalTitle: "Host Resource Monitor",  // Descriptive modal header title (falls back to title)
     icon: "Activity",                     // Pill Lucide icon name
+    compactIcon: "Cpu",                   // Optional compact icon
     modalIcon: "Cpu",                     // Modal header icon (name or ReactNode)
     flair: { radius: "rounded", accentColor: "#3b82f6" },
     // renderPill receives ({ isSelected, isCompact, isOpen, open, close, toggle })

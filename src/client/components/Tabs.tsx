@@ -46,6 +46,7 @@ export function Tabs({
   const scrollRef = useRef<ScrollView>(null);
   const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});
   const [viewportWidth, setViewportWidth] = useState<number>(0);
+  const [contentWidth, setContentWidth] = useState<number>(0);
   const [canScrollLeft, setCanScrollLeft] = useState<boolean>(false);
   const [canScrollRight, setCanScrollRight] = useState<boolean>(false);
 
@@ -59,6 +60,12 @@ export function Tabs({
   const isDragging = useRef<boolean>(false);
   const dragStartScrollX = useRef<number>(0);
 
+  const checkOverflow = (cWidth: number, vWidth: number, scrollX: number) => {
+    if (vWidth <= 0 || cWidth <= 0) return;
+    setCanScrollLeft(scrollX > 4);
+    setCanScrollRight(scrollX + vWidth < cWidth - 4);
+  };
+
   // Accurately center the active tab inside the viewport
   useEffect(() => {
     if (!shouldFit && scrollRef.current && tabLayouts.current[activeTab] && viewportWidth > 0) {
@@ -69,8 +76,9 @@ export function Tabs({
         animated: true,
       });
       currentScrollX.current = targetX;
+      checkOverflow(contentWidth, viewportWidth, targetX);
     }
-  }, [activeTab, shouldFit, viewportWidth]);
+  }, [activeTab, shouldFit, viewportWidth, contentWidth]);
 
   const handleTabLayout = (tabId: string, event: LayoutChangeEvent) => {
     const { x, width } = event.nativeEvent.layout;
@@ -80,14 +88,19 @@ export function Tabs({
   const handleContainerLayout = (event: LayoutChangeEvent) => {
     const width = event.nativeEvent.layout.width;
     setViewportWidth(width);
+    checkOverflow(contentWidth, width, currentScrollX.current);
+  };
+
+  const handleContentSizeChange = (cWidth: number) => {
+    setContentWidth(cWidth);
+    checkOverflow(cWidth, viewportWidth, currentScrollX.current);
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
     const x = contentOffset.x;
     currentScrollX.current = x;
-    setCanScrollLeft(x > 4);
-    setCanScrollRight(x + layoutMeasurement.width < contentSize.width - 4);
+    checkOverflow(contentSize.width, layoutMeasurement.width, x);
   };
 
   const scrollByDelta = (delta: number) => {
@@ -270,6 +283,7 @@ export function Tabs({
         directionalLockEnabled={true}
         keyboardShouldPersistTaps="handled"
         onScroll={handleScroll}
+        onContentSizeChange={handleContentSizeChange}
         scrollEventThrottle={16}
         showsHorizontalScrollIndicator={!isCompact}
         style={styles.scrollView}

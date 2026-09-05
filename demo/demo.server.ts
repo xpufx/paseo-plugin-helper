@@ -3,11 +3,26 @@ import {
   createPeriodicTask,
   findAvailablePort,
   getSystemMetrics,
+  PluginStorage,
+  createSettingsHandlers,
 } from "paseo-plugin-helper/server";
-import { type DemoData } from "./demo.shared.js";
+import { demoSettingsContract, type DemoData, type DemoSettings } from "./demo.shared.js";
 import { PLUGIN_VERSION } from "./version.js";
 
 export const log = createPluginLogger("helper-demo");
+
+export const demoStorage = new PluginStorage<DemoSettings>("helper-demo", "settings.json", {
+  schema: demoSettingsContract.schema,
+});
+
+export const settingsHandlers = createSettingsHandlers(demoSettingsContract, demoStorage, {
+  onUpdate: (newSettings) => {
+    log.info("Demo settings updated via RPC:", newSettings);
+  },
+  onReset: () => {
+    log.info("Demo settings reset to default values");
+  },
+});
 
 let daemonPort = 4280;
 let backgroundTicks = 0;

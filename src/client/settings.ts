@@ -95,7 +95,7 @@ export function usePluginSettings<TSettings extends Record<string, any>>(
   const query = useQuery({
     queryKey,
     queryFn: async () => {
-      const res = await callGet(undefined as any);
+      const res = await callGet({} as any);
       return res as TSettings;
     },
     // Use placeholderData so UI displays immediately without marking the cache as fresh forever
@@ -143,7 +143,7 @@ export function usePluginSettings<TSettings extends Record<string, any>>(
 
   const resetMutation = useMutation({
     mutationFn: async () => {
-      const res = await callReset(undefined as any);
+      const res = await callReset({} as any);
       return res as TSettings;
     },
     onSuccess: (data: TSettings) => {

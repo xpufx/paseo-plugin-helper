@@ -7,6 +7,7 @@ import type {
 } from "@getpaseo/plugin";
 import { Icon, Modal } from "@getpaseo/plugin/react-native";
 import { PluginThemeProvider } from "./theme/provider.js";
+import { useResponsive } from "./theme/useResponsive.js";
 import type { VisualFlair } from "./theme/flair.js";
 
 export interface RenderPillProps extends PluginComposerPillProps {
@@ -32,6 +33,12 @@ export interface RegisterComposerPillOptions {
   title: string;
 
   /**
+   * Optional compact title shown in the composer trackbar when screen or track is narrow/mobile
+   * (when `layout.compact` is true). Defaults to `title`.
+   */
+  compactTitle?: string;
+
+  /**
    * Optional custom title shown in the modal header (defaults to `title`).
    * Useful when the modal needs a full descriptive title (e.g. "Host System Resources").
    */
@@ -41,6 +48,11 @@ export interface RegisterComposerPillOptions {
    * Lucide icon name for the pill (e.g. "Cpu", "Server", "MessageSquare").
    */
   icon?: string;
+
+  /**
+   * Optional compact Lucide icon name shown when in compact mode. Defaults to `icon`.
+   */
+  compactIcon?: string;
 
   /**
    * Optional custom icon for the modal header. Can be a Lucide icon name string or a JSX element.
@@ -57,6 +69,11 @@ export interface RegisterComposerPillOptions {
    * Optional custom badge text shown inside the default pill (e.g. "LIVE", "3").
    */
   badgeText?: string;
+
+  /**
+   * Optional compact badge text shown inside the default pill in compact mode. Defaults to `badgeText`.
+   */
+  compactBadgeText?: string;
 
   /**
    * Custom pill body renderer if you want to replace the default pill layout.
@@ -121,8 +138,11 @@ export function registerComposerPill(
         ) : (
           <DefaultPillBody
             title={options.title}
+            compactTitle={options.compactTitle}
             icon={options.icon}
+            compactIcon={options.compactIcon}
             badgeText={options.badgeText}
+            compactBadgeText={options.compactBadgeText}
             theme={props.theme}
           />
         )}
@@ -198,20 +218,40 @@ export function registerComposerPill(
 
 interface DefaultPillBodyProps {
   title: string;
+  compactTitle?: string;
   icon?: string;
+  compactIcon?: string;
   badgeText?: string;
+  compactBadgeText?: string;
   theme: PluginComposerPillProps["theme"];
 }
 
-function DefaultPillBody({ title, icon, badgeText, theme }: DefaultPillBodyProps) {
+function DefaultPillBody({
+  title,
+  compactTitle,
+  icon,
+  compactIcon,
+  badgeText,
+  compactBadgeText,
+  theme,
+}: DefaultPillBodyProps) {
+  const { isCompact } = useResponsive();
+
+  const effectiveTitle = isCompact && compactTitle ? compactTitle : title;
+  const effectiveIcon = isCompact && compactIcon ? compactIcon : icon;
+  const effectiveBadge =
+    isCompact && compactBadgeText !== undefined ? compactBadgeText : badgeText;
+
   return (
     <View style={styles.pillContainer}>
-      {icon && <Icon name={icon} size={13} color={theme.colors.foreground} />}
-      <Text style={[styles.title, { color: theme.colors.foreground }]}>{title}</Text>
-      {badgeText && (
+      {effectiveIcon && <Icon name={effectiveIcon} size={13} color={theme.colors.foreground} />}
+      {effectiveTitle ? (
+        <Text style={[styles.title, { color: theme.colors.foreground }]}>{effectiveTitle}</Text>
+      ) : null}
+      {effectiveBadge && (
         <View style={[styles.badge, { backgroundColor: theme.colors.surface1 }]}>
           <Text style={[styles.badgeText, { color: theme.colors.foregroundMuted }]}>
-            {badgeText}
+            {effectiveBadge}
           </Text>
         </View>
       )}

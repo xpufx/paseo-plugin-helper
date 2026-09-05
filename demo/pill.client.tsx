@@ -19,10 +19,15 @@ import {
   EmptyState,
   CodeBlock,
   Toggle,
+  FormRow,
+  TextInput,
+  Responsive,
   triggerHaptic,
   usePluginTheme,
+  useResponsive,
   useAutoRefreshQuery,
   useRpcMutation,
+  usePluginSettings,
   type RenderModalProps,
   type RenderPillProps,
 } from "paseo-plugin-helper/client";
@@ -30,6 +35,7 @@ import { formatBytes, formatUptime } from "paseo-plugin-helper/shared";
 import {
   getDemoDataRpc,
   triggerDemoActionRpc,
+  demoSettingsContract,
   type DemoData,
 } from "./demo.shared.js";
 import { PLUGIN_VERSION } from "./version.js";
@@ -38,40 +44,67 @@ const EMPTY_PARAMS = {};
 
 function DemoPill({ isOpen }: RenderPillProps) {
   const { colors } = usePluginTheme();
+  const { isCompact } = useResponsive();
+  const { settings } = usePluginSettings(demoSettingsContract);
   const { data, isLoading } = useAutoRefreshQuery(getDemoDataRpc, EMPTY_PARAMS, {
-    defaultRate: "2s",
+    defaultRate: settings.pollingRate,
   });
 
   const cpu = data?.cpuUsagePercent ?? 0;
-  const mem = data?.memoryUsedPercent ?? 0;
+  const isAlert = cpu > settings.highCpuThreshold;
 
   return (
     <View style={styles.pillRow}>
-      <StatusDot variant={cpu > 80 ? "danger" : "success"} pulse={cpu > 80} />
-      <Text numberOfLines={1} style={[styles.pillText, isOpen && styles.pillTextActive]}>
-        <Text style={{ color: colors.accent, fontWeight: "600" }}>demo</Text>
-        <Text style={{ color: colors.foregroundMuted }}>{" · "}</Text>
-        <Text style={{ color: colors.foreground }}>{isLoading ? "..." : `${cpu}% CPU`}</Text>
-      </Text>
+      <StatusDot variant={isAlert ? "danger" : "success"} pulse={isAlert} />
+      {isCompact ? (
+        // Mobile / Compact track: ultra-compact layout to prevent truncation!
+        <Text numberOfLines={1} style={[styles.pillText, isOpen && styles.pillTextActive]}>
+          <Text style={{ color: colors.foreground, fontWeight: "600" }}>
+            {isLoading ? "..." : `${cpu}%`}
+          </Text>
+        </Text>
+      ) : (
+        // Desktop wide track: full descriptive label
+        <Text numberOfLines={1} style={[styles.pillText, isOpen && styles.pillTextActive]}>
+          <Text style={{ color: colors.accent, fontWeight: "600" }}>
+            {settings.accentPillLabel}
+          </Text>
+          {settings.showCpuUsage && (
+            <>
+              <Text style={{ color: colors.foregroundMuted }}>{" · "}</Text>
+              <Text style={{ color: colors.foreground }}>{isLoading ? "..." : `${cpu}% CPU`}</Text>
+            </>
+          )}
+        </Text>
+      )}
     </View>
   );
 }
 
 function DemoModal({ close }: RenderModalProps) {
   const { colors } = usePluginTheme();
+  const { isCompact } = useResponsive();
   const [activeTab, setActiveTab] = useState<string>("gauges");
-  const [tabMode, setTabMode] = useState<"fit" | "scroll">("fit");
+  const [tabMode, setTabMode] = useState<"fit" | "scroll">(isCompact ? "scroll" : "fit");
 
   const showcaseTabs = [
     { id: "gauges", label: "Gauges & Hardware", shortLabel: "Gauges" },
     { id: "data", label: "Data Table", shortLabel: "Data" },
     { id: "controls", label: "Interactive Controls", shortLabel: "Controls" },
+    { id: "settings", label: "Plugin Settings", shortLabel: "Settings" },
     { id: "network", label: "Network Diagnostics", shortLabel: "Net" },
     { id: "logs", label: "System Logs", shortLabel: "Logs" },
   ];
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [liveStream, setLiveStream] = useState<boolean>(true);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+
+  const {
+    settings,
+    updateSettings,
+    resetSettings,
+    isUpdating: isSettingsUpdating,
+  } = usePluginSettings(demoSettingsContract);
 
   const {
     data,
@@ -221,7 +254,7 @@ function DemoModal({ close }: RenderModalProps) {
 
           <Card variant="elevated">
             <Card.Header title="Host & Network" />
-            <KeyValueGroup columns={2}>
+            <KeyValueGroup columns={isCompact ? 1 : 2}>
               <KeyValue
                 label="Hostname"
                 value={data?.hostname ?? "..."}
@@ -250,7 +283,7 @@ function DemoModal({ close }: RenderModalProps) {
       {/* TAB 2: DATA TABLE */}
       {activeTab === "data" && (
         <Card variant="elevated">
-          <Card.Header title="Services Table (Mobile Reflow)" />
+          <Card.Header title={`Services Table (${isCompact ? "Compact 2-Col" : "Desktop 3-Col"})`} />
           <SearchInput
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -267,44 +300,74 @@ function DemoModal({ close }: RenderModalProps) {
                 description="Try clearing your search query."
               />
             }
-            columns={[
-              {
-                key: "name",
-                header: "Service",
-                flex: 2,
-                render: (item) => (
-                  <View>
-                    <Text style={[styles.tableNameText, { color: colors.foreground }]}>
-                      {item.name}
-                    </Text>
-                    <Text style={[styles.tableSubText, { color: colors.foregroundMuted }]}>
-                      {item.category}
-                    </Text>
-                  </View>
-                ),
-              },
-              {
-                key: "status",
-                header: "Status",
-                align: "center",
-                render: (item) => (
-                  <Badge
-                    label={item.status}
-                    variant={item.status === "running" ? "success" : "warning"}
-                  />
-                ),
-              },
-              {
-                key: "load",
-                header: "Load",
-                align: "right",
-                render: (item) => (
-                  <Text style={[styles.tableMetricText, { color: colors.foreground }]}>
-                    {item.loadPercent}%
-                  </Text>
-                ),
-              },
-            ]}
+            columns={
+              isCompact
+                ? [
+                    {
+                      key: "name",
+                      header: "Service",
+                      flex: 2,
+                      render: (item) => (
+                        <View>
+                          <Text style={[styles.tableNameText, { color: colors.foreground }]}>
+                            {item.name}
+                          </Text>
+                          <Text style={[styles.tableSubText, { color: colors.foregroundMuted }]}>
+                            {item.category}
+                          </Text>
+                        </View>
+                      ),
+                    },
+                    {
+                      key: "load",
+                      header: "Load",
+                      align: "right",
+                      render: (item) => (
+                        <Text style={[styles.tableMetricText, { color: colors.foreground }]}>
+                          {item.loadPercent}%
+                        </Text>
+                      ),
+                    },
+                  ]
+                : [
+                    {
+                      key: "name",
+                      header: "Service",
+                      flex: 2,
+                      render: (item) => (
+                        <View>
+                          <Text style={[styles.tableNameText, { color: colors.foreground }]}>
+                            {item.name}
+                          </Text>
+                          <Text style={[styles.tableSubText, { color: colors.foregroundMuted }]}>
+                            {item.category}
+                          </Text>
+                        </View>
+                      ),
+                    },
+                    {
+                      key: "status",
+                      header: "Status",
+                      align: "center",
+                      render: (item) => (
+                        <Badge
+                          label={item.status}
+                          variant={item.status === "running" ? "success" : "warning"}
+                        />
+                      ),
+                    },
+                    {
+                      key: "load",
+                      header: "Load",
+                      align: "right",
+                      render: (item) => (
+                        <Text style={[styles.tableMetricText, { color: colors.foreground }]}>
+                          {item.loadPercent}%
+                        </Text>
+                      ),
+                    },
+                  ]
+            }
           />
         </Card>
       )}
@@ -346,6 +409,68 @@ function DemoModal({ close }: RenderModalProps) {
             />
           </Card>
         </>
+      )}
+
+      {/* TAB: SETTINGS & STORAGE */}
+      {activeTab === "settings" && (
+        <Card variant="elevated">
+          <Card.Header
+            title="Plugin Settings"
+            subtitle="Type-safe Zod storage with optimistic React Query updates"
+          />
+          <FormRow
+            label="Show CPU in Pill"
+            description="Toggle whether the CPU usage percent is visible in the composer bar"
+          >
+            <Toggle
+              value={settings.showCpuUsage}
+              onValueChange={(val) => {
+                triggerHaptic("light");
+                updateSettings({ showCpuUsage: val });
+              }}
+            />
+          </FormRow>
+
+          <FormRow
+            label="Pill Accent Label"
+            description="Custom label displayed at the front of the composer pill"
+          >
+            <TextInput
+              value={settings.accentPillLabel}
+              onChangeText={(text) => updateSettings({ accentPillLabel: text })}
+              placeholder="demo"
+            />
+          </FormRow>
+
+          <FormRow
+            label="Alert Threshold"
+            description={`Turns the status dot red when CPU exceeds this percent (Current: ${settings.highCpuThreshold}%)`}
+          >
+            <TextInput
+              value={String(settings.highCpuThreshold)}
+              keyboardType="numeric"
+              onChangeText={(text) => {
+                const val = parseInt(text, 10);
+                if (!isNaN(val)) updateSettings({ highCpuThreshold: val });
+              }}
+            />
+          </FormRow>
+
+          <ActionBar align="space-between">
+            <Text style={{ fontSize: 11, color: colors.foregroundMuted }}>
+              {isSettingsUpdating ? "Saving to disk..." : "Saved to settings.json atomically"}
+            </Text>
+            <Button
+              label="Reset Defaults"
+              variant="secondary"
+              size="sm"
+              onPress={async () => {
+                triggerHaptic("warning");
+                await resetSettings();
+              }}
+            />
+          </ActionBar>
+        </Card>
       )}
 
       {/* TAB 4: NETWORK DIAGNOSTICS */}

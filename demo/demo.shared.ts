@@ -1,5 +1,24 @@
-import { defineContract, type RpcOutput } from "paseo-plugin-helper/shared";
+import {
+  defineContract,
+  defineSettingsContract,
+  type RpcOutput,
+} from "paseo-plugin-helper/shared";
 import { z } from "zod";
+
+export const DemoSettingsSchema = z.object({
+  showCpuUsage: z.boolean().default(true),
+  accentPillLabel: z.string().default("demo"),
+  pollingRate: z.enum(["1s", "2s", "5s", "paused"]).default("2s"),
+  highCpuThreshold: z.number().default(80),
+});
+
+export type DemoSettings = z.infer<typeof DemoSettingsSchema>;
+
+export const demoSettingsContract = defineSettingsContract({
+  name: "helper-demo.settings",
+  schema: DemoSettingsSchema,
+  description: "Showcase demo settings",
+});
 
 export const getDemoDataRpc = defineContract({
   name: "helper-demo.get-data",
