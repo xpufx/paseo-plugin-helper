@@ -222,3 +222,72 @@ export default function activate(context: PluginContext) {
 }
 ```
 
+---
+
+## 11. Agent MCP Configuration Writer: `upsertMcpServer` & `removeMcpServer`
+
+Safely injects and removes MCP server configurations for standalone agent CLIs and tools (Claude Desktop, Claude Code, OpenCode, Cursor, Gemini, Pi) without risk of corrupting user configuration files.
+
+### Why Use This Instead of `fs.writeFileSync`
+1. **Namespaced Idempotency**: Performs deep equality comparisons on existing server entries. If identical, no write occurs, preventing file-watcher churn in running agent runners.
+2. **JSONC Safe**: Preserves files containing comments and trailing commas using `parseJsonc`.
+3. **Atomic Writes**: Writes to a process-unique temporary file before POSIX atomic renaming, preventing half-written files during crashes.
+4. **Optional Automated Backups**: Creates a timestamped `.bak` copy before modifying existing files.
+5. **Clean Teardown**: Provides `removeMcpServer` so uninstalled or deactivated plugins leave zero orphan server entries.
+
+### Usage
+```ts
+import {
+  upsertMcpServer,
+  removeMcpServer,
+  getMcpServer,
+  McpConfigPaths,
+} from "paseo-plugin-helper/server";
+
+// 1. Upsert into Claude Code global config (~/.claude.json)
+const result = upsertMcpServer({
+  target: McpConfigPaths.claudeCode(),
+  serverName: "paseo-gateway",
+  config: {
+    command: "node",
+    args: ["/path/to/gateway.js"],
+    env: { PORT: "4280" },
+  },
+  backup: true, // Creates ~/.claude.json.bak.<timestamp>
+});
+
+if (result.changed) {
+  console.log(`MCP server ${result.action}: ${result.filePath}`);
+} else {
+  console.log("MCP configuration already matches, no disk write performed");
+}
+
+// 2. Query active configuration
+const active = getMcpServer(McpConfigPaths.claudeCode(), "paseo-gateway");
+
+// 3. Remove on plugin deactivation or uninstall
+removeMcpServer({
+  target: McpConfigPaths.claudeCode(),
+  serverName: "paseo-gateway",
+});
+```
+
+### Preset Paths (`McpConfigPaths`)
+- `McpConfigPaths.claudeDesktop()`: Resolves macOS (`~/Library/Application Support/Claude`), Windows (`%APPDATA%/Claude`), and Linux (`~/.config/Claude`).
+- `McpConfigPaths.claudeCode()`: `~/.claude.json`
+- `McpConfigPaths.openCode()`: `~/.config/opencode/opencode.json`
+- `McpConfigPaths.cursor()`: `~/.cursor/mcp.json`
+- `McpConfigPaths.gemini()`: `~/.gemini/config/mcp_config.json`
+- `McpConfigPaths.pi()`: `~/.pi/config.json`
+
+Custom targets can also be specified directly:
+```ts
+upsertMcpServer({
+  target: {
+    path: "/custom/path/to/config.json",
+    key: "mcpServers", // or "mcp-servers"
+  },
+  serverName: "x-comms",
+  config: { command: "x-comms" },
+});
+```
