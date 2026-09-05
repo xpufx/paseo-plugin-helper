@@ -214,10 +214,20 @@ export function Tabs({
         horizontal
         nestedScrollEnabled={true}
         directionalLockEnabled={true}
+        keyboardShouldPersistTaps="handled"
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        showsHorizontalScrollIndicator={!isCompact}
-        style={styles.scrollView}
+        showsHorizontalScrollIndicator={true}
+        style={[
+          styles.scrollView,
+          // On Web, force native touch-action: pan-x and smooth touch scrolling
+          {
+            // @ts-ignore
+            touchAction: "pan-x",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+          },
+        ]}
         contentContainerStyle={styles.scrollContent}
       >
         {tabs.map((tab) => renderTab(tab))}
