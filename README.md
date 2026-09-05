@@ -231,7 +231,7 @@ const tabs: TabItem[] = [
 
 ## Interactive Showcase Demo
 
-The repository includes a runnable reference plugin in `demo/` (`helper-demo`) demonstrating all components, responsive mobile bottom-sheet behaviors, and an interactive Visual Flair Studio backed by atomic settings storage.
+The repository includes a runnable reference plugin in [`demo/`](demo/README.md) (`helper-demo`) demonstrating all components, responsive mobile bottom-sheet behaviors, and an interactive Visual Flair Studio backed by atomic settings storage. See the [**Demo README**](demo/README.md) for installation and walkthrough details.
 
 ---
 
