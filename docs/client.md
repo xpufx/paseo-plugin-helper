@@ -217,6 +217,31 @@ Visual gauge with automated threshold coloring (<75% green, 75-89% yellow, >=90%
 <ProgressBar value={82} max={100} showLabel label="RAM Usage" />
 ```
 
+### `<MetricGauge>`
+Circular metric gauge with center value slot and automated threshold coloring.
+```tsx
+<MetricGauge value={78} label="CPU Load" size={90} />
+```
+
+### `<DataTable>`
+Responsive data table that automatically reflows to a structured card list on mobile and compact viewports.
+```tsx
+<DataTable
+  data={processes}
+  keyExtractor={(p) => String(p.pid)}
+  columns={[
+    { key: "name", header: "Process", render: (p) => <Text>{p.name}</Text> },
+    { key: "cpu", header: "CPU %", align: "right", render: (p) => <Text>{p.cpu}%</Text> },
+  ]}
+/>
+```
+
+### `<SearchInput>`
+Themed search input with magnifying glass icon and clear button.
+```tsx
+<SearchInput value={query} onChangeText={setQuery} placeholder="Filter processes..." />
+```
+
 ### `<EmptyState>`
 Placeholder view for empty lists or zero-state panels.
 ```tsx
@@ -235,10 +260,13 @@ Placeholder view for empty lists or zero-state panels.
 
 ### `<ModalBody>`
 A scrollable container for `<Modal.Content>` that automatically applies bottom padding (`paddingBottom: 48` on mobile) to clear OS home navigation bars and keyboards.
+Supports native pull-to-refresh on mobile via `refreshing` and `onRefresh`.
 
 ```tsx
 <Modal.Content>
-  <ModalBody>{/* controls and cards */}</ModalBody>
+  <ModalBody refreshing={isRefetching} onRefresh={refetch}>
+    {/* controls and cards */}
+  </ModalBody>
 </Modal.Content>
 ```
 
@@ -285,6 +313,17 @@ const { mutate, isPending } = useRpcMutation(updateSettingContract, {
 });
 ```
 
+### `useAutoRefreshQuery(contract, input, options?)`
+Enhanced React Query hook for live polling metrics. Automatically halts background polling when modal/panel is closed (`isOpen === false`) to save battery and CPU on mobile, and provides selectable interval controls ("1s", "2s", "5s", "paused").
+
+```tsx
+const { data, rate, setRate, isPolling } = useAutoRefreshQuery(
+  myStatusContract,
+  { agentId },
+  { defaultRate: "2s", isOpen: isModalOpen }
+);
+```
+
 ---
 
 ## 6. Utilities
@@ -305,4 +344,17 @@ const handleCopy = async () => {
   });
 };
 ```
+
+### `triggerHaptic(type?)`
+Triggers subtle tactile haptic vibration on mobile devices ("light", "medium", "heavy", "success", "warning", "error"). Gracefully degrades on unsupported platforms.
+
+```tsx
+import { triggerHaptic } from "paseo-plugin-helper/client";
+
+const handlePress = () => {
+  triggerHaptic("light");
+  doAction();
+};
+```
+
 

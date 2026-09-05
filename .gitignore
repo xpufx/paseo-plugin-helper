@@ -2,3 +2,6 @@ node_modules
 dist
 .DS_Store
 *.log
+demo/node_modules/
+demo/package-lock.json
+demo/version.ts

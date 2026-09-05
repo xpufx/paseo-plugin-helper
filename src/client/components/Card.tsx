@@ -126,22 +126,27 @@ Card.Header = CardHeader;
 const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
+    width: "100%",
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
     marginBottom: 8,
     gap: 8,
+    width: "100%",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     flex: 1,
+    flexShrink: 1,
   },
   titleColumn: {
     gap: 1,
+    flexShrink: 1,
   },
   headerTitle: {
     fontWeight: "600",
@@ -153,6 +158,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexShrink: 0,
   },
   headerValue: {
     fontWeight: "600",

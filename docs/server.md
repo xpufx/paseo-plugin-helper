@@ -154,3 +154,48 @@ This generates:
 export const PLUGIN_VERSION = "0.1.0";
 ```
 Now both `pill.client.tsx` and server handlers can import `PLUGIN_VERSION` directly.
+
+---
+
+## 8. Network Utilities: `isPortOpen`, `findAvailablePort`, `pingHost`
+
+Utilities for testing daemon service reachability or finding open TCP ports for child processes.
+
+```ts
+import { isPortOpen, findAvailablePort, pingHost } from "paseo-plugin-helper/server";
+
+// Find an available port to bind an internal daemon service
+const port = await findAvailablePort(3000);
+
+// Check if a port is responding
+const open = await isPortOpen(8080, "127.0.0.1");
+
+// Ping host
+const reachable = await pingHost("127.0.0.1", port, { timeoutMs: 1000 });
+```
+
+---
+
+## 9. Background Tasks: `createPeriodicTask`
+
+Resilient background loop for plugin daemons with exponential backoff on consecutive failures and safe teardown.
+
+```ts
+import { createPeriodicTask } from "paseo-plugin-helper/server";
+
+const metricsWorker = createPeriodicTask({
+  intervalMs: 5000,
+  runImmediately: true,
+  task: async () => {
+    await collectMetrics();
+  },
+  onError: (err, failureCount) => {
+    log.warn(`Metrics polling failed (attempt ${failureCount}):`, err);
+  },
+});
+
+// Teardown during plugin shutdown
+export function deactivate() {
+  metricsWorker.stop();
+}
+```

@@ -7,9 +7,9 @@ import { createPluginLogger } from "../server/logger.js";
 
 describe("resolvePluginVersion", () => {
   it("resolves version from package.json in current directory", () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
     const version = resolvePluginVersion();
-    // In paseo-plugin-helper root, package.json has 0.1.0
-    expect(version).toContain("0.1.0");
+    expect(version).toContain(pkg.version);
   });
 
   it("falls back to default fallback when package.json is missing", () => {
@@ -38,13 +38,14 @@ describe("resolvePluginVersion", () => {
   });
 
   it("createPluginLogger auto-resolves version when version option is omitted", () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
     const spy = vi.spyOn(console, "log").mockImplementation(() => {});
 
     createPluginLogger("auto-plugin");
 
     expect(spy).toHaveBeenCalled();
     const bannerLine = spy.mock.calls[0][0];
-    expect(bannerLine).toContain("[auto-plugin v0.1.0");
+    expect(bannerLine).toContain(`[auto-plugin v${pkg.version}`);
 
     spy.mockRestore();
   });
