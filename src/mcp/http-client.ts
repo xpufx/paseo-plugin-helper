@@ -31,6 +31,7 @@ export class McpHttpClient {
   private initPromise?: Promise<void>;
   private abortController = new AbortController();
   private postUrl: string;
+  private sessionId?: string;
   private isSse = false;
   private sseConnectPromise?: Promise<void>;
 
@@ -185,17 +186,27 @@ export class McpHttpClient {
 
       this.pendingRequests.set(id, { resolve, reject, timer });
 
+      const reqHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        ...this.options.headers,
+      };
+      if (this.sessionId) {
+        reqHeaders["Mcp-Session-Id"] = this.sessionId;
+      }
+
       fetch(this.postUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json, text/event-stream",
-          ...this.options.headers,
-        },
+        headers: reqHeaders,
         body: JSON.stringify(payload),
         signal: this.abortController.signal,
       })
         .then(async (res) => {
+          const sid = res.headers.get("mcp-session-id");
+          if (sid) {
+            this.sessionId = sid;
+          }
+
           if (!res.ok) {
             clearTimeout(timer);
             this.pendingRequests.delete(id);
@@ -224,13 +235,18 @@ export class McpHttpClient {
       ...(params !== undefined ? { params } : {}),
     };
 
+    const reqHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...this.options.headers,
+    };
+    if (this.sessionId) {
+      reqHeaders["Mcp-Session-Id"] = this.sessionId;
+    }
+
     try {
       await fetch(this.postUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...this.options.headers,
-        },
+        headers: reqHeaders,
         body: JSON.stringify(payload),
         signal: this.abortController.signal,
       });

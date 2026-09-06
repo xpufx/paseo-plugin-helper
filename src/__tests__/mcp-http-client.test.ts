@@ -20,22 +20,32 @@ describe("McpHttpClient (HTTP / Streamable transport)", () => {
             let result: any = {};
 
             if (msg.method === "initialize") {
+              res.setHeader("Mcp-Session-Id", "session-xyz-123");
               result = {
                 protocolVersion: "2024-11-05",
                 capabilities: { tools: {} },
                 serverInfo: { name: "remote-http-server", version: "1.0.0" },
                 instructions: "Remote prompt instructions.",
               };
-            } else if (msg.method === "ping") {
-              result = {};
-            } else if (msg.method === "tools/list") {
-              result = {
-                tools: [{ name: "http_tool", description: "An HTTP-based tool" }],
-              };
-            } else if (msg.method === "tools/call") {
-              result = {
-                content: [{ type: "text", text: `Invoked ${msg.params?.name}` }],
-              };
+            } else {
+              // Ensure session header is propagated on non-init calls
+              if (req.headers["mcp-session-id"] !== "session-xyz-123") {
+                res.writeHead(400, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ jsonrpc: "2.0", id: msg.id, error: { message: "Missing session ID" } }));
+                return;
+              }
+
+              if (msg.method === "ping") {
+                result = {};
+              } else if (msg.method === "tools/list") {
+                result = {
+                  tools: [{ name: "http_tool", description: "An HTTP-based tool" }],
+                };
+              } else if (msg.method === "tools/call") {
+                result = {
+                  content: [{ type: "text", text: `Invoked ${msg.params?.name}` }],
+                };
+              }
             }
 
             res.writeHead(200, { "Content-Type": "application/json" });
