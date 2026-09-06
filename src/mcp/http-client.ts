@@ -163,6 +163,7 @@ export class McpHttpClient {
     method: string,
     params?: any,
     timeoutMs?: number,
+    retryOnSessionExpired = true,
   ): Promise<T> {
     const timeout = timeoutMs ?? this.options.timeoutMs ?? 10000;
     const id = crypto.randomUUID();
@@ -210,6 +211,28 @@ export class McpHttpClient {
           if (!res.ok) {
             clearTimeout(timer);
             this.pendingRequests.delete(id);
+
+            // If a stateful session expired (404), invalidate and retry once with a fresh handshake
+            if (
+              res.status === 404 &&
+              this.sessionId &&
+              retryOnSessionExpired &&
+              method !== "initialize"
+            ) {
+              this.sessionId = undefined;
+              this.initialized = false;
+              this.initPromise = undefined;
+              try {
+                await this.initialize();
+                const retried = await this.sendRequest<T>(method, params, timeoutMs, false);
+                resolve(retried);
+                return;
+              } catch (retryErr) {
+                reject(retryErr);
+                return;
+              }
+            }
+
             reject(new Error(`MCP HTTP POST returned HTTP ${res.status}: ${res.statusText}`));
             return;
           }
@@ -336,6 +359,23 @@ export class McpHttpClient {
   }
 
   async close(): Promise<void> {
+    if (this.sessionId) {
+      const sid = this.sessionId;
+      this.sessionId = undefined;
+      try {
+        await fetch(this.postUrl, {
+          method: "DELETE",
+          headers: {
+            "Mcp-Session-Id": sid,
+            ...this.options.headers,
+          },
+          signal: AbortSignal.timeout(2000),
+        });
+      } catch {
+        // Ignore session teardown errors
+      }
+    }
+
     this.abortController.abort();
     for (const [, pending] of this.pendingRequests.entries()) {
       clearTimeout(pending.timer);
