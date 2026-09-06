@@ -1,11 +1,18 @@
 'use strict';
 
-var plugin = require('@getpaseo/plugin');
 var zod = require('zod');
 
 // src/shared/rpc.ts
+var RPC_NAME = /^[a-z][a-z0-9._-]*$/;
+function defineRpc(definition) {
+  const name = definition.name.trim();
+  if (!RPC_NAME.test(name)) {
+    throw new Error(`Invalid plugin RPC method: ${definition.name}`);
+  }
+  return { ...definition, name };
+}
 function defineContract(options) {
-  const contract = plugin.defineRpc({
+  const contract = defineRpc({
     name: options.name,
     input: options.input,
     output: options.output
@@ -184,13 +191,10 @@ async function withTimeout(promise, timeoutMs, label = "Operation") {
   }
 }
 
-Object.defineProperty(exports, "defineRpc", {
-  enumerable: true,
-  get: function () { return plugin.defineRpc; }
-});
 exports.SettingsEmptyInputSchema = SettingsEmptyInputSchema;
 exports.TimeoutError = TimeoutError;
 exports.defineContract = defineContract;
+exports.defineRpc = defineRpc;
 exports.defineSettingsContract = defineSettingsContract;
 exports.formatBytes = formatBytes;
 exports.formatDuration = formatDuration;

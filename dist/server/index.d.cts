@@ -1,7 +1,7 @@
 import { ZodType } from 'zod';
-import { S as SettingsContract } from '../settings-Dcs78Iwe.cjs';
+import { S as SettingsContract } from '../settings-DxMv3qC2.cjs';
 import { SpawnOptions } from 'node:child_process';
-import '@getpaseo/plugin';
+import '../rpc-Ja20I4uK.cjs';
 
 interface PluginStorageOptions<T> {
     defaultData?: T;

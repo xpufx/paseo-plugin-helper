@@ -1,7 +1,29 @@
-import { defineRpc, type PluginRpcContract } from "@getpaseo/plugin";
 import type { ZodType, input as ZodInput, output as ZodOutput } from "zod";
 
-export { defineRpc, type PluginRpcContract };
+export interface PluginRpcContract<
+  InputSchema extends ZodType = ZodType,
+  OutputSchema extends ZodType = ZodType,
+> {
+  name: string;
+  input: InputSchema;
+  output: OutputSchema;
+}
+
+const RPC_NAME = /^[a-z][a-z0-9._-]*$/;
+
+/**
+ * Define a typed Paseo RPC contract conforming to the Paseo RPC protocol.
+ * Implemented locally without runtime dependency on @getpaseo/plugin.
+ */
+export function defineRpc<InputSchema extends ZodType, OutputSchema extends ZodType>(
+  definition: { name: string; input: InputSchema; output: OutputSchema },
+): PluginRpcContract<InputSchema, OutputSchema> {
+  const name = definition.name.trim();
+  if (!RPC_NAME.test(name)) {
+    throw new Error(`Invalid plugin RPC method: ${definition.name}`);
+  }
+  return { ...definition, name };
+}
 
 export type RpcInput<TContract> = TContract extends PluginRpcContract<infer TInput, any>
   ? ZodInput<TInput>

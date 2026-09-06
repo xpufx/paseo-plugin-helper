@@ -1,8 +1,14 @@
-import { defineRpc } from '@getpaseo/plugin';
-export { defineRpc } from '@getpaseo/plugin';
 import { z } from 'zod';
 
 // src/shared/rpc.ts
+var RPC_NAME = /^[a-z][a-z0-9._-]*$/;
+function defineRpc(definition) {
+  const name = definition.name.trim();
+  if (!RPC_NAME.test(name)) {
+    throw new Error(`Invalid plugin RPC method: ${definition.name}`);
+  }
+  return { ...definition, name };
+}
 function defineContract(options) {
   const contract = defineRpc({
     name: options.name,
@@ -183,6 +189,6 @@ async function withTimeout(promise, timeoutMs, label = "Operation") {
   }
 }
 
-export { SettingsEmptyInputSchema, TimeoutError, defineContract, defineSettingsContract, formatBytes, formatDuration, formatNumber, formatUptime, resolveMetricStatus, stripAnsi, truncate, withTimeout };
+export { SettingsEmptyInputSchema, TimeoutError, defineContract, defineRpc, defineSettingsContract, formatBytes, formatDuration, formatNumber, formatUptime, resolveMetricStatus, stripAnsi, truncate, withTimeout };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

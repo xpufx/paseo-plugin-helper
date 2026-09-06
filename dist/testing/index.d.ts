@@ -1,7 +1,7 @@
 import { PluginClientContext, PluginComposerPillContribution, PluginSurfaceProps, PluginContext, PluginRpcContract } from '@getpaseo/plugin';
 import { PaseoAgent } from '@getpaseo/client';
 import { ComponentType } from 'react';
-import { R as RpcInput, a as RpcOutput } from '../rpc-BTgj_F61.js';
+import { R as RpcInput, a as RpcOutput } from '../rpc-Ja20I4uK.js';
 import 'zod';
 
 interface MockClientContext extends PluginClientContext {

@@ -1,5 +1,5 @@
 import { ZodType, z } from 'zod';
-import { PluginRpcContract } from '@getpaseo/plugin';
+import { P as PluginRpcContract } from './rpc-Ja20I4uK.js';
 
 declare const SettingsEmptyInputSchema: z.ZodOptional<z.ZodUnion<readonly [z.ZodVoid, z.ZodRecord<z.ZodString, z.ZodUnknown>]>>;
 type SettingsEmptyInput = z.infer<typeof SettingsEmptyInputSchema>;
