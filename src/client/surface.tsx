@@ -1,10 +1,18 @@
 import React, { type ComponentType } from "react";
 import type {
-  PluginContext,
   PluginSurfaceProps,
 } from "@getpaseo/plugin";
 import { PluginThemeProvider } from "./theme/provider.js";
 import type { VisualFlair } from "./theme/flair.js";
+
+/**
+ * Structural registrar interface satisfied by both Paseo v0.7 PluginContext
+ * and Paseo v0.8 PluginClientContext.
+ */
+export interface SidebarSurfaceRegistrar {
+  addSurface(surfaceId: string, Component: ComponentType<PluginSurfaceProps>): any;
+  addSidebarItem(contribution: any): any;
+}
 
 export interface RegisterSidebarSurfaceOptions {
   id: string;
@@ -17,9 +25,10 @@ export interface RegisterSidebarSurfaceOptions {
 /**
  * Registers a sidebar icon and corresponding full-page surface in a single call,
  * automatically injecting `<PluginThemeProvider>` with custom visual flair.
+ * Works with both Paseo v0.7 PluginContext and Paseo v0.8 PluginClientContext.
  */
 export function registerSidebarSurface(
-  plugin: PluginContext,
+  plugin: SidebarSurfaceRegistrar,
   options: RegisterSidebarSurfaceOptions,
 ): void {
   const { id, title, icon, Component, flair } = options;

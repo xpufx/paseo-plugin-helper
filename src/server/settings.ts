@@ -1,6 +1,13 @@
-import type { PluginContext } from "@getpaseo/plugin";
 import type { SettingsContract } from "../shared/settings.js";
 import type { PluginStorage } from "./storage.js";
+
+/**
+ * Structural server context interface satisfied by both Paseo v0.7 PluginContext
+ * and Paseo v0.8 PluginServerContext.
+ */
+export interface HandleableServerContext {
+  handle(contract: any, handler: (input?: any) => any): any;
+}
 
 export interface RegisterSettingsRpcOptions<TSettings> {
   /**
@@ -14,11 +21,12 @@ export interface RegisterSettingsRpcOptions<TSettings> {
 }
 
 /**
- * Registers RPC handlers on the daemon PluginContext for a SettingsContract.
+ * Registers RPC handlers on the daemon PluginContext/PluginServerContext for a SettingsContract.
  * Connects get, update, and reset RPCs directly to atomic PluginStorage persistence.
+ * Works with both Paseo v0.7 and Paseo v0.8.
  */
 export function registerSettingsRpc<TSettings extends Record<string, any>>(
-  context: PluginContext,
+  context: HandleableServerContext,
   contract: SettingsContract<TSettings>,
   storage: PluginStorage<TSettings>,
   options: RegisterSettingsRpcOptions<TSettings> = {},

@@ -1,11 +1,18 @@
 import React, { type ComponentType } from "react";
 import type {
-  PluginContext,
   PluginWorkspacePanelProps,
   PluginAgentPanelProps,
 } from "@getpaseo/plugin";
 import { PluginThemeProvider } from "./theme/provider.js";
 import type { VisualFlair } from "./theme/flair.js";
+
+/**
+ * Structural registrar interface satisfied by both Paseo v0.7 PluginContext
+ * and Paseo v0.8 PluginClientContext.
+ */
+export interface WorkspacePanelRegistrar {
+  addWorkspacePanel(contribution: any): any;
+}
 
 export interface RegisterWorkspacePanelOptions {
   id: string;
@@ -25,9 +32,10 @@ export interface RegisterAgentPanelOptions {
 
 /**
  * Registers a workspace-scoped panel with automatic `<PluginThemeProvider>` injection.
+ * Works with both Paseo v0.7 PluginContext and Paseo v0.8 PluginClientContext.
  */
 export function registerWorkspacePanel(
-  plugin: PluginContext,
+  plugin: WorkspacePanelRegistrar,
   options: RegisterWorkspacePanelOptions,
 ): void {
   const { id, title, icon, Component, flair } = options;
@@ -49,9 +57,10 @@ export function registerWorkspacePanel(
 
 /**
  * Registers an agent-scoped panel with automatic `<PluginThemeProvider>` injection.
+ * Works with both Paseo v0.7 PluginContext and Paseo v0.8 PluginClientContext.
  */
 export function registerAgentPanel(
-  plugin: PluginContext,
+  plugin: WorkspacePanelRegistrar,
   options: RegisterAgentPanelOptions,
 ): void {
   const { id, title, icon, Component, flair } = options;
