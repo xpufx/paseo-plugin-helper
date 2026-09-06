@@ -241,6 +241,13 @@ export class McpHttpClient {
           if (contentType.includes("application/json")) {
             const body = await res.json();
             this.handleIncomingMessage(body);
+          } else if (contentType.includes("text/event-stream") && res.body) {
+            this.consumeSseStream(res.body);
+          } else {
+            // Unhandled content type; ensure request does not hang
+            clearTimeout(timer);
+            this.pendingRequests.delete(id);
+            reject(new Error(`Unsupported MCP HTTP response content-type: ${contentType}`));
           }
         })
         .catch((err) => {
