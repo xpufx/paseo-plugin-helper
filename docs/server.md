@@ -301,3 +301,51 @@ upsertMcpServer({
   config: { command: "x-comms" },
 });
 ```
+
+---
+
+## 12. Plugin Query & Lifecycle Helpers: `listPlugins`, `isPluginRunning`, `getPluginInfo`
+
+Provides cross-plugin awareness and lifecycle discovery without fragile filesystem probes.
+
+Queries Paseo's live plugin list via `paseo plugin ls --json` with fallback to `~/.paseo/config.json`. Includes built-in TTL caching (default 5 seconds) to prevent command churn during frequent polling.
+
+### Usage
+```ts
+import {
+  listPlugins,
+  getPluginInfo,
+  isPluginInstalled,
+  isPluginEnabled,
+  isPluginRunning,
+  clearPluginCache,
+} from "paseo-plugin-helper/server";
+
+// 1. Check if a dependency or companion plugin is running
+const mcpRunning = await isPluginRunning("mcp-tools");
+if (mcpRunning) {
+  // Safe to read shared PluginStorage state or call cross-plugin RPC
+}
+
+// 2. Check if installed (e.g. to dim a toggle in settings when missing)
+const mcpInstalled = await isPluginInstalled("mcp-tools");
+
+// 3. List plugins with optional status filter ("all" | "enabled" | "disabled" | "running" | "failed")
+const runningPlugins = await listPlugins({ filter: "running" });
+
+// 4. Inspect full plugin metadata
+const info = await getPluginInfo("top");
+// {
+//   id: "top",
+//   status: "running",
+//   enabled: true,
+//   path: "/home/user/code/paseo-top",
+//   source: "directory",
+//   error?: string
+// }
+
+// 5. Force refresh cache immediately
+clearPluginCache();
+// or pass forceRefresh option:
+const fresh = await listPlugins({ forceRefresh: true });
+```
