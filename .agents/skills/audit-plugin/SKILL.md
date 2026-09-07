@@ -23,14 +23,15 @@ Use this skill whenever authoring, reviewing, or refactoring a Paseo plugin to d
 ### Command Line
 
 ```bash
-# Standard human-readable audit
+# Standard human-readable audit (audit or doctor)
 npx paseo-plugin-helper audit <path>
+npx paseo-plugin-helper doctor <path>
 
 # Machine-readable JSON output (best for agents)
-npx paseo-plugin-helper audit <path> --format json
+npx paseo-plugin-helper doctor <path> --format json
 
 # Strict mode (fails with non-zero exit code if issues found)
-npx paseo-plugin-helper audit <path> --strict
+npx paseo-plugin-helper doctor <path> --strict
 ```
 
 ### Programmatic API (Node / TypeScript)

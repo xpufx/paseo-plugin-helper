@@ -38,6 +38,17 @@ function isBuildOrToolFile(filePath: string): boolean {
   );
 }
 
+function isGeneratedOrBundledFile(filePath: string): boolean {
+  const base = path.basename(filePath);
+  return (
+    base.includes(".bundled.") ||
+    base.includes(".bundle.") ||
+    base.includes(".min.") ||
+    base.endsWith(".bundle.js") ||
+    base.endsWith(".bundle.mjs")
+  );
+}
+
 function findFiles(dir: string, ignoredCustom: Set<string>): string[] {
   const results: string[] = [];
 
@@ -57,7 +68,11 @@ function findFiles(dir: string, ignoredCustom: Set<string>): string[] {
         }
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name);
-        if (SCANNABLE_EXTENSIONS.has(ext) && !entry.name.endsWith(".d.ts")) {
+        if (
+          SCANNABLE_EXTENSIONS.has(ext) &&
+          !entry.name.endsWith(".d.ts") &&
+          !isGeneratedOrBundledFile(entry.name)
+        ) {
           results.push(fullPath);
         }
       }
@@ -247,8 +262,11 @@ export function auditProject(targetDir: string, options: AuditOptions = {}): Aud
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const isMcpSpawn =
-          (line.includes("spawn(") || line.includes("exec(")) &&
-          (line.includes("mcp") || content.includes("jsonrpc"));
+          (line.includes("spawn(") ||
+            line.includes("child_process.exec(") ||
+            line.includes("execSync(") ||
+            line.includes("execFile(")) &&
+          (line.includes("mcp") || content.includes("jsonrpc") || line.includes("stdio"));
 
         if (isMcpSpawn && !content.includes("McpClient")) {
           const rule = AUDIT_RULES["no-raw-mcp-subprocess"];
@@ -345,3 +363,8 @@ export function auditProject(targetDir: string, options: AuditOptions = {}): Aud
     passed,
   };
 }
+
+/**
+ * Alias for auditProject.
+ */
+export const doctorProject = auditProject;

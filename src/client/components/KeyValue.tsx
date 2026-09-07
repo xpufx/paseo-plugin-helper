@@ -40,7 +40,7 @@ export function KeyValue({
   const toast = useToast();
   const [copied, setCopied] = useState(false);
 
-  const displayValue = value === null || value === undefined ? "—" : String(value);
+  const displayValue = value === null || value === undefined ? "-" : String(value);
 
   const handleCopy = async () => {
     if (!copyable || !value) return;

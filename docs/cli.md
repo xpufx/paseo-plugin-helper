@@ -1,6 +1,8 @@
-# CLI & Audit Tool (`paseo-plugin-helper audit`)
+# CLI & Audit Tool (`paseo-plugin-helper audit` / `doctor`)
 
 The `paseo-plugin-helper` CLI provides a deterministic scanner for analyzing Paseo plugins. It inspects plugin source code to identify raw, bespoke patterns that should be migrated to helper functions.
+
+`doctor` is an alias for `audit`.
 
 ---
 
@@ -9,17 +11,21 @@ The `paseo-plugin-helper` CLI provides a deterministic scanner for analyzing Pas
 Run directly using `npx`:
 
 ```bash
-# Audit the current directory
+# Audit the current directory (using audit or doctor)
 npx paseo-plugin-helper audit .
+npx paseo-plugin-helper doctor .
+
+# Or using the paseo-doctor alias
+npx paseo-doctor .
 
 # Audit a specific plugin path
-npx paseo-plugin-helper audit ~/code/my-plugin
+npx paseo-plugin-helper doctor ~/code/my-plugin
 
 # Enforce in CI or automated agent task (exits with code 1 if issues found)
-npx paseo-plugin-helper audit . --strict
+npx paseo-plugin-helper doctor . --strict
 
 # Machine-readable JSON output for agent orchestration
-npx paseo-plugin-helper audit . --format json
+npx paseo-plugin-helper doctor . --format json
 ```
 
 ---

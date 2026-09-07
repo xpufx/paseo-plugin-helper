@@ -41,10 +41,14 @@ interface AuditRule {
 declare const AUDIT_RULES: Record<string, AuditRule>;
 
 declare function auditProject(targetDir: string, options?: AuditOptions): AuditReport;
+/**
+ * Alias for auditProject.
+ */
+declare const doctorProject: typeof auditProject;
 
 declare function formatReportPretty(report: AuditReport): string;
 declare function formatReportJson(report: AuditReport): string;
 
 declare function runCli(argv?: string[]): number;
 
-export { AUDIT_RULES, type AuditIssue, type AuditOptions, type AuditReport, type AuditRule, type AuditSeverity, auditProject, formatReportJson, formatReportPretty, runCli };
+export { AUDIT_RULES, type AuditIssue, type AuditOptions, type AuditReport, type AuditRule, type AuditSeverity, auditProject, doctorProject, formatReportJson, formatReportPretty, runCli };

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { auditProject } from "../cli/scanner.js";
+import { auditProject, doctorProject } from "../cli/scanner.js";
 import { formatReportPretty, formatReportJson } from "../cli/formatter.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -95,6 +95,38 @@ describe("Audit CLI & Scanner", () => {
 
       const pretty = formatReportPretty(report);
       expect(pretty).toContain("[PASS]");
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("doctorProject alias works identically and ignores bundled/minified files", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-doctor-test-"));
+
+    try {
+      // Bundled file with raw regex exec or spawn shouldn't trigger warnings
+      fs.writeFileSync(
+        path.join(tmpDir, "server.bundled.js"),
+        `
+        const m = /regex/.exec("data");
+        const s = spawn("node", ["server.js"]);
+        `,
+      );
+
+      // Clean client file
+      fs.writeFileSync(
+        path.join(tmpDir, "client.tsx"),
+        `
+        import { registerComposerPill } from "paseo-plugin-helper/client";
+        export const setup = (client) => registerComposerPill(client, { id: "test", title: "OK" });
+        `,
+      );
+
+      const report = doctorProject(tmpDir, { strict: true });
+      // Only client.tsx was scanned, bundled was excluded
+      expect(report.scannedFiles).toBe(1);
+      expect(report.issues.length).toBe(0);
+      expect(report.passed).toBe(true);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

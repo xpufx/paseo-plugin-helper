@@ -97,6 +97,10 @@ function isBuildOrToolFile(filePath) {
   const base = path__default.default.basename(filePath);
   return base.startsWith("tsup.config.") || base.startsWith("vite.config.") || base.startsWith("vitest.config.") || base === "cli.ts" || base === "scanner.ts" || filePath.includes("/scripts/") || filePath.includes("/testing/");
 }
+function isGeneratedOrBundledFile(filePath) {
+  const base = path__default.default.basename(filePath);
+  return base.includes(".bundled.") || base.includes(".bundle.") || base.includes(".min.") || base.endsWith(".bundle.js") || base.endsWith(".bundle.mjs");
+}
 function findFiles(dir, ignoredCustom) {
   const results = [];
   function walk(current) {
@@ -114,7 +118,7 @@ function findFiles(dir, ignoredCustom) {
         }
       } else if (entry.isFile()) {
         const ext = path__default.default.extname(entry.name);
-        if (SCANNABLE_EXTENSIONS.has(ext) && !entry.name.endsWith(".d.ts")) {
+        if (SCANNABLE_EXTENSIONS.has(ext) && !entry.name.endsWith(".d.ts") && !isGeneratedOrBundledFile(entry.name)) {
           results.push(fullPath);
         }
       }
@@ -248,7 +252,7 @@ function auditProject(targetDir, options = {}) {
     if (!inTest && !inBuildOrTool) {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const isMcpSpawn = (line.includes("spawn(") || line.includes("exec(")) && (line.includes("mcp") || content.includes("jsonrpc"));
+        const isMcpSpawn = (line.includes("spawn(") || line.includes("child_process.exec(") || line.includes("execSync(") || line.includes("execFile(")) && (line.includes("mcp") || content.includes("jsonrpc") || line.includes("stdio"));
         if (isMcpSpawn && !content.includes("McpClient")) {
           const rule = AUDIT_RULES["no-raw-mcp-subprocess"];
           issues.push({
@@ -323,6 +327,7 @@ function auditProject(targetDir, options = {}) {
     passed
   };
 }
+var doctorProject = auditProject;
 
 // src/cli/formatter.ts
 function formatReportPretty(report) {
@@ -426,6 +431,7 @@ if (isMain) {
 
 exports.AUDIT_RULES = AUDIT_RULES;
 exports.auditProject = auditProject;
+exports.doctorProject = doctorProject;
 exports.formatReportJson = formatReportJson;
 exports.formatReportPretty = formatReportPretty;
 exports.runCli = runCli;

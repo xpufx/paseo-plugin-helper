@@ -2156,7 +2156,7 @@ function KeyValue({
   const { colors, flair, isCompact, touchTargetMin } = usePluginTheme();
   const toast = reactNative.useToast();
   const [copied, setCopied] = React7.useState(false);
-  const displayValue = value === null || value === void 0 ? "\u2014" : String(value);
+  const displayValue = value === null || value === void 0 ? "-" : String(value);
   const handleCopy = async () => {
     if (!copyable || !value) return;
     const ok = await copyToClipboard(String(value), {
