@@ -139,13 +139,13 @@ function auditProject(targetDir, options = {}) {
     const inTest = isTestFile(relPath);
     const inBuildOrTool = isBuildOrToolFile(relPath);
     if (!inTest && !inBuildOrTool) {
-      const hasAgentSubscribe = content.includes(".agents.subscribe(");
+      content.includes(".agents.subscribe(");
       const hasAddComposerPill = content.includes(".addComposerPill(");
       const hasRegisterPill = content.includes("registerComposerPill");
-      if ((hasAgentSubscribe || hasAddComposerPill) && !hasRegisterPill) {
+      if (hasAddComposerPill && !hasRegisterPill) {
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          if (line.includes(".agents.subscribe(") || line.includes(".addComposerPill(")) {
+          if (line.includes(".addComposerPill(") || line.includes(".agents.subscribe(")) {
             const rule = AUDIT_RULES["no-manual-agent-subscription"];
             issues.push({
               ruleId: rule.id,

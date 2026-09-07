@@ -103,10 +103,10 @@ export function auditProject(targetDir: string, options: AuditOptions = {}): Aud
       const hasAddComposerPill = content.includes(".addComposerPill(");
       const hasRegisterPill = content.includes("registerComposerPill");
 
-      if ((hasAgentSubscribe || hasAddComposerPill) && !hasRegisterPill) {
+      if (hasAddComposerPill && !hasRegisterPill) {
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          if (line.includes(".agents.subscribe(") || line.includes(".addComposerPill(")) {
+          if (line.includes(".addComposerPill(") || line.includes(".agents.subscribe(")) {
             const rule = AUDIT_RULES["no-manual-agent-subscription"];
             issues.push({
               ruleId: rule.id,
