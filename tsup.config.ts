@@ -8,6 +8,7 @@ export default defineConfig({
     "mcp/index": "src/mcp/index.ts",
     "shared/index": "src/shared/index.ts",
     "testing/index": "src/testing/index.ts",
+    cli: "src/cli/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

@@ -1,6 +1,6 @@
 {
   "name": "paseo-plugin-helper",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Developer toolkit, UI design system, and lifecycle primitives for Paseo plugins",
   "author": "",
   "license": "MIT",
@@ -38,9 +38,18 @@
       "types": "./dist/testing/index.d.ts",
       "import": "./dist/testing/index.js",
       "require": "./dist/testing/index.cjs"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js",
+      "require": "./dist/cli.cjs"
     }
   },
+  "bin": {
+    "paseo-plugin-helper": "./bin/paseo-plugin-helper.js"
+  },
   "files": [
+    "bin",
     "dist",
     "README.md"
   ],

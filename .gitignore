@@ -7,3 +7,4 @@ demo/version.ts
 demo-v8/node_modules/
 demo-v8/package-lock.json
 demo-v8/version.ts
+.serena
