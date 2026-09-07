@@ -1,8 +1,8 @@
 'use strict';
 
 var React7 = require('react');
-var jsxRuntime = require('react/jsx-runtime');
 var reactNative$1 = require('react-native');
+var jsxRuntime = require('react/jsx-runtime');
 var reactNative = require('@getpaseo/plugin/react-native');
 var plugin = require('@getpaseo/plugin');
 var reactQuery = require('@tanstack/react-query');
@@ -184,7 +184,7 @@ var defaultLayout = {
   compact: false,
   platform: "web"
 };
-var defaultTheme = {
+var defaultDarkTheme = {
   colors: {
     surface0: "#18181b",
     surface1: "#27272a",
@@ -199,9 +199,35 @@ var defaultTheme = {
     statusDanger: "#ef4444"
   }
 };
+var defaultLightTheme = {
+  colors: {
+    surface0: "#ffffff",
+    surface1: "#f4f4f5",
+    surface2: "#e4e4e7",
+    border: "#e4e4e7",
+    foreground: "#09090b",
+    foregroundMuted: "#71717a",
+    accent: "#2563eb",
+    accentForeground: "#ffffff",
+    statusSuccess: "#16a34a",
+    statusWarning: "#ca8a04",
+    statusDanger: "#dc2626"
+  }
+};
+function getDefaultTheme() {
+  try {
+    const scheme = reactNative$1.Appearance.getColorScheme?.();
+    if (scheme === "light") {
+      return defaultLightTheme;
+    }
+  } catch {
+  }
+  return defaultDarkTheme;
+}
+var initialDefaultTheme = getDefaultTheme();
 var PluginThemeContext = React7.createContext({
-  theme: defaultTheme,
-  colors: defaultTheme.colors,
+  theme: initialDefaultTheme,
+  colors: initialDefaultTheme.colors,
   layout: defaultLayout,
   flair: defaultFlair,
   isCompact: false,
@@ -209,8 +235,8 @@ var PluginThemeContext = React7.createContext({
   touchTargetMin: 28,
   alpha: (color, op) => alpha(color, op),
   getContrastColor: (bg, l, d) => getContrastColor(bg, l, d),
-  getStatusColor: (v) => getStatusColor(v, defaultTheme.colors),
-  getVariantPalette: (v) => getVariantPalette(v, defaultTheme.colors),
+  getStatusColor: (v) => getStatusColor(v, initialDefaultTheme.colors),
+  getVariantPalette: (v) => getVariantPalette(v, initialDefaultTheme.colors),
   resolveRadius: (s) => resolveRadius("rounded", s),
   padding: resolvePadding(defaultLayout, "comfortable")
 });
@@ -3167,8 +3193,11 @@ exports.TextInput = TextInput2;
 exports.Toggle = Toggle;
 exports.alpha = alpha;
 exports.copyToClipboard = copyToClipboard;
+exports.defaultDarkTheme = defaultDarkTheme;
 exports.defaultFlair = defaultFlair;
+exports.defaultLightTheme = defaultLightTheme;
 exports.getContrastColor = getContrastColor;
+exports.getDefaultTheme = getDefaultTheme;
 exports.getLuminance = getLuminance;
 exports.getStatusColor = getStatusColor;
 exports.getTouchTargetMin = getTouchTargetMin;

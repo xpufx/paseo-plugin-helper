@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { PluginTheme, PluginHostProps } from "@getpaseo/plugin";
+import { Appearance } from "react-native";
 import { defaultFlair, resolveRadius, type VisualFlair } from "./flair.js";
 import { alpha, getContrastColor, getStatusColor, getVariantPalette } from "./color-utils.js";
 import { getTouchTargetMin, isMobilePlatform, resolvePadding } from "./responsive.js";
@@ -26,7 +27,7 @@ const defaultLayout: ResponsiveLayout = {
   platform: "web",
 };
 
-const defaultTheme: PluginTheme = {
+export const defaultDarkTheme: PluginTheme = {
   colors: {
     surface0: "#18181b",
     surface1: "#27272a",
@@ -42,9 +43,39 @@ const defaultTheme: PluginTheme = {
   },
 };
 
+export const defaultLightTheme: PluginTheme = {
+  colors: {
+    surface0: "#ffffff",
+    surface1: "#f4f4f5",
+    surface2: "#e4e4e7",
+    border: "#e4e4e7",
+    foreground: "#09090b",
+    foregroundMuted: "#71717a",
+    accent: "#2563eb",
+    accentForeground: "#ffffff",
+    statusSuccess: "#16a34a",
+    statusWarning: "#ca8a04",
+    statusDanger: "#dc2626",
+  },
+};
+
+export function getDefaultTheme(): PluginTheme {
+  try {
+    const scheme = Appearance.getColorScheme?.();
+    if (scheme === "light") {
+      return defaultLightTheme;
+    }
+  } catch {
+    // Graceful fallback if Appearance is unavailable
+  }
+  return defaultDarkTheme;
+}
+
+const initialDefaultTheme = getDefaultTheme();
+
 const PluginThemeContext = createContext<PluginThemeContextValue>({
-  theme: defaultTheme,
-  colors: defaultTheme.colors,
+  theme: initialDefaultTheme,
+  colors: initialDefaultTheme.colors,
   layout: defaultLayout,
   flair: defaultFlair,
   isCompact: false,
@@ -52,8 +83,8 @@ const PluginThemeContext = createContext<PluginThemeContextValue>({
   touchTargetMin: 28,
   alpha: (color, op) => alpha(color, op),
   getContrastColor: (bg, l, d) => getContrastColor(bg, l, d),
-  getStatusColor: (v) => getStatusColor(v, defaultTheme.colors),
-  getVariantPalette: (v) => getVariantPalette(v, defaultTheme.colors),
+  getStatusColor: (v) => getStatusColor(v, initialDefaultTheme.colors),
+  getVariantPalette: (v) => getVariantPalette(v, initialDefaultTheme.colors),
   resolveRadius: (s) => resolveRadius("rounded", s),
   padding: resolvePadding(defaultLayout, "comfortable"),
 });

@@ -1,6 +1,6 @@
 import React7, { createContext, useMemo, useContext, useRef, useEffect, useState } from 'react';
+import { StyleSheet, Appearance, Pressable, ActivityIndicator, Text, View, Animated, PanResponder, ScrollView, Platform, TextInput, Image, RefreshControl, Linking } from 'react-native';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
-import { StyleSheet, Pressable, ActivityIndicator, Text, View, Animated, PanResponder, ScrollView, Platform, TextInput, Image, RefreshControl, Linking } from 'react-native';
 import { Icon, useToast, Modal } from '@getpaseo/plugin/react-native';
 export { Icon } from '@getpaseo/plugin/react-native';
 import { useRpc } from '@getpaseo/plugin';
@@ -179,7 +179,7 @@ var defaultLayout = {
   compact: false,
   platform: "web"
 };
-var defaultTheme = {
+var defaultDarkTheme = {
   colors: {
     surface0: "#18181b",
     surface1: "#27272a",
@@ -194,9 +194,35 @@ var defaultTheme = {
     statusDanger: "#ef4444"
   }
 };
+var defaultLightTheme = {
+  colors: {
+    surface0: "#ffffff",
+    surface1: "#f4f4f5",
+    surface2: "#e4e4e7",
+    border: "#e4e4e7",
+    foreground: "#09090b",
+    foregroundMuted: "#71717a",
+    accent: "#2563eb",
+    accentForeground: "#ffffff",
+    statusSuccess: "#16a34a",
+    statusWarning: "#ca8a04",
+    statusDanger: "#dc2626"
+  }
+};
+function getDefaultTheme() {
+  try {
+    const scheme = Appearance.getColorScheme?.();
+    if (scheme === "light") {
+      return defaultLightTheme;
+    }
+  } catch {
+  }
+  return defaultDarkTheme;
+}
+var initialDefaultTheme = getDefaultTheme();
 var PluginThemeContext = createContext({
-  theme: defaultTheme,
-  colors: defaultTheme.colors,
+  theme: initialDefaultTheme,
+  colors: initialDefaultTheme.colors,
   layout: defaultLayout,
   flair: defaultFlair,
   isCompact: false,
@@ -204,8 +230,8 @@ var PluginThemeContext = createContext({
   touchTargetMin: 28,
   alpha: (color, op) => alpha(color, op),
   getContrastColor: (bg, l, d) => getContrastColor(bg, l, d),
-  getStatusColor: (v) => getStatusColor(v, defaultTheme.colors),
-  getVariantPalette: (v) => getVariantPalette(v, defaultTheme.colors),
+  getStatusColor: (v) => getStatusColor(v, initialDefaultTheme.colors),
+  getVariantPalette: (v) => getVariantPalette(v, initialDefaultTheme.colors),
   resolveRadius: (s) => resolveRadius("rounded", s),
   padding: resolvePadding(defaultLayout, "comfortable")
 });
@@ -3132,6 +3158,6 @@ function usePluginSettings(contract, options = {}) {
   };
 }
 
-export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, DataTable, EmptyState, FormRow, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput2 as TextInput, Toggle, alpha, copyToClipboard, defaultFlair, getContrastColor, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, DataTable, EmptyState, FormRow, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput2 as TextInput, Toggle, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map
