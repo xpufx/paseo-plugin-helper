@@ -10,18 +10,19 @@ import { PluginThemeProvider } from "./theme/provider.js";
 import { useResponsive } from "./theme/useResponsive.js";
 import type { VisualFlair } from "./theme/flair.js";
 
-export interface RenderPillProps extends PluginComposerPillProps {
+export interface RenderPillProps<TPayload = any> extends PluginComposerPillProps {
   isOpen: boolean;
-  open: () => void;
+  open: (payload?: TPayload) => void;
   close: () => void;
-  toggle: () => void;
+  toggle: (payload?: TPayload) => void;
 }
 
-export interface RenderModalProps extends PluginComposerPillProps {
+export interface RenderModalProps<TPayload = any> extends PluginComposerPillProps {
   close: () => void;
+  payload?: TPayload;
 }
 
-export interface RegisterComposerPillOptions {
+export interface RegisterComposerPillOptions<TPayload = any> {
   /**
    * Unique ID for the pill (e.g. "paseo-top", "mcp-monitor").
    */
@@ -50,7 +51,7 @@ export interface RegisterComposerPillOptions {
   icon?: string;
 
   /**
-   * Optional compact Lucide icon name shown when in compact mode. Defaults to `icon`.
+   * Optional compact Lucide icon name shown when in compact mode. Defaults to `icon`.\
    */
   compactIcon?: string;
 
@@ -76,34 +77,44 @@ export interface RegisterComposerPillOptions {
   compactBadgeText?: string;
 
   /**
+   * Optional callback to resolve default payload when the outer host pill is clicked.
+   * Receives agentId and workspaceId.
+   */
+  resolveDefaultPayload?: (context: { agentId: string; workspaceId: string }) => TPayload | undefined;
+
+  /**
    * Custom pill body renderer if you want to replace the default pill layout.
    * Receives `isOpen`, `open`, `close`, and `toggle` along with standard pill props.
    */
-  renderPill?: (props: RenderPillProps) => ReactNode;
+  renderPill?: (props: RenderPillProps<TPayload>) => ReactNode;
 
   /**
    * Renders the content inside the controlled modal.
-   * Automatically wrapped with PluginThemeProvider and supplied with a `close()` helper.
+   * Automatically wrapped with PluginThemeProvider and supplied with a `close()` helper and optional payload.
    */
-  renderModal: (props: RenderModalProps) => ReactNode;
+  renderModal: (props: RenderModalProps<TPayload>) => ReactNode;
 }
 
 /**
  * Registers an agent-scoped composer pill and modal lifecycle.
  * Manages agent subscription events, unmount cleanup, and pill-to-modal activation.
  */
-export function registerComposerPill(
+export function registerComposerPill<TPayload = any>(
   client: PluginClientContext,
-  options: RegisterComposerPillOptions,
+  options: RegisterComposerPillOptions<TPayload>,
 ): PluginCleanup {
-  const openers = new Map<string, () => void>();
+  const openers = new Map<string, (payload?: TPayload) => void>();
   const pills = new Map<string, () => void>();
 
   function PillHost(props: PluginComposerPillProps) {
     const [open, setOpen] = useState(false);
+    const [payload, setPayload] = useState<TPayload | undefined>(undefined);
 
     useEffect(() => {
-      openers.set(props.agentId, () => setOpen(true));
+      openers.set(props.agentId, (incomingPayload?: TPayload) => {
+        setPayload(incomingPayload);
+        setOpen(true);
+      });
       return () => {
         openers.delete(props.agentId);
       };
@@ -123,12 +134,18 @@ export function registerComposerPill(
       return undefined;
     }, [options.modalIcon, options.icon, props.theme.colors.foreground]);
 
-    const renderPillProps: RenderPillProps = {
+    const renderPillProps: RenderPillProps<TPayload> = {
       ...props,
       isOpen: open,
-      open: () => setOpen(true),
+      open: (customPayload?: TPayload) => {
+        setPayload(customPayload);
+        setOpen(true);
+      },
       close: () => setOpen(false),
-      toggle: () => setOpen((prev) => !prev),
+      toggle: (customPayload?: TPayload) => {
+        setPayload(customPayload);
+        setOpen((prev) => !prev);
+      },
     };
 
     return (
@@ -151,7 +168,12 @@ export function registerComposerPill(
           title={effectiveModalTitle}
           icon={modalIconElement}
           open={open}
-          onOpenChange={setOpen}
+          onOpenChange={(nextOpen) => {
+            setOpen(nextOpen);
+            if (!nextOpen) {
+              setPayload(undefined);
+            }
+          }}
         >
           <Modal.Content>
             {open ? (
@@ -159,10 +181,12 @@ export function registerComposerPill(
                 {options.renderModal({
                   ...props,
                   close: () => setOpen(false),
+                  payload,
                 })}
               </PluginThemeProvider>
             ) : null}
           </Modal.Content>
+
         </Modal>
       </PluginThemeProvider>
     );
@@ -178,7 +202,10 @@ export function registerComposerPill(
       Component: PillHost,
       onPress() {
         const opener = openers.get(agentId);
-        if (opener) opener();
+        if (opener) {
+          const defaultPayload = options.resolveDefaultPayload?.({ agentId, workspaceId });
+          opener(defaultPayload);
+        }
       },
     });
     pills.set(agentId, cleanup);

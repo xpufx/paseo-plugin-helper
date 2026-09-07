@@ -110,19 +110,27 @@ export const contributeClient = (client) => {
     compactIcon: "Cpu",                   // Optional compact icon
     modalIcon: "Cpu",                     // Modal header icon (name or ReactNode)
     flair: { radius: "rounded", accentColor: "#3b82f6" },
-    // renderPill receives ({ isSelected, isCompact, isOpen, open, close, toggle })
-    renderPill: ({ isOpen, toggle }) => (
-      <Button label="CPU 14%" onPress={toggle} variant="ghost" />
+    // Optional default payload resolver when outer host pill button is clicked
+    resolveDefaultPayload: ({ agentId, workspaceId }) => "system",
+    // renderPill receives ({ isOpen, open, close, toggle, ...props })
+    // open(payload) and toggle(payload) pass contextual state to the modal
+    renderPill: ({ isOpen, open }) => (
+      <View style={{ flexDirection: "row", gap: 4 }}>
+        <Pressable onPress={() => open("cpu")}><Text>CPU 14%</Text></Pressable>
+        <Pressable onPress={() => open("mcp")}><Text>MCP 4/4</Text></Pressable>
+      </View>
     ),
-    renderModal: ({ agentId, close }) => (
+    // renderModal receives ({ agentId, close, payload })
+    renderModal: ({ agentId, close, payload }) => (
       <ModalBody>
-        <Text>Agent ID: {agentId}</Text>
+        <Text>Agent ID: {agentId} (Initial Tab: {payload})</Text>
         <Button label="Close" onPress={close} />
       </ModalBody>
     ),
   });
 };
 ```
+
 
 ### `registerSidebarSurface(plugin, options)`
 Registers a sidebar icon and corresponding full-page surface in a single call, automatically injecting `<PluginThemeProvider>` with custom visual flair.

@@ -579,16 +579,17 @@ interface FormRowProps {
 }
 declare function FormRow({ label, description, children, style }: FormRowProps): React__default.JSX.Element;
 
-interface RenderPillProps extends PluginComposerPillProps {
+interface RenderPillProps<TPayload = any> extends PluginComposerPillProps {
     isOpen: boolean;
-    open: () => void;
+    open: (payload?: TPayload) => void;
     close: () => void;
-    toggle: () => void;
+    toggle: (payload?: TPayload) => void;
 }
-interface RenderModalProps extends PluginComposerPillProps {
+interface RenderModalProps<TPayload = any> extends PluginComposerPillProps {
     close: () => void;
+    payload?: TPayload;
 }
-interface RegisterComposerPillOptions {
+interface RegisterComposerPillOptions<TPayload = any> {
     /**
      * Unique ID for the pill (e.g. "paseo-top", "mcp-monitor").
      */
@@ -612,7 +613,7 @@ interface RegisterComposerPillOptions {
      */
     icon?: string;
     /**
-     * Optional compact Lucide icon name shown when in compact mode. Defaults to `icon`.
+     * Optional compact Lucide icon name shown when in compact mode. Defaults to `icon`.\
      */
     compactIcon?: string;
     /**
@@ -633,21 +634,29 @@ interface RegisterComposerPillOptions {
      */
     compactBadgeText?: string;
     /**
+     * Optional callback to resolve default payload when the outer host pill is clicked.
+     * Receives agentId and workspaceId.
+     */
+    resolveDefaultPayload?: (context: {
+        agentId: string;
+        workspaceId: string;
+    }) => TPayload | undefined;
+    /**
      * Custom pill body renderer if you want to replace the default pill layout.
      * Receives `isOpen`, `open`, `close`, and `toggle` along with standard pill props.
      */
-    renderPill?: (props: RenderPillProps) => ReactNode;
+    renderPill?: (props: RenderPillProps<TPayload>) => ReactNode;
     /**
      * Renders the content inside the controlled modal.
-     * Automatically wrapped with PluginThemeProvider and supplied with a `close()` helper.
+     * Automatically wrapped with PluginThemeProvider and supplied with a `close()` helper and optional payload.
      */
-    renderModal: (props: RenderModalProps) => ReactNode;
+    renderModal: (props: RenderModalProps<TPayload>) => ReactNode;
 }
 /**
  * Registers an agent-scoped composer pill and modal lifecycle.
  * Manages agent subscription events, unmount cleanup, and pill-to-modal activation.
  */
-declare function registerComposerPill(client: PluginClientContext, options: RegisterComposerPillOptions): PluginCleanup;
+declare function registerComposerPill<TPayload = any>(client: PluginClientContext, options: RegisterComposerPillOptions<TPayload>): PluginCleanup;
 
 /**
  * Structural registrar interface satisfied by both Paseo v0.7 PluginContext

@@ -2818,8 +2818,12 @@ function registerComposerPill(client, options) {
   const pills = /* @__PURE__ */ new Map();
   function PillHost(props) {
     const [open, setOpen] = React7.useState(false);
+    const [payload, setPayload] = React7.useState(void 0);
     React7.useEffect(() => {
-      openers.set(props.agentId, () => setOpen(true));
+      openers.set(props.agentId, (incomingPayload) => {
+        setPayload(incomingPayload);
+        setOpen(true);
+      });
       return () => {
         openers.delete(props.agentId);
       };
@@ -2838,9 +2842,15 @@ function registerComposerPill(client, options) {
     const renderPillProps = {
       ...props,
       isOpen: open,
-      open: () => setOpen(true),
+      open: (customPayload) => {
+        setPayload(customPayload);
+        setOpen(true);
+      },
       close: () => setOpen(false),
-      toggle: () => setOpen((prev) => !prev)
+      toggle: (customPayload) => {
+        setPayload(customPayload);
+        setOpen((prev) => !prev);
+      }
     };
     return /* @__PURE__ */ jsxRuntime.jsxs(PluginThemeProvider, { theme: props.theme, layout: props.layout, flair: options.flair, children: [
       options.renderPill ? options.renderPill(renderPillProps) : /* @__PURE__ */ jsxRuntime.jsx(
@@ -2861,10 +2871,16 @@ function registerComposerPill(client, options) {
           title: effectiveModalTitle,
           icon: modalIconElement,
           open,
-          onOpenChange: setOpen,
+          onOpenChange: (nextOpen) => {
+            setOpen(nextOpen);
+            if (!nextOpen) {
+              setPayload(void 0);
+            }
+          },
           children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Modal.Content, { children: open ? /* @__PURE__ */ jsxRuntime.jsx(PluginThemeProvider, { theme: props.theme, layout: props.layout, flair: options.flair, children: options.renderModal({
             ...props,
-            close: () => setOpen(false)
+            close: () => setOpen(false),
+            payload
           }) }) : null })
         }
       )
@@ -2880,7 +2896,10 @@ function registerComposerPill(client, options) {
       Component: PillHost,
       onPress() {
         const opener = openers.get(agentId);
-        if (opener) opener();
+        if (opener) {
+          const defaultPayload = options.resolveDefaultPayload?.({ agentId, workspaceId });
+          opener(defaultPayload);
+        }
       }
     });
     pills.set(agentId, cleanup);
