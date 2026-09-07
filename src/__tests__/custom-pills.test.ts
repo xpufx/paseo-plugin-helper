@@ -95,6 +95,12 @@ describe("Custom Pills - Server Discovery & Poller", () => {
     const configs = await discoverCustomPillConfigs(tempDir);
     expect(configs).toHaveLength(2);
     expect(configs.map((c) => c.id).sort()).toEqual(["test1", "test2"]);
+    expect(configs.find((c) => c.id === "test1")).toMatchObject({
+      sourceFile: path.join(tempDir, "pill1.json"),
+    });
+    expect(configs.find((c) => c.id === "test2")).toMatchObject({
+      sourceFile: path.join(tempDir, "pill2.jsonc"),
+    });
   });
 
   it("polls commands, computes state, and executes modal commands", async () => {
@@ -127,6 +133,7 @@ describe("Custom Pills - Server Discovery & Poller", () => {
     expect(state?.displayValue).toBe("75 items");
     expect(state?.numericValue).toBe(75);
     expect(state?.status).toBe("warning");
+    expect(state?.sourceFile).toBeUndefined();
 
     const modalRes = await poller.runModalCommand("count");
     expect(modalRes.output).toContain("Detailed breakdown of items");

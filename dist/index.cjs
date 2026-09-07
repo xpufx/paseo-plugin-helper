@@ -261,7 +261,13 @@ var CustomPillDefinitionSchema = zod.z.object({
   /**
    * Whether this custom pill is enabled. Defaults to true.
    */
-  enabled: zod.z.boolean().default(true)
+  enabled: zod.z.boolean().default(true),
+  /**
+   * Absolute path to the config file that defined this pill (e.g.
+   * ~/.paseo/top/pills/disk-usage.jsonc). Injected at discovery time; not
+   * intended to be authored in the config file itself.
+   */
+  sourceFile: zod.z.string().optional()
 });
 function parseNumericPillValue(rawValue) {
   const match = rawValue.match(/-?\d+(\.\d+)?/);

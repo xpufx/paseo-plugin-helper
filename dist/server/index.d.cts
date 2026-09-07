@@ -1,5 +1,5 @@
 import { ZodType } from 'zod';
-import { a as SettingsContract, C as CustomPillDefinition, b as CustomPillState } from '../custom-pills-s4PfJCzV.cjs';
+import { a as SettingsContract, C as CustomPillDefinition, b as CustomPillState } from '../custom-pills-C6I4Zb9G.cjs';
 import { SpawnOptions } from 'node:child_process';
 import '../rpc-Ja20I4uK.cjs';
 import '@getpaseo/plugin';

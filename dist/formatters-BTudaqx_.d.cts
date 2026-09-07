@@ -1,4 +1,4 @@
-import { S as StatusVariant } from './custom-pills-DZR2aH2P.js';
+import { S as StatusVariant } from './custom-pills-C6I4Zb9G.cjs';
 
 interface FormatBytesOptions {
     /**

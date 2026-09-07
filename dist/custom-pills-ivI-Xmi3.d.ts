@@ -1,5 +1,5 @@
 import { ZodType, z } from 'zod';
-import { P as PluginRpcContract } from './rpc-Ja20I4uK.cjs';
+import { P as PluginRpcContract } from './rpc-Ja20I4uK.js';
 import { PluginTheme } from '@getpaseo/plugin';
 
 type ThemeColors = PluginTheme["colors"];
@@ -83,6 +83,7 @@ declare const CustomPillDefinitionSchema: z.ZodObject<{
         preformatted: z.ZodDefault<z.ZodBoolean>;
     }, z.core.$strip>>;
     enabled: z.ZodDefault<z.ZodBoolean>;
+    sourceFile: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 type CustomPillDefinition = z.infer<typeof CustomPillDefinitionSchema>;
 type CustomPillThresholds = z.infer<typeof CustomPillThresholdsSchema>;
@@ -99,6 +100,7 @@ interface CustomPillState {
     status: StatusVariant;
     lastUpdated: number;
     error?: string;
+    sourceFile?: string;
     modalTitle?: string;
     modalDescription?: string;
     modalOutput?: string;

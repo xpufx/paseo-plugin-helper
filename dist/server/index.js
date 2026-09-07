@@ -1121,7 +1121,13 @@ var CustomPillDefinitionSchema = z.object({
   /**
    * Whether this custom pill is enabled. Defaults to true.
    */
-  enabled: z.boolean().default(true)
+  enabled: z.boolean().default(true),
+  /**
+   * Absolute path to the config file that defined this pill (e.g.
+   * ~/.paseo/top/pills/disk-usage.jsonc). Injected at discovery time; not
+   * intended to be authored in the config file itself.
+   */
+  sourceFile: z.string().optional()
 });
 function parseNumericPillValue(rawValue) {
   const match = rawValue.match(/-?\d+(\.\d+)?/);
@@ -1168,7 +1174,7 @@ async function discoverCustomPillConfigs(dirPath, logger) {
         const parsed = parseJsonc(rawContent);
         const result = CustomPillDefinitionSchema.safeParse(parsed);
         if (result.success) {
-          configs.push(result.data);
+          configs.push({ ...result.data, sourceFile: filePath });
         } else {
           logger?.warn(
             `Invalid custom pill config in ${entry.name}: ${result.error.issues.map((i) => i.message).join(", ")}`
@@ -1255,6 +1261,7 @@ var CustomPillPoller = class {
         numericValue,
         status,
         lastUpdated: Date.now(),
+        sourceFile: pill.sourceFile,
         modalTitle: pill.modal?.title ?? pill.title,
         modalDescription: pill.modal?.description
       };
@@ -1276,6 +1283,7 @@ var CustomPillPoller = class {
         status: "danger",
         lastUpdated: Date.now(),
         error: errorMsg,
+        sourceFile: pill.sourceFile,
         modalTitle: pill.modal?.title ?? pill.title,
         modalDescription: pill.modal?.description
       };

@@ -87,6 +87,13 @@ export const CustomPillDefinitionSchema = z.object({
    * Whether this custom pill is enabled. Defaults to true.
    */
   enabled: z.boolean().default(true),
+
+  /**
+   * Absolute path to the config file that defined this pill (e.g.
+   * ~/.paseo/top/pills/disk-usage.jsonc). Injected at discovery time; not
+   * intended to be authored in the config file itself.
+   */
+  sourceFile: z.string().optional(),
 });
 
 export type CustomPillDefinition = z.infer<typeof CustomPillDefinitionSchema>;
@@ -105,6 +112,7 @@ export interface CustomPillState {
   status: StatusVariant;
   lastUpdated: number;
   error?: string;
+  sourceFile?: string;
   modalTitle?: string;
   modalDescription?: string;
   modalOutput?: string;

@@ -43,7 +43,7 @@ export async function discoverCustomPillConfigs(
 
         const result = CustomPillDefinitionSchema.safeParse(parsed);
         if (result.success) {
-          configs.push(result.data);
+          configs.push({ ...result.data, sourceFile: filePath });
         } else {
           logger?.warn(
             `Invalid custom pill config in ${entry.name}: ${result.error.issues.map((i) => i.message).join(", ")}`,
@@ -178,6 +178,7 @@ export class CustomPillPoller {
         numericValue,
         status,
         lastUpdated: Date.now(),
+        sourceFile: pill.sourceFile,
         modalTitle: pill.modal?.title ?? pill.title,
         modalDescription: pill.modal?.description,
       };
@@ -201,6 +202,7 @@ export class CustomPillPoller {
         status: "danger",
         lastUpdated: Date.now(),
         error: errorMsg,
+        sourceFile: pill.sourceFile,
         modalTitle: pill.modal?.title ?? pill.title,
         modalDescription: pill.modal?.description,
       };
