@@ -913,7 +913,90 @@ function removeMcpServer(options) {
     backupPath
   };
 }
+var cachedPlugins = null;
+var lastFetchTime = 0;
+function clearPluginCache() {
+  cachedPlugins = null;
+  lastFetchTime = 0;
+}
+function readConfigPluginsFallback() {
+  try {
+    const configPath = path3.join(os3.homedir(), ".paseo", "config.json");
+    if (!fs.existsSync(configPath)) return [];
+    const raw = fs.readFileSync(configPath, "utf-8");
+    const parsed = JSON.parse(raw);
+    const pluginsObj = parsed?.plugins;
+    if (!pluginsObj || typeof pluginsObj !== "object") return [];
+    return Object.entries(pluginsObj).map(([id, val]) => {
+      const isEnabled = val?.enabled !== false;
+      return {
+        id,
+        path: val?.path ?? "",
+        enabled: isEnabled,
+        status: isEnabled ? "unknown" : "disabled",
+        source: val?.source,
+        remote: val?.remote,
+        ref: val?.ref,
+        commit: val?.commit
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+async function listPlugins(options = {}) {
+  const { filter = "all", cacheTtlMs = 5e3, forceRefresh = false } = options;
+  const now = Date.now();
+  if (!forceRefresh && cachedPlugins && now - lastFetchTime < cacheTtlMs) {
+    return applyFilter(cachedPlugins, filter);
+  }
+  let plugins = [];
+  try {
+    const result = await safeSpawn("paseo", ["plugin", "ls", "--json"], { timeoutMs: 3e3 });
+    if (result.code === 0 && result.stdout.trim()) {
+      plugins = JSON.parse(result.stdout.trim());
+    } else {
+      plugins = readConfigPluginsFallback();
+    }
+  } catch {
+    plugins = readConfigPluginsFallback();
+  }
+  cachedPlugins = plugins;
+  lastFetchTime = now;
+  return applyFilter(plugins, filter);
+}
+function applyFilter(plugins, filter) {
+  switch (filter) {
+    case "enabled":
+      return plugins.filter((p) => p.enabled);
+    case "disabled":
+      return plugins.filter((p) => !p.enabled);
+    case "running":
+      return plugins.filter((p) => p.status === "running");
+    case "failed":
+      return plugins.filter((p) => p.status === "failed");
+    case "all":
+    default:
+      return plugins;
+  }
+}
+async function getPluginInfo(pluginId, options) {
+  const plugins = await listPlugins(options);
+  return plugins.find((p) => p.id === pluginId) ?? null;
+}
+async function isPluginInstalled(pluginId, options) {
+  const info = await getPluginInfo(pluginId, options);
+  return info !== null;
+}
+async function isPluginEnabled(pluginId, options) {
+  const info = await getPluginInfo(pluginId, options);
+  return info !== null && info.enabled;
+}
+async function isPluginRunning(pluginId, options) {
+  const info = await getPluginInfo(pluginId, options);
+  return info !== null && info.status === "running";
+}
 
-export { CpuSampler, McpConfigPaths, PluginStorage, createPeriodicTask, createPluginLogger, createSettingsHandlers, expandPath, findAvailablePort, getMcpServer, getSystemMetrics, isPortOpen, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
+export { CpuSampler, McpConfigPaths, PluginStorage, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

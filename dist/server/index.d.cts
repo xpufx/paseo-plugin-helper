@@ -431,4 +431,63 @@ declare function upsertMcpServer(options: UpsertMcpServerOptions): McpMutationRe
  */
 declare function removeMcpServer(options: RemoveMcpServerOptions): McpMutationResult;
 
-export { type CpuCoreMetrics, CpuSampler, type HandleableServerContext, type LogLevel, McpConfigPaths, type McpConfigTarget, type McpMutationResult, type McpServerConfig, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, createPeriodicTask, createPluginLogger, createSettingsHandlers, expandPath, findAvailablePort, getMcpServer, getSystemMetrics, isPortOpen, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
+interface PaseoPluginInfo {
+    id: string;
+    path: string;
+    enabled: boolean;
+    status: "running" | "disabled" | "failed" | string;
+    source?: "directory" | "git" | string;
+    remote?: string;
+    ref?: string;
+    commit?: string;
+    error?: string;
+}
+type PluginStatusFilter = "all" | "enabled" | "disabled" | "running" | "failed";
+interface ListPluginsOptions {
+    /** Filter results by status or enablement. Defaults to "all". */
+    filter?: PluginStatusFilter;
+    /** In-memory TTL cache duration in milliseconds. Defaults to 5000ms. */
+    cacheTtlMs?: number;
+    /** If true, bypasses the in-memory cache and queries the daemon fresh. */
+    forceRefresh?: boolean;
+}
+/**
+ * Clears the in-memory plugin list cache.
+ */
+declare function clearPluginCache(): void;
+/**
+ * Lists plugins from the Paseo daemon, with optional filtering and TTL caching.
+ * Primary mechanism uses 'paseo plugin ls --json', with fallback to ~/.paseo/config.json.
+ */
+declare function listPlugins(options?: ListPluginsOptions): Promise<PaseoPluginInfo[]>;
+/**
+ * Retrieves metadata for a specific plugin by ID.
+ * Returns null if the plugin is not installed or found.
+ */
+declare function getPluginInfo(pluginId: string, options?: {
+    cacheTtlMs?: number;
+    forceRefresh?: boolean;
+}): Promise<PaseoPluginInfo | null>;
+/**
+ * Checks whether a plugin is installed in Paseo.
+ */
+declare function isPluginInstalled(pluginId: string, options?: {
+    cacheTtlMs?: number;
+    forceRefresh?: boolean;
+}): Promise<boolean>;
+/**
+ * Checks whether a plugin is installed and marked as enabled in Paseo.
+ */
+declare function isPluginEnabled(pluginId: string, options?: {
+    cacheTtlMs?: number;
+    forceRefresh?: boolean;
+}): Promise<boolean>;
+/**
+ * Checks whether a plugin is currently running in the Paseo daemon.
+ */
+declare function isPluginRunning(pluginId: string, options?: {
+    cacheTtlMs?: number;
+    forceRefresh?: boolean;
+}): Promise<boolean>;
+
+export { type CpuCoreMetrics, CpuSampler, type HandleableServerContext, type ListPluginsOptions, type LogLevel, McpConfigPaths, type McpConfigTarget, type McpMutationResult, type McpServerConfig, type PaseoPluginInfo, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, type PluginStatusFilter, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
