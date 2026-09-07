@@ -407,3 +407,10 @@ const state = poller.getState("gpu-util");
 const drilldown = await poller.runModalCommand("gpu-util");
 ```
 
+### `sourceFile` provenance (injected, not authored)
+`discoverCustomPillConfigs` injects `sourceFile` (the absolute config file path)
+into each discovered definition, and `CustomPillPoller` carries it through into
+every `CustomPillState` (including error states). Do not author `sourceFile` in
+config files; it is overwritten at discovery time. It is intended for display
+only, such as a "defined in ..." hint in a drilldown modal.
+

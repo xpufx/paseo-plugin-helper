@@ -501,6 +501,11 @@ import { CustomPillBody, CustomPillModalContent } from "paseo-plugin-helper/clie
 />
 ```
 
+Each `CustomPillState` carries an optional `sourceFile` (the absolute config
+file path, injected at discovery time on the server). Use it for a display-only
+provenance hint such as "defined in ...". Display it shortened (for example
+with `~/...`) rather than as a raw absolute path.
+
 
 ---
 
