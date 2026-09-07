@@ -1,4 +1,4 @@
-import React7, { createContext, useMemo, useContext, useRef, useEffect, useState } from 'react';
+import React7, { createContext, useMemo, useContext, useRef, useEffect, useState, useCallback } from 'react';
 import { StyleSheet, Appearance, Pressable, ActivityIndicator, Text, View, Animated, PanResponder, ScrollView, Platform, TextInput, Image, RefreshControl, Linking } from 'react-native';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { Icon, useToast, Modal } from '@getpaseo/plugin/react-native';
@@ -3157,7 +3157,149 @@ function usePluginSettings(contract, options = {}) {
     refetch: () => query.refetch()
   };
 }
+function CustomPillBody({ state }) {
+  const { colors } = usePluginTheme();
+  const { isCompact } = useResponsive();
+  const title = isCompact && state.compactTitle ? state.compactTitle : state.title;
+  const icon = isCompact && state.compactIcon ? state.compactIcon : state.icon;
+  return /* @__PURE__ */ jsxs(View, { style: styles21.pillContainer, children: [
+    icon && /* @__PURE__ */ jsx(Icon, { name: icon, size: 13, color: colors.foreground }),
+    title ? /* @__PURE__ */ jsx(Text, { style: [styles21.pillTitle, { color: colors.foreground }], children: title }) : null,
+    /* @__PURE__ */ jsx(
+      Badge,
+      {
+        label: state.displayValue,
+        variant: state.status,
+        styleVariant: "tinted",
+        style: styles21.pillBadge
+      }
+    )
+  ] });
+}
+function CustomPillModalContent({
+  state,
+  onRefresh,
+  isRefreshing = false
+}) {
+  const { colors, isCompact } = usePluginTheme();
+  const displayText = state.modalOutput || state.rawValue || (state.error ? `Error: ${state.error}` : "No output");
+  return /* @__PURE__ */ jsx(View, { style: styles21.modalContent, children: /* @__PURE__ */ jsxs(Card, { children: [
+    /* @__PURE__ */ jsx(
+      Card.Header,
+      {
+        title: state.modalTitle ?? state.title,
+        subtitle: state.modalDescription,
+        icon: state.icon,
+        badge: /* @__PURE__ */ jsx(Badge, { label: state.displayValue, variant: state.status }),
+        action: onRefresh ? /* @__PURE__ */ jsx(
+          Button,
+          {
+            variant: "secondary",
+            size: "sm",
+            icon: "RefreshCw",
+            loading: isRefreshing,
+            label: !isCompact ? "Refresh" : void 0,
+            onPress: () => onRefresh()
+          }
+        ) : void 0
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      CodeBlock,
+      {
+        code: displayText,
+        title: state.modalTitle ?? state.title,
+        maxHeight: 280,
+        copyable: true
+      }
+    ),
+    /* @__PURE__ */ jsx(View, { style: styles21.footerRow, children: /* @__PURE__ */ jsxs(Text, { style: [styles21.timestampText, { color: colors.foregroundMuted }], children: [
+      "Last updated: ",
+      new Date(state.lastUpdated).toLocaleTimeString()
+    ] }) })
+  ] }) });
+}
+function registerCustomPills(client, options) {
+  const cleanups = [];
+  for (const pill of options.pills) {
+    const cleanup = registerComposerPill(client, {
+      id: pill.id,
+      title: pill.title,
+      compactTitle: pill.compactTitle,
+      icon: pill.icon,
+      compactIcon: pill.compactIcon,
+      flair: options.flair,
+      renderPill: () => /* @__PURE__ */ jsx(CustomPillBody, { state: pill }),
+      renderModal: () => {
+        const [refreshing, setRefreshing] = useState(false);
+        const [currentOutput, setCurrentOutput] = useState(
+          pill.modalOutput
+        );
+        const handleRefresh = useCallback(async () => {
+          if (!options.onRefreshModal) return;
+          setRefreshing(true);
+          try {
+            const res = await options.onRefreshModal(pill.id);
+            if (res.output) {
+              setCurrentOutput(res.output);
+            }
+          } finally {
+            setRefreshing(false);
+          }
+        }, [pill.id]);
+        const activeState = {
+          ...pill,
+          modalOutput: currentOutput ?? pill.modalOutput
+        };
+        return /* @__PURE__ */ jsx(
+          CustomPillModalContent,
+          {
+            state: activeState,
+            onRefresh: options.onRefreshModal ? handleRefresh : void 0,
+            isRefreshing: refreshing
+          }
+        );
+      }
+    });
+    cleanups.push(cleanup);
+  }
+  return () => {
+    for (const dispose of cleanups) {
+      dispose();
+    }
+  };
+}
+var styles21 = StyleSheet.create({
+  modalContent: {
+    width: "100%",
+    padding: 12
+  },
+  pillContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3
+  },
+  pillTitle: {
+    fontSize: 12,
+    fontWeight: "500"
+  },
+  pillBadge: {
+    paddingVertical: 1,
+    paddingHorizontal: 5
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: 8
+  },
+  timestampText: {
+    fontSize: 11
+  }
+});
 
-export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, DataTable, EmptyState, FormRow, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput2 as TextInput, Toggle, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, CustomPillBody, CustomPillModalContent, DataTable, EmptyState, FormRow, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput2 as TextInput, Toggle, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

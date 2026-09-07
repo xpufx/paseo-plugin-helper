@@ -10,3 +10,4 @@ export * from "./network.js";
 export * from "./task.js";
 export * from "./mcp-config.js";
 export * from "./plugins.js";
+export * from "./custom-pills.js";

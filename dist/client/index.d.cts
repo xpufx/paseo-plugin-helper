@@ -1,12 +1,12 @@
-import { S as StatusVariant, T as ThemeColors, P as PlatformType, R as ResponsiveLayout, M as MetricThresholds } from '../formatters-C_Xs512l.cjs';
+import { S as StatusVariant, T as ThemeColors, P as PlatformType, R as ResponsiveLayout, a as SettingsContract, b as CustomPillState } from '../custom-pills-s4PfJCzV.cjs';
 import * as React from 'react';
 import React__default, { ReactNode, ComponentType } from 'react';
 import { PluginTheme, PluginHostProps, PluginComposerPillProps, PluginClientContext, PluginCleanup, PluginSurfaceProps, PluginAgentPanelProps, PluginWorkspacePanelProps, PluginRpcContract } from '@getpaseo/plugin';
 import { StyleProp, ViewStyle, TextStyle, KeyboardTypeOptions, ImageSourcePropType } from 'react-native';
+import { M as MetricThresholds } from '../formatters-BqBnc5Y-.cjs';
 import { R as RpcInput, a as RpcOutput } from '../rpc-Ja20I4uK.cjs';
 import * as _tanstack_react_query from '@tanstack/react-query';
 import { UseMutationOptions, UseQueryOptions, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import { S as SettingsContract } from '../settings-DxMv3qC2.cjs';
 import { ToastApi } from '@getpaseo/plugin/react-native';
 export { Icon } from '@getpaseo/plugin/react-native';
 import 'zod';
@@ -1033,4 +1033,45 @@ type HapticFeedbackType = "light" | "medium" | "heavy" | "success" | "warning" |
  */
 declare function triggerHaptic(type?: HapticFeedbackType): boolean;
 
-export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, type CopyToClipboardOptions, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+interface CustomPillBodyProps {
+    state: CustomPillState;
+}
+/**
+ * Standard pill body renderer for a custom metric pill in the composer trackbar.
+ * Automatically adapts to responsive compact/mobile modes and shows threshold status.
+ */
+declare function CustomPillBody({ state }: CustomPillBodyProps): React__default.JSX.Element;
+interface CustomPillModalContentProps {
+    state: CustomPillState;
+    onRefresh?: () => Promise<void> | void;
+    isRefreshing?: boolean;
+}
+/**
+ * Full modal inspection content for a custom metric pill.
+ * Shows status, preformatted command output, last updated time, and quick actions.
+ */
+declare function CustomPillModalContent({ state, onRefresh, isRefreshing, }: CustomPillModalContentProps): React__default.JSX.Element;
+interface RegisterCustomPillsOptions {
+    /**
+     * The list of custom pill states or definitions.
+     */
+    pills: CustomPillState[];
+    /**
+     * Callback invoked when a pill needs a fresh refresh or modal command run.
+     */
+    onRefreshModal?: (pillId: string) => Promise<{
+        output?: string;
+        error?: string;
+    }>;
+    /**
+     * Optional visual flair overrides.
+     */
+    flair?: Partial<VisualFlair>;
+}
+/**
+ * Registers one or more declarative custom metric pills into Paseo's composer trackbar.
+ * Automatically handles pill lifecycle, responsive layouts, and drill-down inspection modals.
+ */
+declare function registerCustomPills(client: PluginClientContext, options: RegisterCustomPillsOptions): PluginCleanup;
+
+export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, type CopyToClipboardOptions, CustomPillBody, type CustomPillBodyProps, CustomPillModalContent, type CustomPillModalContentProps, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterCustomPillsOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };

@@ -461,7 +461,50 @@ function SettingsTab() {
 
 ---
 
-## 6. Utilities
+## 6. Declarative Custom Metric Pills
+
+The client module provides ready-made components and registration helpers to render user-defined custom metrics in the composer trackbar with automatic design system styling, responsive compact modes, and drill-down inspection modals:
+
+### `registerCustomPills(client, options)`
+Registers an array of `CustomPillState` entries with Paseo's composer trackbar:
+
+```tsx
+import { registerCustomPills } from "paseo-plugin-helper/client";
+
+export default function activateClient(client: PluginClientContext) {
+  // states received via RPC or storage
+  const cleanup = registerCustomPills(client, {
+    pills: customPillStates,
+    onRefreshModal: async (pillId) => {
+      // Call daemon RPC to execute pill.modal.command and return output
+      return await client.rpc.call("top:runCustomPillModal", { id: pillId });
+    },
+  });
+
+  return cleanup;
+}
+```
+
+### `<CustomPillBody>` & `<CustomPillModalContent>`
+For embedding custom metrics inside a composite pill (e.g. `paseo-top`'s main modal or trackbar):
+
+```tsx
+import { CustomPillBody, CustomPillModalContent } from "paseo-plugin-helper/client";
+
+// Inside custom trackbar or dashboard:
+<CustomPillBody state={pillState} />
+
+// Inside drill-down inspection tab:
+<CustomPillModalContent
+  state={pillState}
+  onRefresh={() => refreshPill(pillState.id)}
+/>
+```
+
+
+---
+
+## 7. Utilities
 
 ### `copyToClipboard(text, options?)`
 Universal cross-platform copy function for Paseo plugins. Works reliably across React Native (Hermes / mobile webviews / touch events), desktop, and modern secure browsers.

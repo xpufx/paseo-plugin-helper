@@ -190,7 +190,109 @@ async function withTimeout(promise, timeoutMs, label = "Operation") {
     }
   }
 }
+var CustomPillThresholdsSchema = zod.z.object({
+  warning: zod.z.number().optional(),
+  danger: zod.z.number().optional(),
+  /**
+   * If true, lower values trigger warnings/dangers instead of higher values
+   * (e.g. disk space remaining, battery percentage).
+   */
+  invert: zod.z.boolean().optional()
+});
+var CustomPillModalSchema = zod.z.object({
+  title: zod.z.string().optional(),
+  description: zod.z.string().optional(),
+  command: zod.z.string().optional(),
+  /**
+   * Whether to format command output as monospace preformatted text (default: true).
+   */
+  preformatted: zod.z.boolean().default(true)
+});
+var CustomPillDefinitionSchema = zod.z.object({
+  /**
+   * Unique identifier for the custom pill (e.g. "gpu-util", "docker-count").
+   */
+  id: zod.z.string().min(1),
+  /**
+   * Title shown in the composer trackbar (e.g. "GPU", "Docker").
+   */
+  title: zod.z.string().min(1),
+  /**
+   * Compact title shown when layout is compact (e.g. "G"). Defaults to title.
+   */
+  compactTitle: zod.z.string().optional(),
+  /**
+   * Lucide icon name (e.g. "Cpu", "Flame", "HardDrive", "Layers").
+   */
+  icon: zod.z.string().optional(),
+  /**
+   * Optional compact icon name. Defaults to icon.
+   */
+  compactIcon: zod.z.string().optional(),
+  /**
+   * Shell command executed periodically to produce the pill's value.
+   * Can use session environment variables like $PASEO_AGENT_ID, $PASEO_WORKSPACE_ID.
+   */
+  command: zod.z.string().min(1),
+  /**
+   * Optional prefix prepended to the output value (e.g. "$", "#").
+   */
+  prefix: zod.z.string().optional(),
+  /**
+   * Optional suffix appended to the output value (e.g. "%", "ms", "GB").
+   */
+  suffix: zod.z.string().optional(),
+  /**
+   * Polling interval in milliseconds. Minimum 500ms, defaults to 5000ms.
+   */
+  intervalMs: zod.z.number().min(500).default(5e3),
+  /**
+   * Execution timeout in milliseconds. Defaults to 10000ms.
+   */
+  timeoutMs: zod.z.number().min(500).default(1e4),
+  /**
+   * Optional threshold rules to automatically transition badge color to warning or danger.
+   */
+  thresholds: CustomPillThresholdsSchema.optional(),
+  /**
+   * Optional modal configuration shown when the pill is pressed.
+   */
+  modal: CustomPillModalSchema.optional(),
+  /**
+   * Whether this custom pill is enabled. Defaults to true.
+   */
+  enabled: zod.z.boolean().default(true)
+});
+function parseNumericPillValue(rawValue) {
+  const match = rawValue.match(/-?\d+(\.\d+)?/);
+  if (!match) return void 0;
+  const num = parseFloat(match[0]);
+  return Number.isNaN(num) ? void 0 : num;
+}
+function resolveCustomPillStatus(numericValue, thresholds) {
+  if (numericValue === void 0 || !thresholds) {
+    return "neutral";
+  }
+  const { warning, danger, invert } = thresholds;
+  if (invert) {
+    if (danger !== void 0 && numericValue <= danger) return "danger";
+    if (warning !== void 0 && numericValue <= warning) return "warning";
+    return "success";
+  }
+  if (danger !== void 0 && numericValue >= danger) return "danger";
+  if (warning !== void 0 && numericValue >= warning) return "warning";
+  return "neutral";
+}
+function formatPillDisplay(rawValue, prefix, suffix) {
+  const cleaned = rawValue.trim();
+  const pre = prefix ?? "";
+  const suf = suffix ?? "";
+  return `${pre}${cleaned}${suf}`;
+}
 
+exports.CustomPillDefinitionSchema = CustomPillDefinitionSchema;
+exports.CustomPillModalSchema = CustomPillModalSchema;
+exports.CustomPillThresholdsSchema = CustomPillThresholdsSchema;
 exports.SettingsEmptyInputSchema = SettingsEmptyInputSchema;
 exports.TimeoutError = TimeoutError;
 exports.defineContract = defineContract;
@@ -199,7 +301,10 @@ exports.defineSettingsContract = defineSettingsContract;
 exports.formatBytes = formatBytes;
 exports.formatDuration = formatDuration;
 exports.formatNumber = formatNumber;
+exports.formatPillDisplay = formatPillDisplay;
 exports.formatUptime = formatUptime;
+exports.parseNumericPillValue = parseNumericPillValue;
+exports.resolveCustomPillStatus = resolveCustomPillStatus;
 exports.resolveMetricStatus = resolveMetricStatus;
 exports.stripAnsi = stripAnsi;
 exports.truncate = truncate;

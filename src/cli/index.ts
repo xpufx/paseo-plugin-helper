@@ -16,6 +16,7 @@ Paseo Plugin Helper CLI (audit & lint)
 
 Usage:
   npx paseo-plugin-helper audit [path] [options]
+  npx paseo-plugin-helper doctor [path] [options]
   npx paseo-plugin-helper [path] [options]
 
 Options:
@@ -26,6 +27,7 @@ Options:
 
 Examples:
   npx paseo-plugin-helper audit .
+  npx paseo-plugin-helper doctor .
   npx paseo-plugin-helper audit ~/code/my-plugin --strict
   npx paseo-plugin-helper audit . --format json
 `);
@@ -41,7 +43,7 @@ Examples:
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "audit") {
+    if (arg === "audit" || arg === "doctor") {
       continue;
     } else if (arg === "--strict") {
       options.strict = true;

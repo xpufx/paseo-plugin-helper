@@ -1,14 +1,4 @@
-import { PluginTheme } from '@getpaseo/plugin';
-
-type ThemeColors = PluginTheme["colors"];
-type PlatformType = "ios" | "android" | "web";
-interface ResponsiveLayout {
-    compact: boolean;
-    platform: PlatformType;
-    width?: number;
-    height?: number;
-}
-type StatusVariant = "neutral" | "success" | "warning" | "danger" | "accent" | "info";
+import { S as StatusVariant } from './custom-pills-DZR2aH2P.js';
 
 interface FormatBytesOptions {
     /**
@@ -69,4 +59,4 @@ declare function truncate(text: string, maxLength: number, suffix?: string): str
  */
 declare function stripAnsi(text: string): string;
 
-export { type FormatBytesOptions as F, type MetricThresholds as M, type PlatformType as P, type ResponsiveLayout as R, type StatusVariant as S, type ThemeColors as T, formatDuration as a, formatNumber as b, formatUptime as c, formatBytes as f, resolveMetricStatus as r, stripAnsi as s, truncate as t };
+export { type FormatBytesOptions as F, type MetricThresholds as M, formatDuration as a, formatNumber as b, formatUptime as c, formatBytes as f, resolveMetricStatus as r, stripAnsi as s, truncate as t };

@@ -3162,6 +3162,148 @@ function usePluginSettings(contract, options = {}) {
     refetch: () => query.refetch()
   };
 }
+function CustomPillBody({ state }) {
+  const { colors } = usePluginTheme();
+  const { isCompact } = useResponsive();
+  const title = isCompact && state.compactTitle ? state.compactTitle : state.title;
+  const icon = isCompact && state.compactIcon ? state.compactIcon : state.icon;
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles21.pillContainer, children: [
+    icon && /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: icon, size: 13, color: colors.foreground }),
+    title ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles21.pillTitle, { color: colors.foreground }], children: title }) : null,
+    /* @__PURE__ */ jsxRuntime.jsx(
+      Badge,
+      {
+        label: state.displayValue,
+        variant: state.status,
+        styleVariant: "tinted",
+        style: styles21.pillBadge
+      }
+    )
+  ] });
+}
+function CustomPillModalContent({
+  state,
+  onRefresh,
+  isRefreshing = false
+}) {
+  const { colors, isCompact } = usePluginTheme();
+  const displayText = state.modalOutput || state.rawValue || (state.error ? `Error: ${state.error}` : "No output");
+  return /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles21.modalContent, children: /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
+    /* @__PURE__ */ jsxRuntime.jsx(
+      Card.Header,
+      {
+        title: state.modalTitle ?? state.title,
+        subtitle: state.modalDescription,
+        icon: state.icon,
+        badge: /* @__PURE__ */ jsxRuntime.jsx(Badge, { label: state.displayValue, variant: state.status }),
+        action: onRefresh ? /* @__PURE__ */ jsxRuntime.jsx(
+          Button,
+          {
+            variant: "secondary",
+            size: "sm",
+            icon: "RefreshCw",
+            loading: isRefreshing,
+            label: !isCompact ? "Refresh" : void 0,
+            onPress: () => onRefresh()
+          }
+        ) : void 0
+      }
+    ),
+    /* @__PURE__ */ jsxRuntime.jsx(
+      CodeBlock,
+      {
+        code: displayText,
+        title: state.modalTitle ?? state.title,
+        maxHeight: 280,
+        copyable: true
+      }
+    ),
+    /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles21.footerRow, children: /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.Text, { style: [styles21.timestampText, { color: colors.foregroundMuted }], children: [
+      "Last updated: ",
+      new Date(state.lastUpdated).toLocaleTimeString()
+    ] }) })
+  ] }) });
+}
+function registerCustomPills(client, options) {
+  const cleanups = [];
+  for (const pill of options.pills) {
+    const cleanup = registerComposerPill(client, {
+      id: pill.id,
+      title: pill.title,
+      compactTitle: pill.compactTitle,
+      icon: pill.icon,
+      compactIcon: pill.compactIcon,
+      flair: options.flair,
+      renderPill: () => /* @__PURE__ */ jsxRuntime.jsx(CustomPillBody, { state: pill }),
+      renderModal: () => {
+        const [refreshing, setRefreshing] = React7.useState(false);
+        const [currentOutput, setCurrentOutput] = React7.useState(
+          pill.modalOutput
+        );
+        const handleRefresh = React7.useCallback(async () => {
+          if (!options.onRefreshModal) return;
+          setRefreshing(true);
+          try {
+            const res = await options.onRefreshModal(pill.id);
+            if (res.output) {
+              setCurrentOutput(res.output);
+            }
+          } finally {
+            setRefreshing(false);
+          }
+        }, [pill.id]);
+        const activeState = {
+          ...pill,
+          modalOutput: currentOutput ?? pill.modalOutput
+        };
+        return /* @__PURE__ */ jsxRuntime.jsx(
+          CustomPillModalContent,
+          {
+            state: activeState,
+            onRefresh: options.onRefreshModal ? handleRefresh : void 0,
+            isRefreshing: refreshing
+          }
+        );
+      }
+    });
+    cleanups.push(cleanup);
+  }
+  return () => {
+    for (const dispose of cleanups) {
+      dispose();
+    }
+  };
+}
+var styles21 = reactNative$1.StyleSheet.create({
+  modalContent: {
+    width: "100%",
+    padding: 12
+  },
+  pillContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3
+  },
+  pillTitle: {
+    fontSize: 12,
+    fontWeight: "500"
+  },
+  pillBadge: {
+    paddingVertical: 1,
+    paddingHorizontal: 5
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: 8
+  },
+  timestampText: {
+    fontSize: 11
+  }
+});
 
 Object.defineProperty(exports, "Icon", {
   enumerable: true,
@@ -3175,6 +3317,8 @@ exports.Card = Card;
 exports.CardHeader = CardHeader;
 exports.CodeBlock = CodeBlock;
 exports.Collapsible = Collapsible;
+exports.CustomPillBody = CustomPillBody;
+exports.CustomPillModalContent = CustomPillModalContent;
 exports.DataTable = DataTable;
 exports.EmptyState = EmptyState;
 exports.FormRow = FormRow;
@@ -3205,6 +3349,7 @@ exports.getVariantPalette = getVariantPalette;
 exports.isMobilePlatform = isMobilePlatform;
 exports.registerAgentPanel = registerAgentPanel;
 exports.registerComposerPill = registerComposerPill;
+exports.registerCustomPills = registerCustomPills;
 exports.registerSidebarSurface = registerSidebarSurface;
 exports.registerWorkspacePanel = registerWorkspacePanel;
 exports.resolvePadding = resolvePadding;

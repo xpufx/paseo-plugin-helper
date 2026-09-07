@@ -3,6 +3,7 @@ import path3 from 'path';
 import os3 from 'os';
 import { spawn, execSync } from 'child_process';
 import net from 'net';
+import { z } from 'zod';
 
 // src/server/storage.ts
 var PluginStorage = class {
@@ -310,6 +311,59 @@ function safeSpawn(command, args = [], options = {}) {
     const child = spawn(command, args, {
       ...options,
       shell: false
+    });
+    let stdout = "";
+    let stderr = "";
+    let timedOut = false;
+    let timer = null;
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        timedOut = true;
+        child.kill("SIGTERM");
+        setTimeout(() => {
+          if (!child.killed) child.kill("SIGKILL");
+        }, 2e3);
+      }, timeoutMs);
+    }
+    child.stdout?.on("data", (chunk) => {
+      if (stdout.length < maxBuffer) {
+        stdout += chunk.toString();
+      }
+    });
+    child.stderr?.on("data", (chunk) => {
+      if (stderr.length < maxBuffer) {
+        stderr += chunk.toString();
+      }
+    });
+    child.on("error", (err) => {
+      if (timer) clearTimeout(timer);
+      reject(err);
+    });
+    child.on("close", (code, signal) => {
+      if (timer) clearTimeout(timer);
+      const durationMs = Date.now() - startTime;
+      if (timedOut) {
+        reject(new Error(`Command '${command}' timed out after ${timeoutMs}ms`));
+        return;
+      }
+      resolve({
+        stdout: stdout.trim(),
+        stderr: stderr.trim(),
+        code,
+        signal,
+        durationMs
+      });
+    });
+  });
+}
+function safeExec(command, options = {}) {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+    const timeoutMs = options.timeoutMs ?? 15e3;
+    const maxBuffer = options.maxBuffer ?? 10 * 1024 * 1024;
+    const child = spawn(command, {
+      ...options,
+      shell: true
     });
     let stdout = "";
     let stderr = "";
@@ -996,7 +1050,348 @@ async function isPluginRunning(pluginId, options) {
   const info = await getPluginInfo(pluginId, options);
   return info !== null && info.status === "running";
 }
+var CustomPillThresholdsSchema = z.object({
+  warning: z.number().optional(),
+  danger: z.number().optional(),
+  /**
+   * If true, lower values trigger warnings/dangers instead of higher values
+   * (e.g. disk space remaining, battery percentage).
+   */
+  invert: z.boolean().optional()
+});
+var CustomPillModalSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  command: z.string().optional(),
+  /**
+   * Whether to format command output as monospace preformatted text (default: true).
+   */
+  preformatted: z.boolean().default(true)
+});
+var CustomPillDefinitionSchema = z.object({
+  /**
+   * Unique identifier for the custom pill (e.g. "gpu-util", "docker-count").
+   */
+  id: z.string().min(1),
+  /**
+   * Title shown in the composer trackbar (e.g. "GPU", "Docker").
+   */
+  title: z.string().min(1),
+  /**
+   * Compact title shown when layout is compact (e.g. "G"). Defaults to title.
+   */
+  compactTitle: z.string().optional(),
+  /**
+   * Lucide icon name (e.g. "Cpu", "Flame", "HardDrive", "Layers").
+   */
+  icon: z.string().optional(),
+  /**
+   * Optional compact icon name. Defaults to icon.
+   */
+  compactIcon: z.string().optional(),
+  /**
+   * Shell command executed periodically to produce the pill's value.
+   * Can use session environment variables like $PASEO_AGENT_ID, $PASEO_WORKSPACE_ID.
+   */
+  command: z.string().min(1),
+  /**
+   * Optional prefix prepended to the output value (e.g. "$", "#").
+   */
+  prefix: z.string().optional(),
+  /**
+   * Optional suffix appended to the output value (e.g. "%", "ms", "GB").
+   */
+  suffix: z.string().optional(),
+  /**
+   * Polling interval in milliseconds. Minimum 500ms, defaults to 5000ms.
+   */
+  intervalMs: z.number().min(500).default(5e3),
+  /**
+   * Execution timeout in milliseconds. Defaults to 10000ms.
+   */
+  timeoutMs: z.number().min(500).default(1e4),
+  /**
+   * Optional threshold rules to automatically transition badge color to warning or danger.
+   */
+  thresholds: CustomPillThresholdsSchema.optional(),
+  /**
+   * Optional modal configuration shown when the pill is pressed.
+   */
+  modal: CustomPillModalSchema.optional(),
+  /**
+   * Whether this custom pill is enabled. Defaults to true.
+   */
+  enabled: z.boolean().default(true)
+});
+function parseNumericPillValue(rawValue) {
+  const match = rawValue.match(/-?\d+(\.\d+)?/);
+  if (!match) return void 0;
+  const num = parseFloat(match[0]);
+  return Number.isNaN(num) ? void 0 : num;
+}
+function resolveCustomPillStatus(numericValue, thresholds) {
+  if (numericValue === void 0 || !thresholds) {
+    return "neutral";
+  }
+  const { warning, danger, invert } = thresholds;
+  if (invert) {
+    if (danger !== void 0 && numericValue <= danger) return "danger";
+    if (warning !== void 0 && numericValue <= warning) return "warning";
+    return "success";
+  }
+  if (danger !== void 0 && numericValue >= danger) return "danger";
+  if (warning !== void 0 && numericValue >= warning) return "warning";
+  return "neutral";
+}
+function formatPillDisplay(rawValue, prefix, suffix) {
+  const cleaned = rawValue.trim();
+  const pre = prefix ?? "";
+  const suf = suffix ?? "";
+  return `${pre}${cleaned}${suf}`;
+}
 
-export { CpuSampler, McpConfigPaths, PluginStorage, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
+// src/server/custom-pills.ts
+async function discoverCustomPillConfigs(dirPath, logger) {
+  try {
+    if (!fs.existsSync(dirPath)) {
+      return [];
+    }
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+    const configs = [];
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".json") && !entry.name.endsWith(".jsonc")) {
+        continue;
+      }
+      const filePath = path3.join(dirPath, entry.name);
+      try {
+        const rawContent = await fs.promises.readFile(filePath, "utf-8");
+        const parsed = parseJsonc(rawContent);
+        const result = CustomPillDefinitionSchema.safeParse(parsed);
+        if (result.success) {
+          configs.push(result.data);
+        } else {
+          logger?.warn(
+            `Invalid custom pill config in ${entry.name}: ${result.error.issues.map((i) => i.message).join(", ")}`
+          );
+        }
+      } catch (err) {
+        logger?.warn(
+          `Failed to read custom pill config from ${entry.name}: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
+    }
+    return configs;
+  } catch (err) {
+    logger?.warn(
+      `Error reading custom pills directory ${dirPath}: ${err instanceof Error ? err.message : String(err)}`
+    );
+    return [];
+  }
+}
+var CustomPillPoller = class {
+  pills = /* @__PURE__ */ new Map();
+  states = /* @__PURE__ */ new Map();
+  timers = /* @__PURE__ */ new Map();
+  inFlight = /* @__PURE__ */ new Set();
+  running = false;
+  options;
+  constructor(options = {}) {
+    this.options = options;
+    if (options.pills) {
+      for (const pill of options.pills) {
+        this.pills.set(pill.id, pill);
+      }
+    }
+  }
+  /**
+   * Starts the polling loops for all configured custom pills.
+   */
+  async start() {
+    if (this.running) return;
+    this.running = true;
+    if (this.options.configDir) {
+      const discovered = await discoverCustomPillConfigs(
+        this.options.configDir,
+        this.options.logger
+      );
+      for (const pill of discovered) {
+        this.pills.set(pill.id, pill);
+      }
+    }
+    for (const pill of this.pills.values()) {
+      if (pill.enabled) {
+        this.schedulePill(pill, 0);
+      }
+    }
+  }
+  /**
+   * Manually triggers an immediate execution of a single custom pill.
+   */
+  async pollPill(pillId) {
+    const pill = this.pills.get(pillId);
+    if (!pill) return void 0;
+    if (this.inFlight.has(pillId)) {
+      return this.states.get(pillId);
+    }
+    this.inFlight.add(pillId);
+    try {
+      const result = await safeExec(pill.command, {
+        timeoutMs: pill.timeoutMs,
+        env: { ...process.env, ...this.options.env },
+        cwd: this.options.cwd
+      });
+      const rawValue = result.stdout || result.stderr || "";
+      const numericValue = parseNumericPillValue(rawValue);
+      const status = resolveCustomPillStatus(numericValue, pill.thresholds);
+      const displayValue = formatPillDisplay(rawValue, pill.prefix, pill.suffix);
+      const state = {
+        id: pill.id,
+        title: pill.title,
+        compactTitle: pill.compactTitle,
+        icon: pill.icon,
+        compactIcon: pill.compactIcon,
+        rawValue,
+        displayValue,
+        numericValue,
+        status,
+        lastUpdated: Date.now(),
+        modalTitle: pill.modal?.title ?? pill.title,
+        modalDescription: pill.modal?.description
+      };
+      this.states.set(pill.id, state);
+      this.notifyUpdate();
+      return state;
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.options.logger?.warn(`Custom pill '${pill.id}' execution failed: ${errorMsg}`);
+      const previous = this.states.get(pill.id);
+      const state = {
+        id: pill.id,
+        title: pill.title,
+        compactTitle: pill.compactTitle,
+        icon: pill.icon,
+        compactIcon: pill.compactIcon,
+        rawValue: previous?.rawValue ?? "ERR",
+        displayValue: previous?.displayValue ?? "ERR",
+        status: "danger",
+        lastUpdated: Date.now(),
+        error: errorMsg,
+        modalTitle: pill.modal?.title ?? pill.title,
+        modalDescription: pill.modal?.description
+      };
+      this.states.set(pill.id, state);
+      this.notifyUpdate();
+      return state;
+    } finally {
+      this.inFlight.delete(pillId);
+    }
+  }
+  /**
+   * Executes the on-demand drilldown command configured in pill.modal.command.
+   */
+  async runModalCommand(pillId) {
+    const pill = this.pills.get(pillId);
+    if (!pill) {
+      return { error: `Custom pill '${pillId}' not found` };
+    }
+    const commandToRun = pill.modal?.command ?? pill.command;
+    try {
+      const result = await safeExec(commandToRun, {
+        timeoutMs: pill.timeoutMs,
+        env: { ...process.env, ...this.options.env },
+        cwd: this.options.cwd
+      });
+      const output = result.stdout || result.stderr || "No output";
+      const existing = this.states.get(pillId);
+      if (existing) {
+        existing.modalOutput = output;
+        existing.modalLastUpdated = Date.now();
+        delete existing.modalError;
+        this.notifyUpdate();
+      }
+      return { output };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      const existing = this.states.get(pillId);
+      if (existing) {
+        existing.modalError = errorMsg;
+        this.notifyUpdate();
+      }
+      return { error: errorMsg };
+    }
+  }
+  /**
+   * Updates or reconciles the list of pill definitions dynamically.
+   */
+  updatePills(newPills) {
+    const nextIds = new Set(newPills.map((p) => p.id));
+    for (const [id, timer] of this.timers.entries()) {
+      if (!nextIds.has(id)) {
+        clearTimeout(timer);
+        this.timers.delete(id);
+        this.pills.delete(id);
+        this.states.delete(id);
+      }
+    }
+    for (const pill of newPills) {
+      this.pills.set(pill.id, pill);
+      const currentTimer = this.timers.get(pill.id);
+      if (currentTimer) {
+        clearTimeout(currentTimer);
+        this.timers.delete(pill.id);
+      }
+      if (this.running && pill.enabled) {
+        this.schedulePill(pill, 0);
+      }
+    }
+    this.notifyUpdate();
+  }
+  /**
+   * Returns live state for a single custom pill.
+   */
+  getState(pillId) {
+    return this.states.get(pillId);
+  }
+  /**
+   * Returns live states for all custom pills.
+   */
+  getAllStates() {
+    return Array.from(this.states.values());
+  }
+  /**
+   * Stops all active polling loops and clears resources.
+   */
+  stop() {
+    this.running = false;
+    for (const timer of this.timers.values()) {
+      clearTimeout(timer);
+    }
+    this.timers.clear();
+    this.inFlight.clear();
+  }
+  schedulePill(pill, delayMs) {
+    if (!this.running) return;
+    const timer = setTimeout(async () => {
+      await this.pollPill(pill.id);
+      if (this.running && this.pills.has(pill.id)) {
+        const nextPill = this.pills.get(pill.id);
+        if (nextPill?.enabled) {
+          this.schedulePill(nextPill, nextPill.intervalMs);
+        }
+      }
+    }, delayMs);
+    this.timers.set(pill.id, timer);
+  }
+  notifyUpdate() {
+    if (this.options.onUpdate) {
+      try {
+        this.options.onUpdate(this.getAllStates());
+      } catch {
+      }
+    }
+  }
+};
+
+export { CpuSampler, CustomPillPoller, McpConfigPaths, PluginStorage, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

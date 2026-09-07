@@ -349,3 +349,61 @@ clearPluginCache();
 // or pass forceRefresh option:
 const fresh = await listPlugins({ forceRefresh: true });
 ```
+
+---
+
+## 13. Declarative Custom Metric Pills: `CustomPillPoller` & `discoverCustomPillConfigs`
+
+Enables plugins (like `paseo-top`) to run user-defined commands, shell scripts, or metrics and expose them as pills in Paseo's composer trackbar without needing fragile dynamic code bundling.
+
+### Configuration Format (`.json` or `.jsonc`)
+Users drop configuration files in `~/.paseo/top/pills/*.json` (or any custom directory):
+
+```jsonc
+{
+  "id": "gpu-util",
+  "title": "GPU",
+  "icon": "Flame",
+  "command": "nvidia-smi --format=csv,noheader,nounits --query-gpu=utilization.gpu",
+  "suffix": "%",
+  "intervalMs": 3000,
+  "thresholds": {
+    "warning": 70,
+    "danger": 90
+  },
+  "modal": {
+    "title": "NVIDIA GPU Diagnostics",
+    "command": "nvidia-smi"
+  }
+}
+```
+
+### Usage
+```ts
+import {
+  CustomPillPoller,
+  discoverCustomPillConfigs,
+} from "paseo-plugin-helper/server";
+
+// 1. Discover configs from a directory
+const configs = await discoverCustomPillConfigs("~/.paseo/top/pills");
+
+// 2. Start managed poller
+const poller = new CustomPillPoller({
+  pills: configs,
+  env: {
+    PASEO_AGENT_ID: agentId,
+    PASEO_WORKSPACE_ID: workspaceId,
+  },
+  onUpdate: (states) => {
+    // Publish states over RPC or update internal cache
+  },
+});
+
+await poller.start();
+
+// 3. Query state or run modal drilldown command on demand
+const state = poller.getState("gpu-util");
+const drilldown = await poller.runModalCommand("gpu-util");
+```
+

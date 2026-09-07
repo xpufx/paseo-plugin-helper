@@ -188,7 +188,106 @@ async function withTimeout(promise, timeoutMs, label = "Operation") {
     }
   }
 }
+var CustomPillThresholdsSchema = z.object({
+  warning: z.number().optional(),
+  danger: z.number().optional(),
+  /**
+   * If true, lower values trigger warnings/dangers instead of higher values
+   * (e.g. disk space remaining, battery percentage).
+   */
+  invert: z.boolean().optional()
+});
+var CustomPillModalSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  command: z.string().optional(),
+  /**
+   * Whether to format command output as monospace preformatted text (default: true).
+   */
+  preformatted: z.boolean().default(true)
+});
+var CustomPillDefinitionSchema = z.object({
+  /**
+   * Unique identifier for the custom pill (e.g. "gpu-util", "docker-count").
+   */
+  id: z.string().min(1),
+  /**
+   * Title shown in the composer trackbar (e.g. "GPU", "Docker").
+   */
+  title: z.string().min(1),
+  /**
+   * Compact title shown when layout is compact (e.g. "G"). Defaults to title.
+   */
+  compactTitle: z.string().optional(),
+  /**
+   * Lucide icon name (e.g. "Cpu", "Flame", "HardDrive", "Layers").
+   */
+  icon: z.string().optional(),
+  /**
+   * Optional compact icon name. Defaults to icon.
+   */
+  compactIcon: z.string().optional(),
+  /**
+   * Shell command executed periodically to produce the pill's value.
+   * Can use session environment variables like $PASEO_AGENT_ID, $PASEO_WORKSPACE_ID.
+   */
+  command: z.string().min(1),
+  /**
+   * Optional prefix prepended to the output value (e.g. "$", "#").
+   */
+  prefix: z.string().optional(),
+  /**
+   * Optional suffix appended to the output value (e.g. "%", "ms", "GB").
+   */
+  suffix: z.string().optional(),
+  /**
+   * Polling interval in milliseconds. Minimum 500ms, defaults to 5000ms.
+   */
+  intervalMs: z.number().min(500).default(5e3),
+  /**
+   * Execution timeout in milliseconds. Defaults to 10000ms.
+   */
+  timeoutMs: z.number().min(500).default(1e4),
+  /**
+   * Optional threshold rules to automatically transition badge color to warning or danger.
+   */
+  thresholds: CustomPillThresholdsSchema.optional(),
+  /**
+   * Optional modal configuration shown when the pill is pressed.
+   */
+  modal: CustomPillModalSchema.optional(),
+  /**
+   * Whether this custom pill is enabled. Defaults to true.
+   */
+  enabled: z.boolean().default(true)
+});
+function parseNumericPillValue(rawValue) {
+  const match = rawValue.match(/-?\d+(\.\d+)?/);
+  if (!match) return void 0;
+  const num = parseFloat(match[0]);
+  return Number.isNaN(num) ? void 0 : num;
+}
+function resolveCustomPillStatus(numericValue, thresholds) {
+  if (numericValue === void 0 || !thresholds) {
+    return "neutral";
+  }
+  const { warning, danger, invert } = thresholds;
+  if (invert) {
+    if (danger !== void 0 && numericValue <= danger) return "danger";
+    if (warning !== void 0 && numericValue <= warning) return "warning";
+    return "success";
+  }
+  if (danger !== void 0 && numericValue >= danger) return "danger";
+  if (warning !== void 0 && numericValue >= warning) return "warning";
+  return "neutral";
+}
+function formatPillDisplay(rawValue, prefix, suffix) {
+  const cleaned = rawValue.trim();
+  const pre = prefix ?? "";
+  const suf = suffix ?? "";
+  return `${pre}${cleaned}${suf}`;
+}
 
-export { SettingsEmptyInputSchema, TimeoutError, defineContract, defineRpc, defineSettingsContract, formatBytes, formatDuration, formatNumber, formatUptime, resolveMetricStatus, stripAnsi, truncate, withTimeout };
+export { CustomPillDefinitionSchema, CustomPillModalSchema, CustomPillThresholdsSchema, SettingsEmptyInputSchema, TimeoutError, defineContract, defineRpc, defineSettingsContract, formatBytes, formatDuration, formatNumber, formatPillDisplay, formatUptime, parseNumericPillValue, resolveCustomPillStatus, resolveMetricStatus, stripAnsi, truncate, withTimeout };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

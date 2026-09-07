@@ -1,7 +1,8 @@
 import { ZodType } from 'zod';
-import { S as SettingsContract } from '../settings-WqIc-fNZ.js';
+import { a as SettingsContract, C as CustomPillDefinition, b as CustomPillState } from '../custom-pills-DZR2aH2P.js';
 import { SpawnOptions } from 'node:child_process';
 import '../rpc-Ja20I4uK.js';
+import '@getpaseo/plugin';
 
 interface PluginStorageOptions<T> {
     defaultData?: T;
@@ -138,6 +139,11 @@ interface SafeSpawnResult {
  * and clean process group termination without shell vulnerabilities.
  */
 declare function safeSpawn(command: string, args?: string[], options?: SafeSpawnOptions): Promise<SafeSpawnResult>;
+/**
+ * Executes a shell command line string with timeout protection, stdout/stderr capture,
+ * and clean process termination.
+ */
+declare function safeExec(command: string, options?: SafeSpawnOptions): Promise<SafeSpawnResult>;
 
 interface CpuCoreMetrics {
     model: string;
@@ -490,4 +496,84 @@ declare function isPluginRunning(pluginId: string, options?: {
     forceRefresh?: boolean;
 }): Promise<boolean>;
 
-export { type CpuCoreMetrics, CpuSampler, type HandleableServerContext, type ListPluginsOptions, type LogLevel, McpConfigPaths, type McpConfigTarget, type McpMutationResult, type McpServerConfig, type PaseoPluginInfo, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, type PluginStatusFilter, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
+/**
+ * Discovers and validates all custom pill configuration files (.json / .jsonc)
+ * from a directory (e.g. ~/.paseo/top/pills or ~/.paseo/custom-pills).
+ */
+declare function discoverCustomPillConfigs(dirPath: string, logger?: PluginLogger): Promise<CustomPillDefinition[]>;
+interface CustomPillPollerOptions {
+    /**
+     * Initial list of custom pill definitions.
+     */
+    pills?: CustomPillDefinition[];
+    /**
+     * Optional directory to discover .json / .jsonc configs from.
+     */
+    configDir?: string;
+    /**
+     * Custom environment variables passed to all executed commands
+     * (e.g. PASEO_AGENT_ID, PASEO_WORKSPACE_ID).
+     */
+    env?: Record<string, string>;
+    /**
+     * Working directory for executed commands. Defaults to process.cwd().
+     */
+    cwd?: string;
+    /**
+     * Optional structured logger.
+     */
+    logger?: PluginLogger;
+    /**
+     * Callback fired whenever any custom pill state changes.
+     */
+    onUpdate?: (states: CustomPillState[]) => void;
+}
+/**
+ * Managed server poller for user-defined declarative custom metric pills.
+ * Periodically executes shell commands, computes statuses via thresholds,
+ * and maintains reactive live state.
+ */
+declare class CustomPillPoller {
+    private pills;
+    private states;
+    private timers;
+    private inFlight;
+    private running;
+    private options;
+    constructor(options?: CustomPillPollerOptions);
+    /**
+     * Starts the polling loops for all configured custom pills.
+     */
+    start(): Promise<void>;
+    /**
+     * Manually triggers an immediate execution of a single custom pill.
+     */
+    pollPill(pillId: string): Promise<CustomPillState | undefined>;
+    /**
+     * Executes the on-demand drilldown command configured in pill.modal.command.
+     */
+    runModalCommand(pillId: string): Promise<{
+        output?: string;
+        error?: string;
+    }>;
+    /**
+     * Updates or reconciles the list of pill definitions dynamically.
+     */
+    updatePills(newPills: CustomPillDefinition[]): void;
+    /**
+     * Returns live state for a single custom pill.
+     */
+    getState(pillId: string): CustomPillState | undefined;
+    /**
+     * Returns live states for all custom pills.
+     */
+    getAllStates(): CustomPillState[];
+    /**
+     * Stops all active polling loops and clears resources.
+     */
+    stop(): void;
+    private schedulePill;
+    private notifyUpdate;
+}
+
+export { type CpuCoreMetrics, CpuSampler, CustomPillPoller, type CustomPillPollerOptions, type HandleableServerContext, type ListPluginsOptions, type LogLevel, McpConfigPaths, type McpConfigTarget, type McpMutationResult, type McpServerConfig, type PaseoPluginInfo, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, type PluginStatusFilter, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
