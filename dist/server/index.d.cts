@@ -472,7 +472,9 @@ type McpInjectionHookHandler = (input: {
     request: AgentCreateInjectionRequest;
 }, context?: unknown) => AgentCreateInjectionRequest | void | Promise<AgentCreateInjectionRequest | void>;
 interface McpInjectionServer {
-    before(name: string, handler: McpInjectionHookHandler): () => void;
+    before(name: string, handler: (input: {
+        request: any;
+    }, context?: any) => any): () => void;
 }
 interface RegisterMcpInjectionOptions {
     serverName: string;
