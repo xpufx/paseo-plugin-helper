@@ -967,6 +967,24 @@ function removeMcpServer(options) {
     backupPath
   };
 }
+
+// src/server/mcp-injection.ts
+function registerMcpInjection(server, options) {
+  const { serverName, config, filter } = options;
+  return server.before("agent.create", ({ request }) => {
+    if (filter && !filter({ request })) return;
+    return {
+      ...request,
+      config: {
+        ...request.config,
+        mcpServers: {
+          ...request.config.mcpServers ?? {},
+          [serverName]: config
+        }
+      }
+    };
+  });
+}
 var cachedPlugins = null;
 var lastFetchTime = 0;
 function clearPluginCache() {
@@ -1400,6 +1418,6 @@ var CustomPillPoller = class {
   }
 };
 
-export { CpuSampler, CustomPillPoller, McpConfigPaths, PluginStorage, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
+export { CpuSampler, CustomPillPoller, McpConfigPaths, PluginStorage, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerMcpInjection, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

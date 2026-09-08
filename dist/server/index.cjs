@@ -976,6 +976,24 @@ function removeMcpServer(options) {
     backupPath
   };
 }
+
+// src/server/mcp-injection.ts
+function registerMcpInjection(server, options) {
+  const { serverName, config, filter } = options;
+  return server.before("agent.create", ({ request }) => {
+    if (filter && !filter({ request })) return;
+    return {
+      ...request,
+      config: {
+        ...request.config,
+        mcpServers: {
+          ...request.config.mcpServers ?? {},
+          [serverName]: config
+        }
+      }
+    };
+  });
+}
 var cachedPlugins = null;
 var lastFetchTime = 0;
 function clearPluginCache() {
@@ -1431,6 +1449,7 @@ exports.listPlugins = listPlugins;
 exports.parseJsonc = parseJsonc;
 exports.pingHost = pingHost;
 exports.redactSecrets = redactSecrets;
+exports.registerMcpInjection = registerMcpInjection;
 exports.registerSettingsRpc = registerSettingsRpc;
 exports.removeMcpServer = removeMcpServer;
 exports.resolvePluginVersion = resolvePluginVersion;

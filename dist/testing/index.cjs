@@ -6,11 +6,13 @@ var noopCleanup = () => {
 function createMockClientContext() {
   const registeredPills = [];
   const registeredSurfaces = [];
+  const registeredSettingsScreens = [];
   const agentSubscribers = /* @__PURE__ */ new Set();
   const agents = /* @__PURE__ */ new Map();
   const mock = {
     registeredPills,
     registeredSurfaces,
+    registeredSettingsScreens,
     addComposerPill(contribution) {
       registeredPills.push(contribution);
       return () => {
@@ -25,7 +27,13 @@ function createMockClientContext() {
     },
     openSettings: () => {
     },
-    addSettingsScreen: () => noopCleanup,
+    addSettingsScreen(contribution) {
+      registeredSettingsScreens.push(contribution);
+      return () => {
+        const index = registeredSettingsScreens.indexOf(contribution);
+        if (index >= 0) registeredSettingsScreens.splice(index, 1);
+      };
+    },
     addSurface: () => noopCleanup,
     addSidebarItem: () => noopCleanup,
     addWorkspacePanel: () => noopCleanup,

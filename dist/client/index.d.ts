@@ -1,10 +1,10 @@
-import { S as StatusVariant, T as ThemeColors, P as PlatformType, R as ResponsiveLayout, c as PluginTheme, a as SettingsContract, b as CustomPillState } from '../custom-pills-IKDl3pen.js';
+import { S as StatusVariant, T as ThemeColors, P as PlatformType, R as ResponsiveLayout, c as PluginTheme, a as SettingsContract, b as CustomPillState } from '../custom-pills-BRMMkgfE.js';
 import * as React from 'react';
 import React__default, { ReactNode, ComponentType } from 'react';
 import { c as HostLayout, d as HostPillProps, e as ComposerPillRegistrar, P as PluginCleanup, a as HostSurfaceProps, f as HostAgentPanelProps, g as HostWorkspacePanelProps, h as HostToast, i as HostIconProps } from '../host-CI3xo45X.js';
 export { j as ClientHostDeps, C as ComposerPillContribution, H as HostAgentRef, b as HostAgentUpdate, k as HostAgentsApi, l as HostIcon, m as HostModal, n as HostModalContentProps, o as HostModalProps, p as HostRpcContract, q as HostTheme, r as HostThemeColors, s as HostUseRpc, t as HostUseToast, u as getClientHost, v as initClientHelpers, w as isClientHostInitialized } from '../host-CI3xo45X.js';
 import { StyleProp, ViewStyle, TextStyle, KeyboardTypeOptions, ImageSourcePropType } from 'react-native';
-import { M as MetricThresholds } from '../formatters-CUdI4vcB.js';
+import { M as MetricThresholds } from '../formatters-BtMZotvg.js';
 import { P as PluginRpcContract, R as RpcInput, a as RpcOutput } from '../rpc-D27pph91.js';
 import { UseMutationOptions, UseQueryOptions, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import * as _tanstack_query_core from '@tanstack/query-core';
@@ -1006,6 +1006,85 @@ interface UsePluginSettingsResult<TSettings> {
  */
 declare function usePluginSettings<TSettings extends Record<string, any>>(contract: SettingsContract<TSettings>, options?: UsePluginSettingsOptions<TSettings>): UsePluginSettingsResult<TSettings>;
 
+interface HelperSettingsCardProps {
+    children: ReactNode;
+    testID?: string;
+}
+interface HelperSettingsSectionProps {
+    title: string;
+    info?: ReactNode;
+    trailing?: ReactNode;
+    children: ReactNode;
+    testID?: string;
+}
+interface HelperSettingsRowBaseProps {
+    label: string;
+    hint?: string;
+    error?: string | null;
+    children?: ReactNode;
+    testID?: string;
+}
+interface HelperSettingsSwitchProps extends HelperSettingsRowBaseProps {
+    value: boolean;
+    onValueChange(value: boolean): void;
+    disabled?: boolean;
+}
+interface HelperSettingsSelectProps<Value extends string = string> extends HelperSettingsRowBaseProps {
+    value: Value;
+    options: readonly {
+        label: string;
+        value: Value;
+    }[];
+    onValueChange(value: Value): void;
+    disabled?: boolean;
+}
+interface HelperSettingsInputProps extends HelperSettingsRowBaseProps {
+    initialValue?: string;
+    onChangeText(text: string): void;
+    placeholder?: string;
+    disabled?: boolean;
+    secureTextEntry?: boolean;
+}
+type HelperSettingsSelectComponent = <Value extends string = string>(props: HelperSettingsSelectProps<Value>) => ReactNode;
+interface HelperSettingsUiBundle {
+    SettingsCard: ComponentType<HelperSettingsCardProps>;
+    SettingsSection: ComponentType<HelperSettingsSectionProps>;
+    SettingsSwitch: ComponentType<HelperSettingsSwitchProps>;
+    SettingsSelect: HelperSettingsSelectComponent;
+    SettingsInput: ComponentType<HelperSettingsInputProps>;
+}
+interface HelperSettingsScreenContribution {
+    id: string;
+    title: string;
+    icon: string;
+    Component: ComponentType<HostSurfaceProps>;
+}
+interface HelperSettingsScreenRegistrar {
+    addSettingsScreen(contribution: HelperSettingsScreenContribution): PluginCleanup;
+}
+type HelperSettingsFieldKind = "boolean" | "enum" | "string" | "number";
+interface HelperSettingsField {
+    key: string;
+    kind: HelperSettingsFieldKind;
+    label: string;
+    description?: string;
+    options?: string[];
+}
+interface HelperSettingsFieldOverrides {
+    labels?: Record<string, string>;
+    descriptions?: Record<string, string>;
+}
+declare function contractSchemaToFields(schema: unknown, overrides?: HelperSettingsFieldOverrides): HelperSettingsField[];
+interface RegisterHelperSettingsScreenOptions {
+    ui: HelperSettingsUiBundle;
+    id?: string;
+    title?: string;
+    icon?: string;
+    labels?: Record<string, string>;
+    descriptions?: Record<string, string>;
+}
+declare function registerHelperSettingsScreen<TSettings extends Record<string, any>>(client: HelperSettingsScreenRegistrar, contract: SettingsContract<TSettings>, options: RegisterHelperSettingsScreenOptions): PluginCleanup;
+
 interface CopyToClipboardOptions {
     toast?: HostToast;
     toastMessage?: string;
@@ -1071,4 +1150,4 @@ declare function registerCustomPills(client: ComposerPillRegistrar, options: Reg
 
 declare function Icon(props: HostIconProps): React__default.JSX.Element;
 
-export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, ComposerPillRegistrar, type CopyToClipboardOptions, CustomPillBody, type CustomPillBodyProps, CustomPillModalContent, type CustomPillModalContentProps, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, HostAgentPanelProps, HostIconProps, HostLayout, HostPillProps, HostSurfaceProps, HostToast, HostWorkspacePanelProps, Icon, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, PluginCleanup, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterCustomPillsOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, ComposerPillRegistrar, type CopyToClipboardOptions, CustomPillBody, type CustomPillBodyProps, CustomPillModalContent, type CustomPillModalContentProps, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, type HelperSettingsCardProps, type HelperSettingsField, type HelperSettingsFieldKind, type HelperSettingsFieldOverrides, type HelperSettingsInputProps, type HelperSettingsRowBaseProps, type HelperSettingsScreenContribution, type HelperSettingsScreenRegistrar, type HelperSettingsSectionProps, type HelperSettingsSelectComponent, type HelperSettingsSelectProps, type HelperSettingsSwitchProps, type HelperSettingsUiBundle, HostAgentPanelProps, HostIconProps, HostLayout, HostPillProps, HostSurfaceProps, HostToast, HostWorkspacePanelProps, Icon, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, PluginCleanup, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterCustomPillsOptions, type RegisterHelperSettingsScreenOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, contractSchemaToFields, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerHelperSettingsScreen, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };

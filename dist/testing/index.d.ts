@@ -6,12 +6,19 @@ import 'zod';
 interface MockAgent extends HostAgentRef {
     [key: string]: any;
 }
+interface MockSettingsScreenContribution {
+    id: string;
+    title: string;
+    icon: string;
+    Component: ComponentType<HostSurfaceProps>;
+}
 interface MockClientContext {
     registeredPills: ComposerPillContribution[];
     registeredSurfaces: Array<{
         id: string;
         Component: ComponentType<HostSurfaceProps>;
     }>;
+    registeredSettingsScreens: MockSettingsScreenContribution[];
     addComposerPill(contribution: ComposerPillContribution): PluginCleanup;
     openPanel(id: string, options?: unknown): void;
     rpc(contract: {
@@ -19,7 +26,7 @@ interface MockClientContext {
     }, input: unknown): Promise<unknown>;
     openSurface(id: string): void;
     openSettings(id: string): void;
-    addSettingsScreen(contribution: unknown): PluginCleanup;
+    addSettingsScreen(contribution: MockSettingsScreenContribution): PluginCleanup;
     addSurface(id: string, component: unknown): PluginCleanup;
     addSidebarItem(contribution: unknown): PluginCleanup;
     addWorkspacePanel(contribution: unknown): PluginCleanup;
@@ -78,4 +85,4 @@ interface MockServerContext {
  */
 declare function createMockServerContext(): MockServerContext;
 
-export { type MockAgent, type MockClientContext, type MockRpcHandler, type MockServerContext, createMockClientContext, createMockServerContext };
+export { type MockAgent, type MockClientContext, type MockRpcHandler, type MockServerContext, type MockSettingsScreenContribution, createMockClientContext, createMockServerContext };

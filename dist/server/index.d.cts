@@ -1,5 +1,5 @@
 import { ZodType } from 'zod';
-import { a as SettingsContract, C as CustomPillDefinition, b as CustomPillState } from '../custom-pills-BhvTNpGn.cjs';
+import { a as SettingsContract, C as CustomPillDefinition, b as CustomPillState } from '../custom-pills-CnrXjVIR.cjs';
 import { SpawnOptions } from 'node:child_process';
 import '../rpc-D27pph91.cjs';
 
@@ -436,6 +436,51 @@ declare function upsertMcpServer(options: UpsertMcpServerOptions): McpMutationRe
  */
 declare function removeMcpServer(options: RemoveMcpServerOptions): McpMutationResult;
 
+interface McpStdioInjectionConfig {
+    type: "stdio";
+    command: string;
+    args?: string[];
+    env?: Record<string, string>;
+    alwaysLoad?: boolean;
+}
+interface McpHttpInjectionConfig {
+    type: "http";
+    url: string;
+    headers?: Record<string, string>;
+    alwaysLoad?: boolean;
+}
+interface McpSseInjectionConfig {
+    type: "sse";
+    url: string;
+    headers?: Record<string, string>;
+    alwaysLoad?: boolean;
+}
+type McpInjectionConfig = McpStdioInjectionConfig | McpHttpInjectionConfig | McpSseInjectionConfig;
+interface AgentCreateInjectionConfig {
+    mcpServers?: Record<string, McpInjectionConfig>;
+    [key: string]: unknown;
+}
+interface AgentCreateInjectionRequest {
+    config: AgentCreateInjectionConfig;
+    env?: Record<string, string>;
+    [key: string]: unknown;
+}
+type McpInjectionFilter = (input: {
+    request: AgentCreateInjectionRequest;
+}) => boolean;
+type McpInjectionHookHandler = (input: {
+    request: AgentCreateInjectionRequest;
+}, context?: unknown) => AgentCreateInjectionRequest | void | Promise<AgentCreateInjectionRequest | void>;
+interface McpInjectionServer {
+    before(name: string, handler: McpInjectionHookHandler): () => void;
+}
+interface RegisterMcpInjectionOptions {
+    serverName: string;
+    config: McpInjectionConfig;
+    filter?: McpInjectionFilter;
+}
+declare function registerMcpInjection(server: McpInjectionServer, options: RegisterMcpInjectionOptions): () => void;
+
 interface PaseoPluginInfo {
     id: string;
     path: string;
@@ -575,4 +620,4 @@ declare class CustomPillPoller {
     private notifyUpdate;
 }
 
-export { type CpuCoreMetrics, CpuSampler, CustomPillPoller, type CustomPillPollerOptions, type HandleableServerContext, type ListPluginsOptions, type LogLevel, McpConfigPaths, type McpConfigTarget, type McpMutationResult, type McpServerConfig, type PaseoPluginInfo, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, type PluginStatusFilter, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
+export { type AgentCreateInjectionConfig, type AgentCreateInjectionRequest, type CpuCoreMetrics, CpuSampler, CustomPillPoller, type CustomPillPollerOptions, type HandleableServerContext, type ListPluginsOptions, type LogLevel, McpConfigPaths, type McpConfigTarget, type McpHttpInjectionConfig, type McpInjectionConfig, type McpInjectionFilter, type McpInjectionHookHandler, type McpInjectionServer, type McpMutationResult, type McpServerConfig, type McpSseInjectionConfig, type McpStdioInjectionConfig, type PaseoPluginInfo, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, type PluginStatusFilter, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterMcpInjectionOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerMcpInjection, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };

@@ -160,7 +160,8 @@ function defineSettingsContract(options) {
     defaultSettings: computedDefaults,
     get: getContract,
     update: updateContract,
-    reset: resetContract
+    reset: resetContract,
+    ...description !== void 0 ? { description } : {}
   };
 }
 
