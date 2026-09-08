@@ -487,6 +487,38 @@ function SettingsTab() {
 }
 ```
 
+### `registerHelperSettingsScreen(client, contract, options)`
+Turns a settings contract built by `defineSettingsContract` into a native Paseo settings screen with zero hand-written JSX. Field mapping follows the Zod object schema: boolean fields render as Switch, `z.enum` fields render as Select, string and number fields render as Input. Schema `.describe()` text is used for labels and hints when present, otherwise the field name is used. Unsupported field shapes are skipped with a logged warning and never throw. Values bind through the existing `usePluginSettings(contract)` hook, so the host `useRpc` injected via `initClientHelpers` is reused with no new plumbing. Number fields ignore unparseable keystrokes and keep the last good value, so `NaN` is never written back.
+
+Like `initClientHelpers`, the helper client imports zero Paseo SDK modules. The SDK settings UI components arrive as an explicit `options.ui` bundle supplied by the plugin from its own SDK version:
+
+```tsx
+import {
+  SettingsCard,
+  SettingsSection,
+  SettingsSwitch,
+  SettingsSelect,
+  SettingsInput,
+} from "@getpaseo/plugin/client/ui";
+import { registerHelperSettingsScreen } from "paseo-plugin-helper/client";
+import { demoSettingsContract } from "../shared/settings.js";
+
+export const contributeClient = (client) => {
+  return registerHelperSettingsScreen(client, demoSettingsContract, {
+    ui: { SettingsCard, SettingsSection, SettingsSwitch, SettingsSelect, SettingsInput },
+    // Optional overrides: id defaults to contract.name, title defaults to
+    // contract.description else contract.name, icon defaults to "Settings".
+    id: "demo-settings",
+    title: "Demo settings",
+    icon: "Settings",
+    labels: { showCpuUsage: "Show CPU usage" },
+    descriptions: { showCpuUsage: "Display load in the pill" },
+  });
+};
+```
+
+Registration returns the host remover for cleanup, like every other `register*` helper.
+
 ---
 
 ## 6. Declarative Custom Metric Pills
