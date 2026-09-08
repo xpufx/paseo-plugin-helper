@@ -46,7 +46,16 @@ export type McpInjectionHookHandler = (
 ) => AgentCreateInjectionRequest | void | Promise<AgentCreateInjectionRequest | void>;
 
 export interface McpInjectionServer {
-  before(name: string, handler: McpInjectionHookHandler): () => void;
+  // Loose on purpose: the real SDK declares a generic
+  // before<Name extends keyof PluginBeforeRequests>(...) whose name param is
+  // narrower than string and whose handler uses SDK request types. Typing this
+  // boundary with any keeps the SDK object directly assignable with no
+  // consumer-side adapter and no SDK imports here. Handler authors should use
+  // McpInjectionHookHandler for the precise shape.
+  before(
+    name: string,
+    handler: (input: { request: any }, context?: any) => any,
+  ): () => void;
 }
 
 export interface RegisterMcpInjectionOptions {
@@ -60,7 +69,7 @@ export function registerMcpInjection(
   options: RegisterMcpInjectionOptions,
 ): () => void {
   const { serverName, config, filter } = options;
-  return server.before("agent.create", ({ request }) => {
+  return server.before("agent.create", ({ request }: { request: AgentCreateInjectionRequest }) => {
     if (filter && !filter({ request })) return;
     return {
       ...request,
