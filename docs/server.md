@@ -414,3 +414,41 @@ every `CustomPillState` (including error states). Do not author `sourceFile` in
 config files; it is overwritten at discovery time. It is intended for display
 only, such as a "defined in ..." hint in a drilldown modal.
 
+## 14. Agent MCP Injection: `registerMcpInjection`
+
+Merges a plugin MCP server entry into every new agent config via
+`server.before("agent.create", ...)`. The hook returns a new request object
+with the entry merged over `request.config.mcpServers`, so the user's own
+servers are preserved. The incoming request is never mutated. The remover
+returned by `server.before` is returned directly for cleanup.
+
+The server argument is structural and only needs `before(name, cb)`. No SDK
+imports appear in the implementation or its types. Config value shapes mirror
+the protocol `AgentSessionConfig` entries: stdio (`type: "stdio"`, command,
+args, env), HTTP (`type: "http"`, url, headers), or SSE (`type: "sse"`, url,
+headers).
+
+Omit `filter` to inject into every new agent. Provide `filter` to scope by
+provider or anything else on the request. The target provider must support
+MCP servers or creation fails at validation, so exclude providers that
+cannot do MCP. Namespacing policy lives with the caller: use a namespaced
+server key per daemon (for example `x-comms.<serverId>`) so collisions are
+impossible by construction.
+
+```ts
+import { registerMcpInjection } from "paseo-plugin-helper/server";
+
+export function activateServer(server) {
+  return registerMcpInjection(server, {
+    serverName: "x-comms",
+    config: {
+      type: "stdio",
+      command: "paseo-x-comms-mcp",
+      args: ["serve"],
+      env: { X_COMMS_HOME: process.env.X_COMMS_HOME ?? "" },
+    },
+    filter: ({ request }) => request.config["provider"] === "claude",
+  });
+}
+```
+
