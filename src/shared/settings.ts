@@ -13,6 +13,7 @@ export interface SettingsContract<TSettings extends Record<string, any>> {
   readonly get: PluginRpcContract<ZodType<SettingsEmptyInput>, ZodType<TSettings>>;
   readonly update: PluginRpcContract<ZodType<Partial<TSettings>>, ZodType<TSettings>>;
   readonly reset: PluginRpcContract<ZodType<SettingsEmptyInput>, ZodType<TSettings>>;
+  readonly description?: string;
 }
 
 export interface DefineSettingsContractOptions<TSettings extends Record<string, any>> {
@@ -132,5 +133,6 @@ export function defineSettingsContract<TSettings extends Record<string, any>>(
     get: getContract,
     update: updateContract,
     reset: resetContract,
+    ...(description !== undefined ? { description } : {}),
   };
 }

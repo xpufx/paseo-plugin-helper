@@ -12,15 +12,23 @@ export interface MockAgent extends HostAgentRef {
   [key: string]: any;
 }
 
+export interface MockSettingsScreenContribution {
+  id: string;
+  title: string;
+  icon: string;
+  Component: ComponentType<HostSurfaceProps>;
+}
+
 export interface MockClientContext {
   registeredPills: ComposerPillContribution[];
   registeredSurfaces: Array<{ id: string; Component: ComponentType<HostSurfaceProps> }>;
+  registeredSettingsScreens: MockSettingsScreenContribution[];
   addComposerPill(contribution: ComposerPillContribution): PluginCleanup;
   openPanel(id: string, options?: unknown): void;
   rpc(contract: { name: string }, input: unknown): Promise<unknown>;
   openSurface(id: string): void;
   openSettings(id: string): void;
-  addSettingsScreen(contribution: unknown): PluginCleanup;
+  addSettingsScreen(contribution: MockSettingsScreenContribution): PluginCleanup;
   addSurface(id: string, component: unknown): PluginCleanup;
   addSidebarItem(contribution: unknown): PluginCleanup;
   addWorkspacePanel(contribution: unknown): PluginCleanup;
@@ -57,12 +65,14 @@ const noopCleanup: PluginCleanup = () => {};
 export function createMockClientContext(): MockClientContext {
   const registeredPills: ComposerPillContribution[] = [];
   const registeredSurfaces: Array<{ id: string; Component: ComponentType<HostSurfaceProps> }> = [];
+  const registeredSettingsScreens: MockSettingsScreenContribution[] = [];
   const agentSubscribers = new Set<(update: HostAgentUpdate) => void>();
   const agents = new Map<string, MockAgent>();
 
   const mock: MockClientContext = {
     registeredPills,
     registeredSurfaces,
+    registeredSettingsScreens,
 
     addComposerPill(contribution: ComposerPillContribution): PluginCleanup {
       registeredPills.push(contribution);
@@ -80,7 +90,13 @@ export function createMockClientContext(): MockClientContext {
 
     openSettings: () => {},
 
-    addSettingsScreen: () => noopCleanup,
+    addSettingsScreen(contribution: MockSettingsScreenContribution): PluginCleanup {
+      registeredSettingsScreens.push(contribution);
+      return () => {
+        const index = registeredSettingsScreens.indexOf(contribution);
+        if (index >= 0) registeredSettingsScreens.splice(index, 1);
+      };
+    },
     addSurface: () => noopCleanup,
     addSidebarItem: () => noopCleanup,
     addWorkspacePanel: () => noopCleanup,
