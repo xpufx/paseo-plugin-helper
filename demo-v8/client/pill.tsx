@@ -84,8 +84,8 @@ function DemoPill({ isOpen }: RenderPillProps) {
   );
 }
 
-function DemoModal({ close, theme, layout }: RenderModalProps) {
-  const { colors } = usePluginTheme();
+function DemoModal({ close }: RenderModalProps) {
+  const { colors, theme, layout } = usePluginTheme();
   const { isCompact } = useResponsive();
   const [activeTab, setActiveTab] = useState<string>("gauges");
   const [tabMode, setTabMode] = useState<"fit" | "scroll">(isCompact ? "scroll" : "fit");
