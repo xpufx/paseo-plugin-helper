@@ -116,6 +116,10 @@ import { initClientHelpers } from "paseo-plugin-helper/client";
 initClientHelpers({ Icon, Modal, useRpc, useToast });
 ```
 
+Forgetting the call fails fast: every helper component throws `used before
+initClientHelpers()` instead of rendering broken UI, so a missing init shows
+up immediately in development rather than as a silent blank pill.
+
 ### `registerComposerPill(client, options)`
 Handles the complete lifecycle of injecting a composer pill for each active agent, subscribing to agent updates, opening modals, and unmounting cleanly.
 
