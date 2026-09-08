@@ -1,6 +1,8 @@
-import { PluginClientContext, PluginComposerPillContribution, PluginSurfaceProps, PluginContext, PluginRpcContract } from '@getpaseo/plugin';
+import { PluginClientContext, PluginComposerPillContribution, PluginSurfaceProps } from '@getpaseo/plugin/client';
 import { PaseoAgent } from '@getpaseo/client';
 import { ComponentType } from 'react';
+import { PluginServerContext } from '@getpaseo/plugin/server';
+import { PluginRpcContract } from '@getpaseo/plugin';
 import { R as RpcInput, a as RpcOutput } from '../rpc-Ja20I4uK.js';
 import 'zod';
 
@@ -22,12 +24,12 @@ interface MockClientContext extends PluginClientContext {
 declare function createMockClientContext(): MockClientContext;
 
 type MockRpcHandler = (input: any, context: any) => Promise<any> | any;
-interface MockServerContext extends PluginContext {
+interface MockServerContext extends PluginServerContext {
     handlers: Map<string, MockRpcHandler>;
     callRpc: <TContract extends PluginRpcContract<any, any>>(contract: TContract, input: RpcInput<TContract>) => Promise<RpcOutput<TContract>>;
 }
 /**
- * Creates a mock PluginContext for testing server RPC handlers and plugin contributions.
+ * Creates a mock PluginServerContext for testing server RPC handlers and plugin contributions.
  */
 declare function createMockServerContext(): MockServerContext;
 

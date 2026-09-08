@@ -2,5 +2,5 @@ export { C as CustomPillDefinition, c as CustomPillDefinitionSchema, d as Custom
 export { D as DefineRpcOptions, P as PluginRpcContract, R as RpcInput, a as RpcOutput, d as defineContract, b as defineRpc } from './rpc-Ja20I4uK.js';
 export { F as FormatBytesOptions, M as MetricThresholds, f as formatBytes, a as formatDuration, b as formatNumber, c as formatUptime, r as resolveMetricStatus, s as stripAnsi, t as truncate } from './formatters-D_q6wnn5.js';
 export { TimeoutError, withTimeout } from './shared/index.js';
-export { PluginHostProps, PluginTheme } from '@getpaseo/plugin';
+export { PluginTheme } from '@getpaseo/plugin';
 import 'zod';

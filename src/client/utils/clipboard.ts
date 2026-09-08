@@ -1,4 +1,4 @@
-import type { ToastApi } from "@getpaseo/plugin/react-native";
+import type { ToastApi } from "@getpaseo/plugin/client/react-native";
 
 export interface CopyToClipboardOptions {
   toast?: ToastApi | {

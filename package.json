@@ -1,6 +1,6 @@
 {
   "name": "paseo-plugin-helper",
-  "version": "0.3.3",
+  "version": "0.4.0-beta.1",
   "description": "Developer toolkit, UI design system, and lifecycle primitives for Paseo plugins",
   "author": "",
   "license": "MIT",
@@ -66,7 +66,7 @@
     "url": "https://github.com/xpufx/paseo-plugin-helper.git"
   },
   "peerDependencies": {
-    "@getpaseo/plugin": ">=0.7.0 || >=0.8.0-beta.1",
+    "@getpaseo/plugin": ">=0.8.0-beta.1",
     "@tanstack/react-query": ">=5.0.0",
     "react": ">=18.0.0",
     "react-native": ">=0.70.0",
@@ -81,13 +81,13 @@
     }
   },
   "devDependencies": {
-    "@getpaseo/client": "0.7.2",
-    "@getpaseo/plugin": "^0.7.2",
+    "@getpaseo/client": "0.8.0-beta.1",
+    "@getpaseo/plugin": "0.8.0-beta.1",
     "@tanstack/react-query": "^5.67.2",
     "@types/node": "^20.17.24",
     "@types/react": "^19.0.10",
     "react": "19.1.0",
-    "react-native": "0.84.0",
+    "react-native": "0.81.5",
     "tsup": "^8.5.1",
     "typescript": "^5.8.2",
     "vitest": "^3.0.8",

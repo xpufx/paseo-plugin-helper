@@ -1,4 +1,5 @@
-import { useRpc, type PluginRpcContract } from "@getpaseo/plugin";
+import { useRpc } from "@getpaseo/plugin/client";
+import type { PluginRpcContract } from "@getpaseo/plugin";
 import type { RpcInput, RpcOutput } from "../shared/rpc.js";
 import {
   useQuery,

@@ -1,9 +1,9 @@
 import type {
   PluginClientContext,
-  PluginCleanup,
   PluginComposerPillContribution,
   PluginSurfaceProps,
-} from "@getpaseo/plugin";
+} from "@getpaseo/plugin/client";
+import type { PluginCleanup } from "@getpaseo/plugin";
 import type { PaseoAgent, PaseoAgentUpdate, PaseoAgentListResult } from "@getpaseo/client";
 import type { ComponentType } from "react";
 
@@ -41,11 +41,25 @@ export function createMockClientContext(): MockClientContext {
 
     openSurface: () => {},
 
+    openSettings: () => {},
+
+    addSettingsScreen: () => () => {},
+    addSurface: () => () => {},
+    addSidebarItem: () => () => {},
+    addWorkspacePanel: () => () => {},
+    addCommandCenterItem: () => () => {},
+    addSlashCommand: () => () => {},
+    addAttachmentSource: () => () => {},
+    addTheme: () => () => {},
+    addTimelineTransformer: () => () => {},
+    addTimelineRenderer: () => () => {},
+
     paseo: {
       workspaces: {} as any,
       projects: {} as any,
       providers: {} as any,
       config: {} as any,
+      terminals: {} as any,
       agents: {
         list: async (): Promise<PaseoAgentListResult> => ({
           requestId: "mock-list-req",

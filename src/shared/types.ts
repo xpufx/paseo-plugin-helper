@@ -1,6 +1,6 @@
-import type { PluginTheme, PluginHostProps } from "@getpaseo/plugin";
+import type { PluginTheme } from "@getpaseo/plugin";
 
-export type { PluginTheme, PluginHostProps };
+export type { PluginTheme };
 
 export type ThemeColors = PluginTheme["colors"];
 

@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type {
   PluginClientContext,
-  PluginCleanup,
   PluginComposerPillProps,
-} from "@getpaseo/plugin";
-import { Icon, Modal } from "@getpaseo/plugin/react-native";
+} from "@getpaseo/plugin/client";
+import type { PluginCleanup } from "@getpaseo/plugin";
+import { Icon, Modal } from "@getpaseo/plugin/client/react-native";
 import { PluginThemeProvider } from "./theme/provider.js";
 import { useResponsive } from "./theme/useResponsive.js";
 import type { VisualFlair } from "./theme/flair.js";

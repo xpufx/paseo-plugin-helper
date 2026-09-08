@@ -9,7 +9,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { Icon, useToast } from "@getpaseo/plugin/react-native";
+import { Icon, useToast } from "@getpaseo/plugin/client/react-native";
 import { usePluginTheme } from "../theme/provider.js";
 import { copyToClipboard } from "../utils/clipboard.js";
 

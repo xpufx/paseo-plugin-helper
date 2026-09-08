@@ -1,9 +1,9 @@
 import React7, { createContext, useMemo, useContext, useRef, useEffect, useState, useCallback } from 'react';
 import { StyleSheet, Appearance, Pressable, ActivityIndicator, Text, View, Animated, PanResponder, ScrollView, Platform, TextInput, Image, RefreshControl, Linking } from 'react-native';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
-import { Icon, useToast, Modal } from '@getpaseo/plugin/react-native';
-export { Icon } from '@getpaseo/plugin/react-native';
-import { useRpc } from '@getpaseo/plugin';
+import { Icon, useToast, Modal } from '@getpaseo/plugin/client/react-native';
+export { Icon } from '@getpaseo/plugin/client/react-native';
+import { useRpc } from '@getpaseo/plugin/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {

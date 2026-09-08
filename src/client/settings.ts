@@ -1,4 +1,4 @@
-import { useRpc } from "@getpaseo/plugin";
+import { useRpc } from "@getpaseo/plugin/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { SettingsContract } from "../shared/settings.js";
 

@@ -19,11 +19,34 @@ function createMockClientContext() {
     rpc: async () => ({}),
     openSurface: () => {
     },
+    openSettings: () => {
+    },
+    addSettingsScreen: () => () => {
+    },
+    addSurface: () => () => {
+    },
+    addSidebarItem: () => () => {
+    },
+    addWorkspacePanel: () => () => {
+    },
+    addCommandCenterItem: () => () => {
+    },
+    addSlashCommand: () => () => {
+    },
+    addAttachmentSource: () => () => {
+    },
+    addTheme: () => () => {
+    },
+    addTimelineTransformer: () => () => {
+    },
+    addTimelineRenderer: () => () => {
+    },
     paseo: {
       workspaces: {},
       projects: {},
       providers: {},
       config: {},
+      terminals: {},
       agents: {
         list: async () => ({
           requestId: "mock-list-req",
@@ -86,23 +109,13 @@ function createMockServerContext() {
     handle(contract, handler) {
       handlers.set(contract.name, handler);
     },
-    addSurface() {
+    registerSettings() {
     },
-    addSidebarItem() {
+    registerProvider() {
     },
-    addWorkspacePanel() {
+    on: () => () => {
     },
-    addCommandCenterItem() {
-    },
-    addClientSide() {
-    },
-    addAttachmentSource() {
-    },
-    addTheme() {
-    },
-    addTimelineTransformer() {
-    },
-    addTimelineRenderer() {
+    before: () => () => {
     },
     async callRpc(contract, input) {
       const handler = handlers.get(contract.name);

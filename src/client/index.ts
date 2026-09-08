@@ -10,4 +10,4 @@ export * from "./settings.js";
 export * from "./utils/clipboard.js";
 export * from "./utils/haptics.js";
 export * from "./custom-pills.js";
-export { Icon } from "@getpaseo/plugin/react-native";
+export { Icon } from "@getpaseo/plugin/client/react-native";

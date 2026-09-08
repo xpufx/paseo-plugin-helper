@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, type ReactNode } from "react";
-import type { PluginTheme, PluginHostProps } from "@getpaseo/plugin";
+import type { PluginTheme } from "@getpaseo/plugin";
+import type { PluginHostProps } from "@getpaseo/plugin/client";
 import { Appearance } from "react-native";
 import { defaultFlair, resolveRadius, type VisualFlair } from "./flair.js";
 import { alpha, getContrastColor, getStatusColor, getVariantPalette } from "./color-utils.js";

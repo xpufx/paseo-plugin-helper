@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import type { PluginClientContext, PluginCleanup } from "@getpaseo/plugin";
-import { Icon } from "@getpaseo/plugin/react-native";
+import type { PluginClientContext } from "@getpaseo/plugin/client";
+import type { PluginCleanup } from "@getpaseo/plugin";
+import { Icon } from "@getpaseo/plugin/client/react-native";
 import { usePluginTheme } from "./theme/provider.js";
 import { useResponsive } from "./theme/useResponsive.js";
 import type { VisualFlair } from "./theme/flair.js";

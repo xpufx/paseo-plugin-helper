@@ -1,9 +1,10 @@
-import type { PluginContext, PluginRpcContract } from "@getpaseo/plugin";
+import type { PluginServerContext } from "@getpaseo/plugin/server";
+import type { PluginRpcContract } from "@getpaseo/plugin";
 import type { RpcInput, RpcOutput } from "../shared/rpc.js";
 
 export type MockRpcHandler = (input: any, context: any) => Promise<any> | any;
 
-export interface MockServerContext extends PluginContext {
+export interface MockServerContext extends PluginServerContext {
   handlers: Map<string, MockRpcHandler>;
   callRpc: <TContract extends PluginRpcContract<any, any>>(
     contract: TContract,
@@ -12,7 +13,7 @@ export interface MockServerContext extends PluginContext {
 }
 
 /**
- * Creates a mock PluginContext for testing server RPC handlers and plugin contributions.
+ * Creates a mock PluginServerContext for testing server RPC handlers and plugin contributions.
  */
 export function createMockServerContext(): MockServerContext {
   const handlers = new Map<string, MockRpcHandler>();
@@ -24,15 +25,10 @@ export function createMockServerContext(): MockServerContext {
       handlers.set(contract.name, handler as MockRpcHandler);
     },
 
-    addSurface() {},
-    addSidebarItem() {},
-    addWorkspacePanel() {},
-    addCommandCenterItem() {},
-    addClientSide() {},
-    addAttachmentSource() {},
-    addTheme() {},
-    addTimelineTransformer() {},
-    addTimelineRenderer() {},
+    registerSettings() {},
+    registerProvider() {},
+    on: () => () => {},
+    before: () => () => {},
 
     async callRpc(contract, input) {
       const handler = handlers.get(contract.name);

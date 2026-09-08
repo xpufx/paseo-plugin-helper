@@ -3,8 +3,8 @@
 var React7 = require('react');
 var reactNative$1 = require('react-native');
 var jsxRuntime = require('react/jsx-runtime');
-var reactNative = require('@getpaseo/plugin/react-native');
-var plugin = require('@getpaseo/plugin');
+var reactNative = require('@getpaseo/plugin/client/react-native');
+var client = require('@getpaseo/plugin/client');
 var reactQuery = require('@tanstack/react-query');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
@@ -3033,7 +3033,7 @@ function registerAgentPanel(plugin, options) {
   });
 }
 function useRpcQuery(contract, input, options) {
-  const callRpc = plugin.useRpc(contract);
+  const callRpc = client.useRpc(contract);
   return reactQuery.useQuery({
     queryKey: [contract.name, input],
     queryFn: () => callRpc(input),
@@ -3041,7 +3041,7 @@ function useRpcQuery(contract, input, options) {
   });
 }
 function useRpcMutation(contract, options) {
-  const callRpc = plugin.useRpc(contract);
+  const callRpc = client.useRpc(contract);
   return reactQuery.useMutation({
     mutationFn: (input) => callRpc(input),
     ...options
@@ -3083,9 +3083,9 @@ function useAutoRefreshQuery(contract, input, options) {
 function usePluginSettings(contract, options = {}) {
   const queryClient = reactQuery.useQueryClient();
   const queryKey = ["plugin-settings", contract.name];
-  const callGet = plugin.useRpc(contract.get);
-  const callUpdate = plugin.useRpc(contract.update);
-  const callReset = plugin.useRpc(contract.reset);
+  const callGet = client.useRpc(contract.get);
+  const callUpdate = client.useRpc(contract.update);
+  const callReset = client.useRpc(contract.reset);
   const query = reactQuery.useQuery({
     queryKey,
     queryFn: async () => {
