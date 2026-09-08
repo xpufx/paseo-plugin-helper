@@ -1,6 +1,8 @@
 'use strict';
 
 // src/testing/mock-client.ts
+var noopCleanup = () => {
+};
 function createMockClientContext() {
   const registeredPills = [];
   const registeredSurfaces = [];
@@ -23,26 +25,16 @@ function createMockClientContext() {
     },
     openSettings: () => {
     },
-    addSettingsScreen: () => () => {
-    },
-    addSurface: () => () => {
-    },
-    addSidebarItem: () => () => {
-    },
-    addWorkspacePanel: () => () => {
-    },
-    addCommandCenterItem: () => () => {
-    },
-    addSlashCommand: () => () => {
-    },
-    addAttachmentSource: () => () => {
-    },
-    addTheme: () => () => {
-    },
-    addTimelineTransformer: () => () => {
-    },
-    addTimelineRenderer: () => () => {
-    },
+    addSettingsScreen: () => noopCleanup,
+    addSurface: () => noopCleanup,
+    addSidebarItem: () => noopCleanup,
+    addWorkspacePanel: () => noopCleanup,
+    addCommandCenterItem: () => noopCleanup,
+    addSlashCommand: () => noopCleanup,
+    addAttachmentSource: () => noopCleanup,
+    addTheme: () => noopCleanup,
+    addTimelineTransformer: () => noopCleanup,
+    addTimelineRenderer: () => noopCleanup,
     paseo: {
       workspaces: {},
       projects: {},
@@ -51,21 +43,7 @@ function createMockClientContext() {
       terminals: {},
       agents: {
         list: async () => ({
-          requestId: "mock-list-req",
-          subscriptionId: null,
-          entries: Array.from(agents.values()).map((agent) => ({
-            agent,
-            project: {
-              id: "mock-project",
-              title: "Mock Project",
-              rootPath: "/mock"
-            }
-          })),
-          pageInfo: {
-            nextCursor: null,
-            prevCursor: null,
-            hasMore: false
-          }
+          entries: Array.from(agents.values()).map((agent) => ({ agent }))
         }),
         ref: () => ({}),
         create: async () => ({}),
@@ -106,6 +84,8 @@ function createMockClientContext() {
 // src/testing/mock-server.ts
 function createMockServerContext() {
   const handlers = /* @__PURE__ */ new Map();
+  const noopCleanup2 = () => {
+  };
   const mock = {
     handlers,
     handle(contract, handler) {
@@ -115,10 +95,8 @@ function createMockServerContext() {
     },
     registerProvider() {
     },
-    on: () => () => {
-    },
-    before: () => () => {
-    },
+    on: () => noopCleanup2,
+    before: () => noopCleanup2,
     async callRpc(contract, input) {
       const handler = handlers.get(contract.name);
       if (!handler) {

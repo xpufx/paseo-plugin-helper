@@ -1,8 +1,7 @@
 import { ZodType } from 'zod';
-import { a as SettingsContract, C as CustomPillDefinition, b as CustomPillState } from '../custom-pills-ivI-Xmi3.js';
+import { a as SettingsContract, C as CustomPillDefinition, b as CustomPillState } from '../custom-pills-IKDl3pen.js';
 import { SpawnOptions } from 'node:child_process';
-import '../rpc-Ja20I4uK.js';
-import '@getpaseo/plugin';
+import '../rpc-D27pph91.js';
 
 interface PluginStorageOptions<T> {
     defaultData?: T;

@@ -1,11 +1,7 @@
-import type { ToastApi } from "@getpaseo/plugin/client/react-native";
+import type { HostToast } from "../host.js";
 
 export interface CopyToClipboardOptions {
-  toast?: ToastApi | {
-    show?: (message: string, options?: unknown) => void;
-    copied?: (label?: string) => void;
-    error?: (message: string) => void;
-  };
+  toast?: HostToast;
   toastMessage?: string;
 }
 

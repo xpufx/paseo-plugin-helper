@@ -1,10 +1,8 @@
 'use strict';
 
 var React7 = require('react');
-var reactNative$1 = require('react-native');
+var reactNative = require('react-native');
 var jsxRuntime = require('react/jsx-runtime');
-var reactNative = require('@getpaseo/plugin/client/react-native');
-var client = require('@getpaseo/plugin/client');
 var reactQuery = require('@tanstack/react-query');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
@@ -216,7 +214,7 @@ var defaultLightTheme = {
 };
 function getDefaultTheme() {
   try {
-    const scheme = reactNative$1.Appearance.getColorScheme?.();
+    const scheme = reactNative.Appearance.getColorScheme?.();
     if (scheme === "light") {
       return defaultLightTheme;
     }
@@ -293,6 +291,23 @@ function useResponsive() {
     }
   };
 }
+
+// src/client/host.ts
+var deps;
+function initClientHelpers(host) {
+  deps = host;
+}
+function getClientHost() {
+  if (!deps) {
+    throw new Error(
+      "paseo-plugin-helper/client used before initClientHelpers(). Call initClientHelpers({ Icon, Modal, useRpc, useToast }) in the plugin client entry."
+    );
+  }
+  return deps;
+}
+function isClientHostInitialized() {
+  return deps !== void 0;
+}
 function Button({
   label,
   variant = "secondary",
@@ -306,6 +321,7 @@ function Button({
   textStyle,
   accessibilityLabel
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const radius = resolveRadius2(size === "sm" ? "sm" : size === "lg" ? "lg" : "md");
   const py = size === "sm" ? isCompact ? 5 : 6 : size === "lg" ? 12 : isCompact ? 8 : 10;
@@ -339,12 +355,12 @@ function Button({
   const renderIcon = () => {
     if (!icon) return null;
     if (typeof icon === "string") {
-      return /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: icon, size: iconSize, color: textColor });
+      return /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: icon, size: iconSize, color: textColor });
     }
     return icon;
   };
   return /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.Pressable,
+    reactNative.Pressable,
     {
       onPress,
       disabled: disabled || loading,
@@ -365,10 +381,10 @@ function Button({
         },
         style
       ],
-      children: loading ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.ActivityIndicator, { size: "small", color: textColor }) : /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
+      children: loading ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.ActivityIndicator, { size: "small", color: textColor }) : /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
         iconPosition === "left" && renderIcon(),
         label ? /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Text,
+          reactNative.Text,
           {
             style: [
               styles.text,
@@ -386,7 +402,7 @@ function Button({
     }
   );
 }
-var styles = reactNative$1.StyleSheet.create({
+var styles = reactNative.StyleSheet.create({
   base: {
     flexDirection: "row",
     alignItems: "center",
@@ -407,6 +423,7 @@ function Badge({
   style,
   textStyle
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, flair, resolveRadius: resolveRadius2, getVariantPalette: getVariantPalette2, getStatusColor: getStatusColor2, isCompact } = usePluginTheme();
   const radius = resolveRadius2("pill");
   const palette = getVariantPalette2(variant);
@@ -426,7 +443,7 @@ function Badge({
   const renderIcon = () => {
     if (dot) {
       return /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.View,
+        reactNative.View,
         {
           style: [
             styles2.dot,
@@ -439,12 +456,12 @@ function Badge({
     }
     if (!icon) return null;
     if (typeof icon === "string") {
-      return /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: icon, size: isCompact ? 10 : 11, color: textColor });
+      return /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: icon, size: isCompact ? 10 : 11, color: textColor });
     }
     return icon;
   };
   return /* @__PURE__ */ jsxRuntime.jsxs(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles2.badge,
@@ -460,7 +477,7 @@ function Badge({
       children: [
         renderIcon(),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Text,
+          reactNative.Text,
           {
             style: [
               styles2.text,
@@ -478,7 +495,7 @@ function Badge({
     }
   );
 }
-var styles2 = reactNative$1.StyleSheet.create({
+var styles2 = reactNative.StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
@@ -498,17 +515,17 @@ var styles2 = reactNative$1.StyleSheet.create({
 function StatusDot({ variant = "neutral", size = "md", pulse = false, style }) {
   const { getStatusColor: getStatusColor2, alpha: alpha2 } = usePluginTheme();
   const color = getStatusColor2(variant);
-  const pulseAnim = React7.useRef(new reactNative$1.Animated.Value(1)).current;
+  const pulseAnim = React7.useRef(new reactNative.Animated.Value(1)).current;
   React7.useEffect(() => {
     if (!pulse) return;
-    const loop = reactNative$1.Animated.loop(
-      reactNative$1.Animated.sequence([
-        reactNative$1.Animated.timing(pulseAnim, {
+    const loop = reactNative.Animated.loop(
+      reactNative.Animated.sequence([
+        reactNative.Animated.timing(pulseAnim, {
           toValue: 0.35,
           duration: 900,
           useNativeDriver: true
         }),
-        reactNative$1.Animated.timing(pulseAnim, {
+        reactNative.Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 900,
           useNativeDriver: true
@@ -520,7 +537,7 @@ function StatusDot({ variant = "neutral", size = "md", pulse = false, style }) {
   }, [pulse, pulseAnim]);
   const dimension = size === "sm" ? 6 : size === "lg" ? 10 : 8;
   return /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles3.container,
@@ -531,7 +548,7 @@ function StatusDot({ variant = "neutral", size = "md", pulse = false, style }) {
         style
       ],
       children: /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Animated.View,
+        reactNative.Animated.View,
         {
           style: [
             styles3.dot,
@@ -549,7 +566,7 @@ function StatusDot({ variant = "neutral", size = "md", pulse = false, style }) {
     }
   );
 }
-var styles3 = reactNative$1.StyleSheet.create({
+var styles3 = reactNative.StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center"
@@ -570,13 +587,14 @@ function CardHeader({
   style,
   titleStyle
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, flair, isCompact } = usePluginTheme();
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles4.headerContainer, style], children: [
-    /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles4.headerLeft, children: [
-      icon ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: icon, size: 15, color: colors.foregroundMuted }) : null,
-      /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles4.titleColumn, children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles4.headerContainer, style], children: [
+    /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles4.headerLeft, children: [
+      icon ? /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: icon, size: 15, color: colors.foregroundMuted }) : null,
+      /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles4.titleColumn, children: [
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Text,
+          reactNative.Text,
           {
             style: [
               styles4.headerTitle,
@@ -591,7 +609,7 @@ function CardHeader({
           }
         ),
         subtitle ? /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Text,
+          reactNative.Text,
           {
             style: [
               styles4.headerSubtitle,
@@ -602,10 +620,10 @@ function CardHeader({
         ) : null
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles4.headerRight, children: [
-      badge ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: { marginRight: 6 }, children: badge }) : null,
+    /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles4.headerRight, children: [
+      badge ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: { marginRight: 6 }, children: badge }) : null,
       typeof value === "string" || typeof value === "number" ? /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Text,
+        reactNative.Text,
         {
           style: [
             styles4.headerValue,
@@ -633,7 +651,7 @@ function Card({ children, variant, style, noPadding = false }) {
   }
   const padding = noPadding ? 0 : isCompact ? 12 : 16;
   return /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles4.card,
@@ -651,7 +669,7 @@ function Card({ children, variant, style, noPadding = false }) {
   );
 }
 Card.Header = CardHeader;
-var styles4 = reactNative$1.StyleSheet.create({
+var styles4 = reactNative.StyleSheet.create({
   card: {
     overflow: "hidden",
     width: "100%"
@@ -699,6 +717,7 @@ function Tabs({
   mode = "auto",
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const scrollRef = React7.useRef(null);
   const tabLayouts = React7.useRef({});
@@ -760,7 +779,7 @@ function Tabs({
     currentScrollX.current = nextX;
   };
   const panResponder = React7.useMemo(
-    () => reactNative$1.PanResponder.create({
+    () => reactNative.PanResponder.create({
       // Capture move events when motion is predominantly horizontal
       onMoveShouldSetPanResponderCapture: (_, gestureState) => {
         const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
@@ -792,7 +811,7 @@ function Tabs({
     const isActive = tab.id === activeTab;
     const displayLabel = shouldFit && isCompact && tab.shortLabel ? tab.shortLabel : tab.label;
     return /* @__PURE__ */ jsxRuntime.jsxs(
-      reactNative$1.Pressable,
+      reactNative.Pressable,
       {
         onPress: () => {
           if (!isDragging.current) {
@@ -815,7 +834,7 @@ function Tabs({
         ],
         children: [
           tab.icon ? /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative.Icon,
+            Icon2,
             {
               name: tab.icon,
               size: isCompact ? 11 : 13,
@@ -823,7 +842,7 @@ function Tabs({
             }
           ) : null,
           /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative$1.Text,
+            reactNative.Text,
             {
               numberOfLines: 1,
               style: [
@@ -838,7 +857,7 @@ function Tabs({
             }
           ),
           tab.badge !== void 0 ? /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative$1.View,
+            reactNative.View,
             {
               style: [
                 styles5.badge,
@@ -847,7 +866,7 @@ function Tabs({
                 }
               ],
               children: /* @__PURE__ */ jsxRuntime.jsx(
-                reactNative$1.Text,
+                reactNative.Text,
                 {
                   style: [
                     styles5.badgeText,
@@ -867,7 +886,7 @@ function Tabs({
   };
   if (shouldFit) {
     return /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.View,
+      reactNative.View,
       {
         style: [
           styles5.frame,
@@ -878,12 +897,12 @@ function Tabs({
           },
           style
         ],
-        children: /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles5.trackFit, children: tabs.map((tab) => renderTab(tab)) })
+        children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles5.trackFit, children: tabs.map((tab) => renderTab(tab)) })
       }
     );
   }
   return /* @__PURE__ */ jsxRuntime.jsxs(
-    reactNative$1.View,
+    reactNative.View,
     {
       onLayout: handleContainerLayout,
       style: [
@@ -898,7 +917,7 @@ function Tabs({
       ...panResponder.panHandlers,
       children: [
         canScrollLeft && /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Pressable,
+          reactNative.Pressable,
           {
             onPress: () => scrollByDelta(-(viewportWidth * 0.7 || 140)),
             style: [
@@ -910,11 +929,11 @@ function Tabs({
               }
             ],
             accessibilityLabel: "Scroll tabs left",
-            children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: "ChevronLeft", size: 14, color: colors.foreground })
+            children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: "ChevronLeft", size: 14, color: colors.foreground })
           }
         ),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.ScrollView,
+          reactNative.ScrollView,
           {
             ref: scrollRef,
             horizontal: true,
@@ -931,7 +950,7 @@ function Tabs({
           }
         ),
         canScrollRight && /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Pressable,
+          reactNative.Pressable,
           {
             onPress: () => scrollByDelta(viewportWidth * 0.7 || 140),
             style: [
@@ -943,14 +962,14 @@ function Tabs({
               }
             ],
             accessibilityLabel: "Scroll tabs right",
-            children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: "ChevronRight", size: 14, color: colors.foreground })
+            children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: "ChevronRight", size: 14, color: colors.foreground })
           }
         )
       ]
     }
   );
 }
-var styles5 = reactNative$1.StyleSheet.create({
+var styles5 = reactNative.StyleSheet.create({
   frame: {
     width: "100%",
     maxWidth: "100%",
@@ -1094,8 +1113,9 @@ function CodeBlock({
   style,
   textStyle
 }) {
+  const { Icon: Icon2, useToast } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
-  const toast = reactNative.useToast();
+  const toast = useToast();
   const [copied, setCopied] = React7.useState(false);
   const radius = resolveRadius2("md");
   const handleCopy = async () => {
@@ -1108,13 +1128,13 @@ function CodeBlock({
       setTimeout(() => setCopied(false), 2e3);
     }
   };
-  const fontFamily = reactNative$1.Platform.select({
+  const fontFamily = reactNative.Platform.select({
     ios: "Menlo",
     android: "monospace",
     default: "monospace"
   });
   return /* @__PURE__ */ jsxRuntime.jsxs(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles6.container,
@@ -1127,7 +1147,7 @@ function CodeBlock({
       ],
       children: [
         (title || language || copyable) && /* @__PURE__ */ jsxRuntime.jsxs(
-          reactNative$1.View,
+          reactNative.View,
           {
             style: [
               styles6.header,
@@ -1136,9 +1156,9 @@ function CodeBlock({
               }
             ],
             children: [
-              /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles6.headerLeft, children: title ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles6.title, { color: colors.foreground }], children: title }) : language ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles6.language, { color: colors.foregroundMuted }], children: language.toUpperCase() }) : null }),
+              /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles6.headerLeft, children: title ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles6.title, { color: colors.foreground }], children: title }) : language ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles6.language, { color: colors.foregroundMuted }], children: language.toUpperCase() }) : null }),
               copyable && /* @__PURE__ */ jsxRuntime.jsxs(
-                reactNative$1.Pressable,
+                reactNative.Pressable,
                 {
                   onPress: handleCopy,
                   hitSlop: Math.max(0, (touchTargetMin - 28) / 2),
@@ -1152,7 +1172,7 @@ function CodeBlock({
                   ],
                   children: [
                     /* @__PURE__ */ jsxRuntime.jsx(
-                      reactNative.Icon,
+                      Icon2,
                       {
                         name: copied ? "Check" : "Copy",
                         size: 12,
@@ -1160,7 +1180,7 @@ function CodeBlock({
                       }
                     ),
                     /* @__PURE__ */ jsxRuntime.jsx(
-                      reactNative$1.Text,
+                      reactNative.Text,
                       {
                         style: [
                           styles6.copyText,
@@ -1176,13 +1196,13 @@ function CodeBlock({
           }
         ),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.ScrollView,
+          reactNative.ScrollView,
           {
             nestedScrollEnabled: true,
             style: { maxHeight },
             contentContainerStyle: styles6.scrollContent,
-            children: /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.ScrollView, { horizontal: true, showsHorizontalScrollIndicator: true, children: /* @__PURE__ */ jsxRuntime.jsx(
-              reactNative$1.Text,
+            children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.ScrollView, { horizontal: true, showsHorizontalScrollIndicator: true, children: /* @__PURE__ */ jsxRuntime.jsx(
+              reactNative.Text,
               {
                 selectable: true,
                 style: [
@@ -1203,7 +1223,7 @@ function CodeBlock({
     }
   );
 }
-var styles6 = reactNative$1.StyleSheet.create({
+var styles6 = reactNative.StyleSheet.create({
   container: {
     borderWidth: 1,
     overflow: "hidden"
@@ -1258,6 +1278,7 @@ function SearchInput({
   inputStyle,
   testID
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, isCompact } = usePluginTheme();
   const radius = resolveRadius2("sm");
   const handleClear = () => {
@@ -1265,7 +1286,7 @@ function SearchInput({
     if (onClear) onClear();
   };
   return /* @__PURE__ */ jsxRuntime.jsxs(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles7.container,
@@ -1278,9 +1299,9 @@ function SearchInput({
         style
       ],
       children: [
-        /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles7.iconWrapper, children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: "Search", size: 16, color: colors.foregroundMuted }) }),
+        /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles7.iconWrapper, children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: "Search", size: 16, color: colors.foregroundMuted }) }),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.TextInput,
+          reactNative.TextInput,
           {
             testID,
             value,
@@ -1301,20 +1322,20 @@ function SearchInput({
           }
         ),
         Boolean(value) && /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Pressable,
+          reactNative.Pressable,
           {
             onPress: handleClear,
             style: styles7.clearButton,
             hitSlop: 8,
             accessibilityLabel: "Clear search",
-            children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: "X", size: 14, color: colors.foregroundMuted })
+            children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: "X", size: 14, color: colors.foregroundMuted })
           }
         )
       ]
     }
   );
 }
-var styles7 = reactNative$1.StyleSheet.create({
+var styles7 = reactNative.StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
@@ -1361,9 +1382,9 @@ function TextInput2({
   const hasError = Boolean(errorText);
   const borderColor = hasError ? colors.statusDanger : isFocused ? colors.accent : colors.border;
   const minHeight = multiline ? Math.max(touchTargetMin * 1.5, 64) : touchTargetMin;
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles8.container, style], children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles8.container, style], children: [
     label ? /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.Text,
+      reactNative.Text,
       {
         style: [
           styles8.label,
@@ -1376,7 +1397,7 @@ function TextInput2({
       }
     ) : null,
     /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.TextInput,
+      reactNative.TextInput,
       {
         value,
         onChangeText,
@@ -1410,7 +1431,7 @@ function TextInput2({
       }
     ),
     (errorText || helperText) && /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.Text,
+      reactNative.Text,
       {
         style: [
           styles8.hint,
@@ -1424,7 +1445,7 @@ function TextInput2({
     )
   ] });
 }
-var styles8 = reactNative$1.StyleSheet.create({
+var styles8 = reactNative.StyleSheet.create({
   container: {
     gap: 4
   },
@@ -1459,7 +1480,7 @@ function Toggle({
   const trackColor = value ? colors.accent : alpha2(colors.foregroundMuted, 0.35);
   const thumbPosition = value ? trackWidth - thumbSize - thumbPadding : thumbPadding;
   return /* @__PURE__ */ jsxRuntime.jsxs(
-    reactNative$1.Pressable,
+    reactNative.Pressable,
     {
       onPress: handlePress,
       disabled,
@@ -1473,9 +1494,9 @@ function Toggle({
         style
       ],
       children: [
-        (label || description) && /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles9.textContainer, children: [
+        (label || description) && /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles9.textContainer, children: [
           label && /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative$1.Text,
+            reactNative.Text,
             {
               style: [
                 styles9.label,
@@ -1488,7 +1509,7 @@ function Toggle({
             }
           ),
           description && /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative$1.Text,
+            reactNative.Text,
             {
               style: [
                 styles9.description,
@@ -1502,7 +1523,7 @@ function Toggle({
           )
         ] }),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.View,
+          reactNative.View,
           {
             style: [
               styles9.track,
@@ -1514,7 +1535,7 @@ function Toggle({
               }
             ],
             children: /* @__PURE__ */ jsxRuntime.jsx(
-              reactNative$1.View,
+              reactNative.View,
               {
                 style: [
                   styles9.thumb,
@@ -1534,7 +1555,7 @@ function Toggle({
     }
   );
 }
-var styles9 = reactNative$1.StyleSheet.create({
+var styles9 = reactNative.StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
@@ -1572,6 +1593,7 @@ function Collapsible({
   icon,
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
   const [internalExpanded, setInternalExpanded] = React7.useState(initiallyExpanded);
   const isExpanded = controlledExpanded !== void 0 ? controlledExpanded : internalExpanded;
@@ -1584,7 +1606,7 @@ function Collapsible({
     onToggle?.(next);
   };
   return /* @__PURE__ */ jsxRuntime.jsxs(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles10.container,
@@ -1597,7 +1619,7 @@ function Collapsible({
       ],
       children: [
         /* @__PURE__ */ jsxRuntime.jsxs(
-          reactNative$1.Pressable,
+          reactNative.Pressable,
           {
             onPress: handlePress,
             style: ({ pressed }) => [
@@ -1610,18 +1632,18 @@ function Collapsible({
               }
             ],
             children: [
-              /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles10.headerLeft, children: [
+              /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles10.headerLeft, children: [
                 /* @__PURE__ */ jsxRuntime.jsx(
-                  reactNative.Icon,
+                  Icon2,
                   {
                     name: isExpanded ? "ChevronDown" : "ChevronRight",
                     size: 14,
                     color: colors.foregroundMuted
                   }
                 ),
-                icon && /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: icon, size: 14, color: colors.accent }),
+                icon && /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: icon, size: 14, color: colors.accent }),
                 /* @__PURE__ */ jsxRuntime.jsx(
-                  reactNative$1.Text,
+                  reactNative.Text,
                   {
                     style: [
                       styles10.title,
@@ -1634,16 +1656,16 @@ function Collapsible({
                   }
                 )
               ] }),
-              badge && /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles10.headerRight, children: badge })
+              badge && /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles10.headerRight, children: badge })
             ]
           }
         ),
-        isExpanded && /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles10.content, children })
+        isExpanded && /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles10.content, children })
       ]
     }
   );
 }
-var styles10 = reactNative$1.StyleSheet.create({
+var styles10 = reactNative.StyleSheet.create({
   container: {
     borderWidth: 1,
     overflow: "hidden"
@@ -1709,10 +1731,10 @@ function ProgressBar({
       barColor = colors.statusSuccess;
     }
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles11.container, style], children: [
-    (label || showValueText) && /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles11.labelRow, children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles11.container, style], children: [
+    (label || showValueText) && /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles11.labelRow, children: [
       label ? /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Text,
+        reactNative.Text,
         {
           style: [
             styles11.labelText,
@@ -1722,7 +1744,7 @@ function ProgressBar({
         }
       ) : null,
       showValueText ? /* @__PURE__ */ jsxRuntime.jsxs(
-        reactNative$1.Text,
+        reactNative.Text,
         {
           style: [
             styles11.valueText,
@@ -1736,7 +1758,7 @@ function ProgressBar({
       ) : null
     ] }),
     /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.View,
+      reactNative.View,
       {
         style: [
           styles11.track,
@@ -1747,7 +1769,7 @@ function ProgressBar({
           }
         ],
         children: /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.View,
+          reactNative.View,
           {
             style: [
               styles11.fill,
@@ -1763,7 +1785,7 @@ function ProgressBar({
     )
   ] });
 }
-var styles11 = reactNative$1.StyleSheet.create({
+var styles11 = reactNative.StyleSheet.create({
   container: {
     gap: 4
   },
@@ -1815,11 +1837,11 @@ function MetricGauge({
   const innerSize = Math.max(0, size - strokeWidth * 2);
   const innerRadius = innerSize / 2;
   const trackColor = colors.surface2;
-  if (reactNative$1.Platform.OS === "web") {
+  if (reactNative.Platform.OS === "web") {
     const webBackground = `conic-gradient(${gaugeColor} 0% ${clamped}%, ${trackColor} ${clamped}% 100%)`;
-    return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles12.wrapper, style], children: [
+    return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles12.wrapper, style], children: [
       /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.View,
+        reactNative.View,
         {
           style: [
             styles12.gaugeBox,
@@ -1831,7 +1853,7 @@ function MetricGauge({
             { background: webBackground }
           ],
           children: /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative$1.View,
+            reactNative.View,
             {
               style: [
                 styles12.centerHole,
@@ -1842,7 +1864,7 @@ function MetricGauge({
                   backgroundColor: colors.surface0
                 }
               ],
-              children: centerSlot ? centerSlot : showPercent ? /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.Text, { style: [styles12.percentText, { color: colors.foreground }], children: [
+              children: centerSlot ? centerSlot : showPercent ? /* @__PURE__ */ jsxRuntime.jsxs(reactNative.Text, { style: [styles12.percentText, { color: colors.foreground }], children: [
                 Math.round(clamped),
                 "%"
               ] }) : null
@@ -1850,18 +1872,18 @@ function MetricGauge({
           )
         }
       ),
-      label ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles12.labelText, { color: colors.foregroundMuted }], children: label }) : null
+      label ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles12.labelText, { color: colors.foregroundMuted }], children: label }) : null
     ] });
   }
   const firstHalfRotation = Math.min(180, clamped * 3.6);
   const secondHalfRotation = clamped > 50 ? (clamped - 50) * 3.6 : 0;
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles12.wrapper, style], children: [
-    /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles12.gaugeBox, { width: size, height: size }], children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles12.wrapper, style], children: [
+    /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles12.gaugeBox, { width: size, height: size }], children: [
       /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.View,
+        reactNative.View,
         {
           style: [
-            reactNative$1.StyleSheet.absoluteFillObject,
+            reactNative.StyleSheet.absoluteFillObject,
             {
               borderRadius: radius,
               borderWidth: strokeWidth,
@@ -1871,7 +1893,7 @@ function MetricGauge({
         }
       ),
       /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.View,
+        reactNative.View,
         {
           style: [
             styles12.halfCircleContainer,
@@ -1882,7 +1904,7 @@ function MetricGauge({
             }
           ],
           children: /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative$1.View,
+            reactNative.View,
             {
               style: [
                 styles12.halfCircle,
@@ -1901,7 +1923,7 @@ function MetricGauge({
         }
       ),
       clamped > 50 ? /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.View,
+        reactNative.View,
         {
           style: [
             styles12.halfCircleContainer,
@@ -1912,7 +1934,7 @@ function MetricGauge({
             }
           ],
           children: /* @__PURE__ */ jsxRuntime.jsx(
-            reactNative$1.View,
+            reactNative.View,
             {
               style: [
                 styles12.halfCircle,
@@ -1931,7 +1953,7 @@ function MetricGauge({
         }
       ) : null,
       /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.View,
+        reactNative.View,
         {
           style: [
             styles12.centerHole,
@@ -1942,17 +1964,17 @@ function MetricGauge({
               backgroundColor: colors.surface0
             }
           ],
-          children: centerSlot ? centerSlot : showPercent ? /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.Text, { style: [styles12.percentText, { color: colors.foreground }], children: [
+          children: centerSlot ? centerSlot : showPercent ? /* @__PURE__ */ jsxRuntime.jsxs(reactNative.Text, { style: [styles12.percentText, { color: colors.foreground }], children: [
             Math.round(clamped),
             "%"
           ] }) : null
         }
       )
     ] }),
-    label ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles12.labelText, { color: colors.foregroundMuted }], children: label }) : null
+    label ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles12.labelText, { color: colors.foregroundMuted }], children: label }) : null
   ] });
 }
-var styles12 = reactNative$1.StyleSheet.create({
+var styles12 = reactNative.StyleSheet.create({
   wrapper: {
     alignItems: "center",
     justifyContent: "center",
@@ -2000,11 +2022,11 @@ function DataTable({
   const { colors, resolveRadius: resolveRadius2, isCompact } = usePluginTheme();
   const radius = resolveRadius2("sm");
   if (!data || data.length === 0) {
-    return emptyState ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style, children: emptyState }) : null;
+    return emptyState ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style, children: emptyState }) : null;
   }
   if (isCompact) {
-    return /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: [styles13.compactContainer, style], children: data.map((item, idx) => /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.View,
+    return /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: [styles13.compactContainer, style], children: data.map((item, idx) => /* @__PURE__ */ jsxRuntime.jsx(
+      reactNative.View,
       {
         style: [
           styles13.compactCard,
@@ -2014,16 +2036,16 @@ function DataTable({
             borderRadius: radius
           }
         ],
-        children: columns.map((col) => /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles13.compactRow, children: [
-          /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles13.compactHeader, { color: colors.foregroundMuted }], children: col.header }),
-          /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles13.compactValue, children: col.render(item) })
+        children: columns.map((col) => /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles13.compactRow, children: [
+          /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles13.compactHeader, { color: colors.foregroundMuted }], children: col.header }),
+          /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles13.compactValue, children: col.render(item) })
         ] }, col.key))
       },
       keyExtractor(item, idx)
     )) });
   }
   return /* @__PURE__ */ jsxRuntime.jsxs(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles13.table,
@@ -2036,7 +2058,7 @@ function DataTable({
       ],
       children: [
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.View,
+          reactNative.View,
           {
             style: [
               styles13.headerRow,
@@ -2046,7 +2068,7 @@ function DataTable({
               }
             ],
             children: columns.map((col) => /* @__PURE__ */ jsxRuntime.jsx(
-              reactNative$1.View,
+              reactNative.View,
               {
                 style: [
                   styles13.cell,
@@ -2054,21 +2076,21 @@ function DataTable({
                   col.width !== void 0 ? { width: col.width } : void 0,
                   col.align === "right" ? styles13.alignRight : col.align === "center" ? styles13.alignCenter : styles13.alignLeft
                 ],
-                children: /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles13.headerText, { color: colors.foregroundMuted }], children: col.header })
+                children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles13.headerText, { color: colors.foregroundMuted }], children: col.header })
               },
               col.key
             ))
           }
         ),
         data.map((item, idx) => /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.View,
+          reactNative.View,
           {
             style: [
               styles13.row,
               idx < data.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 }
             ],
             children: columns.map((col) => /* @__PURE__ */ jsxRuntime.jsx(
-              reactNative$1.View,
+              reactNative.View,
               {
                 style: [
                   styles13.cell,
@@ -2087,7 +2109,7 @@ function DataTable({
     }
   );
 }
-var styles13 = reactNative$1.StyleSheet.create({
+var styles13 = reactNative.StyleSheet.create({
   table: {
     borderWidth: 1,
     overflow: "hidden"
@@ -2153,8 +2175,9 @@ function KeyValue({
   labelStyle,
   valueStyle
 }) {
+  const { Icon: Icon2, useToast } = getClientHost();
   const { colors, flair, isCompact, touchTargetMin } = usePluginTheme();
-  const toast = reactNative.useToast();
+  const toast = useToast();
   const [copied, setCopied] = React7.useState(false);
   const displayValue = value === null || value === void 0 ? "-" : String(value);
   const handleCopy = async () => {
@@ -2168,10 +2191,10 @@ function KeyValue({
       setTimeout(() => setCopied(false), 2e3);
     }
   };
-  const fontFamily = mono ? reactNative$1.Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" }) : void 0;
+  const fontFamily = mono ? reactNative.Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" }) : void 0;
   const shouldStack = stackOnCompact && isCompact;
   const copyButton = copyable && value ? /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.Pressable,
+    reactNative.Pressable,
     {
       onPress: handleCopy,
       hitSlop: Math.max(8, (touchTargetMin - 20) / 2),
@@ -2179,7 +2202,7 @@ function KeyValue({
       accessibilityRole: "button",
       accessibilityLabel: `Copy ${label}`,
       children: /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative.Icon,
+        Icon2,
         {
           name: copied ? "Check" : "Copy",
           size: isCompact ? 12 : 13,
@@ -2189,10 +2212,10 @@ function KeyValue({
     }
   ) : null;
   if (shouldStack) {
-    return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles14.container, styles14.stackedContainer, style], children: [
-      /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles14.stackedHeaderRow, children: [
+    return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles14.container, styles14.stackedContainer, style], children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles14.stackedHeaderRow, children: [
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Text,
+          reactNative.Text,
           {
             style: [
               styles14.label,
@@ -2209,7 +2232,7 @@ function KeyValue({
         copyButton
       ] }),
       /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Text,
+        reactNative.Text,
         {
           selectable: true,
           style: [
@@ -2226,7 +2249,7 @@ function KeyValue({
         }
       ),
       subValue ? /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Text,
+        reactNative.Text,
         {
           style: [
             styles14.subValue,
@@ -2241,9 +2264,9 @@ function KeyValue({
       ) : null
     ] });
   }
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles14.container, styles14.rowContainer, style], children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles14.container, styles14.rowContainer, style], children: [
     /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.Text,
+      reactNative.Text,
       {
         style: [
           styles14.label,
@@ -2257,9 +2280,9 @@ function KeyValue({
         children: label
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles14.rowValueWrapper, children: [
+    /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles14.rowValueWrapper, children: [
       /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Text,
+        reactNative.Text,
         {
           selectable: true,
           style: [
@@ -2274,7 +2297,7 @@ function KeyValue({
           children: displayValue
         }
       ),
-      subValue && /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles14.subValue, { color: colors.foregroundMuted, fontSize: 11 }], children: subValue }),
+      subValue && /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles14.subValue, { color: colors.foregroundMuted, fontSize: 11 }], children: subValue }),
       copyButton
     ] })
   ] });
@@ -2288,8 +2311,8 @@ function KeyValueGroup({
   const { isCompact } = usePluginTheme();
   const effectiveColumns = isCompact ? 1 : columns;
   const childArray = React7__default.default.Children.toArray(children).filter(Boolean);
-  return /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: [styles14.groupContainer, { gap }, style], children: childArray.map((child, index) => /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.View,
+  return /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: [styles14.groupContainer, { gap }, style], children: childArray.map((child, index) => /* @__PURE__ */ jsxRuntime.jsx(
+    reactNative.View,
     {
       style: {
         flexGrow: 1,
@@ -2301,7 +2324,7 @@ function KeyValueGroup({
     index
   )) });
 }
-var styles14 = reactNative$1.StyleSheet.create({
+var styles14 = reactNative.StyleSheet.create({
   container: {
     paddingVertical: 5
   },
@@ -2363,13 +2386,14 @@ function EmptyState({
   onAction,
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, isCompact } = usePluginTheme();
   const resolvedAction = action ? action : actionLabel && onAction ? { label: actionLabel, onPress: onAction, variant: "secondary" } : void 0;
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles15.container, { padding: isCompact ? 20 : 32 }, style], children: [
-    icon ? typeof icon === "string" ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: [styles15.iconWrapper, { backgroundColor: colors.surface1 }], children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: icon, size: isCompact ? 24 : 32, color: colors.foregroundMuted }) }) : icon : null,
-    /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles15.title, { color: colors.foreground, fontSize: isCompact ? 14 : 16 }], children: title }),
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles15.container, { padding: isCompact ? 20 : 32 }, style], children: [
+    icon ? typeof icon === "string" ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: [styles15.iconWrapper, { backgroundColor: colors.surface1 }], children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: icon, size: isCompact ? 24 : 32, color: colors.foregroundMuted }) }) : icon : null,
+    /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles15.title, { color: colors.foreground, fontSize: isCompact ? 14 : 16 }], children: title }),
     description ? /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.Text,
+      reactNative.Text,
       {
         style: [
           styles15.description,
@@ -2378,10 +2402,10 @@ function EmptyState({
         children: description
       }
     ) : null,
-    resolvedAction ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles15.actionRow, children: /* @__PURE__ */ jsxRuntime.jsx(Button, { size: isCompact ? "sm" : "md", ...resolvedAction }) }) : null
+    resolvedAction ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles15.actionRow, children: /* @__PURE__ */ jsxRuntime.jsx(Button, { size: isCompact ? "sm" : "md", ...resolvedAction }) }) : null
   ] });
 }
-var styles15 = reactNative$1.StyleSheet.create({
+var styles15 = reactNative.StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
@@ -2470,6 +2494,7 @@ function AboutSection({
   showDiagnosticsCopy = true,
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, flair, resolveRadius: resolveRadius2 } = usePluginTheme();
   const { isCompact, platform } = useResponsive();
   const [copied, setCopied] = React7.useState(false);
@@ -2479,7 +2504,7 @@ function AboutSection({
     if (typeof logo === "string") {
       if (logo.startsWith("http://") || logo.startsWith("https://")) {
         resolvedLogoNode = /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.Image,
+          reactNative.Image,
           {
             source: { uri: logo },
             style: [styles16.logoImage, { borderRadius: radius }]
@@ -2487,7 +2512,7 @@ function AboutSection({
         );
       } else {
         resolvedLogoNode = /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative$1.View,
+          reactNative.View,
           {
             style: [
               styles16.logoIconFallback,
@@ -2497,13 +2522,13 @@ function AboutSection({
                 borderColor: colors.border
               }
             ],
-            children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: logo, size: 26, color: colors.accent })
+            children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: logo, size: 26, color: colors.accent })
           }
         );
       }
     } else {
       resolvedLogoNode = /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Image,
+        reactNative.Image,
         {
           source: logo,
           style: [styles16.logoImage, { borderRadius: radius }]
@@ -2514,7 +2539,7 @@ function AboutSection({
     const githubAvatar = resolveGitHubAvatarUrl(repository, author);
     if (githubAvatar) {
       resolvedLogoNode = /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.Image,
+        reactNative.Image,
         {
           source: { uri: githubAvatar },
           style: [styles16.logoImage, { borderRadius: radius }]
@@ -2522,7 +2547,7 @@ function AboutSection({
       );
     } else {
       resolvedLogoNode = /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative$1.View,
+        reactNative.View,
         {
           style: [
             styles16.logoIconFallback,
@@ -2532,7 +2557,7 @@ function AboutSection({
               borderColor: colors.border
             }
           ],
-          children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: "Layers", size: 26, color: colors.accent })
+          children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: "Layers", size: 26, color: colors.accent })
         }
       );
     }
@@ -2540,9 +2565,9 @@ function AboutSection({
   const handleOpenUrl = async (url) => {
     try {
       triggerHaptic("light");
-      const canOpen = await reactNative$1.Linking.canOpenURL(url);
+      const canOpen = await reactNative.Linking.canOpenURL(url);
       if (canOpen) {
-        await reactNative$1.Linking.openURL(url);
+        await reactNative.Linking.openURL(url);
       }
     } catch {
     }
@@ -2567,24 +2592,24 @@ function AboutSection({
     ...homepage ? [{ label: "Documentation", url: homepage, icon: "BookOpen" }] : [],
     ...links
   ];
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles16.container, style], children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles16.container, style], children: [
     /* @__PURE__ */ jsxRuntime.jsxs(Card, { variant: flair.surfaceStyle, children: [
-      /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles16.headerRow, children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles16.headerRow, children: [
         resolvedLogoNode,
-        /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles16.metaColumn, children: [
-          /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles16.titleRow, children: [
-            /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles16.nameText, { color: colors.foreground }], children: name }),
+        /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles16.metaColumn, children: [
+          /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles16.titleRow, children: [
+            /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles16.nameText, { color: colors.foreground }], children: name }),
             /* @__PURE__ */ jsxRuntime.jsx(Badge, { variant: "accent", label: `v${version}` }),
             license ? /* @__PURE__ */ jsxRuntime.jsx(Badge, { variant: "neutral", label: license }) : null
           ] }),
-          author ? /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.Text, { style: [styles16.authorText, { color: colors.foregroundMuted }], children: [
+          author ? /* @__PURE__ */ jsxRuntime.jsxs(reactNative.Text, { style: [styles16.authorText, { color: colors.foregroundMuted }], children: [
             "by ",
             author
           ] }) : null,
-          description ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles16.descText, { color: colors.foregroundMuted }], children: description }) : null
+          description ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles16.descText, { color: colors.foregroundMuted }], children: description }) : null
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles16.actionsRow, children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles16.actionsRow, children: [
         allLinks.map((link) => /* @__PURE__ */ jsxRuntime.jsx(
           Button,
           {
@@ -2635,7 +2660,7 @@ function AboutSection({
     ] })
   ] });
 }
-var styles16 = reactNative$1.StyleSheet.create({
+var styles16 = reactNative.StyleSheet.create({
   container: {
     gap: 12
   },
@@ -2685,7 +2710,7 @@ var styles16 = reactNative$1.StyleSheet.create({
     gap: 8,
     marginTop: 12,
     paddingTop: 10,
-    borderTopWidth: reactNative$1.StyleSheet.hairlineWidth,
+    borderTopWidth: reactNative.StyleSheet.hairlineWidth,
     borderTopColor: "rgba(128, 128, 128, 0.2)"
   }
 });
@@ -2700,7 +2725,7 @@ function ModalBody({
   const { isCompact, padding, colors } = usePluginTheme();
   const bottomPadding = (isCompact ? 48 : 20) + extraBottomInset;
   const refreshControl = onRefresh ? /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.RefreshControl,
+    reactNative.RefreshControl,
     {
       refreshing,
       onRefresh,
@@ -2710,7 +2735,7 @@ function ModalBody({
   ) : void 0;
   if (isCompact) {
     return /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.View,
+      reactNative.View,
       {
         style: [
           styles17.content,
@@ -2729,7 +2754,7 @@ function ModalBody({
     );
   }
   return /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.ScrollView,
+    reactNative.ScrollView,
     {
       style: [{ backgroundColor: colors.surface0 }, styles17.container, style],
       nestedScrollEnabled: true,
@@ -2750,7 +2775,7 @@ function ModalBody({
     }
   );
 }
-var styles17 = reactNative$1.StyleSheet.create({
+var styles17 = reactNative.StyleSheet.create({
   container: {
     flex: 1,
     minHeight: 0,
@@ -2772,7 +2797,7 @@ function ActionBar({
   const { isCompact, padding } = usePluginTheme();
   const isColumn = direction === "column" || direction === "auto" && isCompact;
   return /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative$1.View,
+    reactNative.View,
     {
       style: [
         styles18.container,
@@ -2789,16 +2814,16 @@ function ActionBar({
     }
   );
 }
-var styles18 = reactNative$1.StyleSheet.create({
+var styles18 = reactNative.StyleSheet.create({
   container: {
     flexWrap: "wrap"
   }
 });
 function FormRow({ label, description, children, style }) {
   const { colors, flair, isCompact } = usePluginTheme();
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: [styles19.container, style], children: [
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: [styles19.container, style], children: [
     /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.Text,
+      reactNative.Text,
       {
         style: [
           styles19.label,
@@ -2812,7 +2837,7 @@ function FormRow({ label, description, children, style }) {
       }
     ),
     description && /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative$1.Text,
+      reactNative.Text,
       {
         style: [
           styles19.description,
@@ -2821,10 +2846,10 @@ function FormRow({ label, description, children, style }) {
         children: description
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles19.content, children })
+    /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles19.content, children })
   ] });
 }
-var styles19 = reactNative$1.StyleSheet.create({
+var styles19 = reactNative.StyleSheet.create({
   container: {
     gap: 4,
     width: "100%"
@@ -2840,6 +2865,7 @@ var styles19 = reactNative$1.StyleSheet.create({
   }
 });
 function registerComposerPill(client, options) {
+  const { Icon: Icon2, Modal } = getClientHost();
   const openers = /* @__PURE__ */ new Map();
   const pills = /* @__PURE__ */ new Map();
   function PillHost(props) {
@@ -2861,7 +2887,7 @@ function registerComposerPill(client, options) {
       }
       const iconName = typeof options.modalIcon === "string" ? options.modalIcon : options.icon;
       if (iconName) {
-        return /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: iconName, size: 16, color: props.theme.colors.foreground });
+        return /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: iconName, size: 16, color: props.theme.colors.foreground });
       }
       return void 0;
     }, [options.modalIcon, options.icon, props.theme.colors.foreground]);
@@ -2892,7 +2918,7 @@ function registerComposerPill(client, options) {
         }
       ),
       /* @__PURE__ */ jsxRuntime.jsx(
-        reactNative.Modal,
+        Modal,
         {
           title: effectiveModalTitle,
           icon: modalIconElement,
@@ -2903,7 +2929,7 @@ function registerComposerPill(client, options) {
               setPayload(void 0);
             }
           },
-          children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Modal.Content, { children: open ? /* @__PURE__ */ jsxRuntime.jsx(PluginThemeProvider, { theme: props.theme, layout: props.layout, flair: options.flair, children: options.renderModal({
+          children: /* @__PURE__ */ jsxRuntime.jsx(Modal.Content, { children: open ? /* @__PURE__ */ jsxRuntime.jsx(PluginThemeProvider, { theme: props.theme, layout: props.layout, flair: options.flair, children: options.renderModal({
             ...props,
             close: () => setOpen(false),
             payload
@@ -2936,12 +2962,14 @@ function registerComposerPill(client, options) {
     openers.delete(agentId);
   }
   const unsubscribe = client.paseo.agents.subscribe((update) => {
-    if (update.kind === "remove") {
+    if ("agentId" in update && update.kind === "remove") {
       removePill(update.agentId);
       return;
     }
-    const { id, workspaceId } = update.agent;
-    if (workspaceId) addPill(id, workspaceId);
+    if ("agent" in update) {
+      const { id, workspaceId } = update.agent;
+      if (workspaceId) addPill(id, workspaceId);
+    }
   });
   client.paseo.agents.list().then((result) => {
     for (const { agent } of result.entries) {
@@ -2967,17 +2995,18 @@ function DefaultPillBody({
   compactBadgeText,
   theme
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { isCompact } = useResponsive();
   const effectiveTitle = isCompact && compactTitle ? compactTitle : title;
   const effectiveIcon = isCompact && compactIcon ? compactIcon : icon;
   const effectiveBadge = isCompact && compactBadgeText !== void 0 ? compactBadgeText : badgeText;
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles20.pillContainer, children: [
-    effectiveIcon && /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: effectiveIcon, size: 13, color: theme.colors.foreground }),
-    effectiveTitle ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles20.title, { color: theme.colors.foreground }], children: effectiveTitle }) : null,
-    effectiveBadge && /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: [styles20.badge, { backgroundColor: theme.colors.surface1 }], children: /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles20.badgeText, { color: theme.colors.foregroundMuted }], children: effectiveBadge }) })
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles20.pillContainer, children: [
+    effectiveIcon && /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: effectiveIcon, size: 13, color: theme.colors.foreground }),
+    effectiveTitle ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles20.title, { color: theme.colors.foreground }], children: effectiveTitle }) : null,
+    effectiveBadge && /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: [styles20.badge, { backgroundColor: theme.colors.surface1 }], children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles20.badgeText, { color: theme.colors.foregroundMuted }], children: effectiveBadge }) })
   ] });
 }
-var styles20 = reactNative$1.StyleSheet.create({
+var styles20 = reactNative.StyleSheet.create({
   pillContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -3033,7 +3062,8 @@ function registerAgentPanel(plugin, options) {
   });
 }
 function useRpcQuery(contract, input, options) {
-  const callRpc = client.useRpc(contract);
+  const { useRpc } = getClientHost();
+  const callRpc = useRpc(contract);
   return reactQuery.useQuery({
     queryKey: [contract.name, input],
     queryFn: () => callRpc(input),
@@ -3041,7 +3071,8 @@ function useRpcQuery(contract, input, options) {
   });
 }
 function useRpcMutation(contract, options) {
-  const callRpc = client.useRpc(contract);
+  const { useRpc } = getClientHost();
+  const callRpc = useRpc(contract);
   return reactQuery.useMutation({
     mutationFn: (input) => callRpc(input),
     ...options
@@ -3081,11 +3112,12 @@ function useAutoRefreshQuery(contract, input, options) {
   };
 }
 function usePluginSettings(contract, options = {}) {
+  const { useRpc } = getClientHost();
   const queryClient = reactQuery.useQueryClient();
   const queryKey = ["plugin-settings", contract.name];
-  const callGet = client.useRpc(contract.get);
-  const callUpdate = client.useRpc(contract.update);
-  const callReset = client.useRpc(contract.reset);
+  const callGet = useRpc(contract.get);
+  const callUpdate = useRpc(contract.update);
+  const callReset = useRpc(contract.reset);
   const query = reactQuery.useQuery({
     queryKey,
     queryFn: async () => {
@@ -3163,13 +3195,14 @@ function usePluginSettings(contract, options = {}) {
   };
 }
 function CustomPillBody({ state }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors } = usePluginTheme();
   const { isCompact } = useResponsive();
   const title = isCompact && state.compactTitle ? state.compactTitle : state.title;
   const icon = isCompact && state.compactIcon ? state.compactIcon : state.icon;
-  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.View, { style: styles21.pillContainer, children: [
-    icon && /* @__PURE__ */ jsxRuntime.jsx(reactNative.Icon, { name: icon, size: 13, color: colors.foreground }),
-    title ? /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.Text, { style: [styles21.pillTitle, { color: colors.foreground }], children: title }) : null,
+  return /* @__PURE__ */ jsxRuntime.jsxs(reactNative.View, { style: styles21.pillContainer, children: [
+    icon && /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: icon, size: 13, color: colors.foreground }),
+    title ? /* @__PURE__ */ jsxRuntime.jsx(reactNative.Text, { style: [styles21.pillTitle, { color: colors.foreground }], children: title }) : null,
     /* @__PURE__ */ jsxRuntime.jsx(
       Badge,
       {
@@ -3188,7 +3221,7 @@ function CustomPillModalContent({
 }) {
   const { colors, isCompact } = usePluginTheme();
   const displayText = state.modalOutput || state.rawValue || (state.error ? `Error: ${state.error}` : "No output");
-  return /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles21.modalContent, children: /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
+  return /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles21.modalContent, children: /* @__PURE__ */ jsxRuntime.jsxs(Card, { children: [
     /* @__PURE__ */ jsxRuntime.jsx(
       Card.Header,
       {
@@ -3218,7 +3251,7 @@ function CustomPillModalContent({
         copyable: true
       }
     ),
-    /* @__PURE__ */ jsxRuntime.jsx(reactNative$1.View, { style: styles21.footerRow, children: /* @__PURE__ */ jsxRuntime.jsxs(reactNative$1.Text, { style: [styles21.timestampText, { color: colors.foregroundMuted }], children: [
+    /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles21.footerRow, children: /* @__PURE__ */ jsxRuntime.jsxs(reactNative.Text, { style: [styles21.timestampText, { color: colors.foregroundMuted }], children: [
       "Last updated: ",
       new Date(state.lastUpdated).toLocaleTimeString()
     ] }) })
@@ -3274,7 +3307,7 @@ function registerCustomPills(client, options) {
     }
   };
 }
-var styles21 = reactNative$1.StyleSheet.create({
+var styles21 = reactNative.StyleSheet.create({
   modalContent: {
     width: "100%",
     padding: 12
@@ -3304,11 +3337,11 @@ var styles21 = reactNative$1.StyleSheet.create({
     fontSize: 11
   }
 });
+function Icon(props) {
+  const { Icon: HostIconComponent } = getClientHost();
+  return /* @__PURE__ */ jsxRuntime.jsx(HostIconComponent, { ...props });
+}
 
-Object.defineProperty(exports, "Icon", {
-  enumerable: true,
-  get: function () { return reactNative.Icon; }
-});
 exports.AboutSection = AboutSection;
 exports.ActionBar = ActionBar;
 exports.Badge = Badge;
@@ -3322,6 +3355,7 @@ exports.CustomPillModalContent = CustomPillModalContent;
 exports.DataTable = DataTable;
 exports.EmptyState = EmptyState;
 exports.FormRow = FormRow;
+exports.Icon = Icon;
 exports.KeyValue = KeyValue;
 exports.KeyValueGroup = KeyValueGroup;
 exports.MetricGauge = MetricGauge;
@@ -3340,12 +3374,15 @@ exports.copyToClipboard = copyToClipboard;
 exports.defaultDarkTheme = defaultDarkTheme;
 exports.defaultFlair = defaultFlair;
 exports.defaultLightTheme = defaultLightTheme;
+exports.getClientHost = getClientHost;
 exports.getContrastColor = getContrastColor;
 exports.getDefaultTheme = getDefaultTheme;
 exports.getLuminance = getLuminance;
 exports.getStatusColor = getStatusColor;
 exports.getTouchTargetMin = getTouchTargetMin;
 exports.getVariantPalette = getVariantPalette;
+exports.initClientHelpers = initClientHelpers;
+exports.isClientHostInitialized = isClientHostInitialized;
 exports.isMobilePlatform = isMobilePlatform;
 exports.registerAgentPanel = registerAgentPanel;
 exports.registerComposerPill = registerComposerPill;

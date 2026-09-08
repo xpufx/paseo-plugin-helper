@@ -8,7 +8,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export interface SearchInputProps {
@@ -33,6 +33,7 @@ export function SearchInput({
   inputStyle,
   testID,
 }: SearchInputProps) {
+  const { Icon } = getClientHost();
   const { colors, resolveRadius, isCompact } = usePluginTheme();
   const radius = resolveRadius("sm");
 

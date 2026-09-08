@@ -12,7 +12,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export interface TabItem {
@@ -42,6 +42,7 @@ export function Tabs({
   mode = "auto",
   style,
 }: TabsProps) {
+  const { Icon } = getClientHost();
   const { colors, resolveRadius, touchTargetMin, isCompact, alpha } = usePluginTheme();
   const scrollRef = useRef<ScrollView>(null);
   const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});

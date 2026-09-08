@@ -1,9 +1,6 @@
 import React7, { createContext, useMemo, useContext, useRef, useEffect, useState, useCallback } from 'react';
 import { StyleSheet, Appearance, Pressable, ActivityIndicator, Text, View, Animated, PanResponder, ScrollView, Platform, TextInput, Image, RefreshControl, Linking } from 'react-native';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
-import { Icon, useToast, Modal } from '@getpaseo/plugin/client/react-native';
-export { Icon } from '@getpaseo/plugin/client/react-native';
-import { useRpc } from '@getpaseo/plugin/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
@@ -288,6 +285,23 @@ function useResponsive() {
     }
   };
 }
+
+// src/client/host.ts
+var deps;
+function initClientHelpers(host) {
+  deps = host;
+}
+function getClientHost() {
+  if (!deps) {
+    throw new Error(
+      "paseo-plugin-helper/client used before initClientHelpers(). Call initClientHelpers({ Icon, Modal, useRpc, useToast }) in the plugin client entry."
+    );
+  }
+  return deps;
+}
+function isClientHostInitialized() {
+  return deps !== void 0;
+}
 function Button({
   label,
   variant = "secondary",
@@ -301,6 +315,7 @@ function Button({
   textStyle,
   accessibilityLabel
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const radius = resolveRadius2(size === "sm" ? "sm" : size === "lg" ? "lg" : "md");
   const py = size === "sm" ? isCompact ? 5 : 6 : size === "lg" ? 12 : isCompact ? 8 : 10;
@@ -334,7 +349,7 @@ function Button({
   const renderIcon = () => {
     if (!icon) return null;
     if (typeof icon === "string") {
-      return /* @__PURE__ */ jsx(Icon, { name: icon, size: iconSize, color: textColor });
+      return /* @__PURE__ */ jsx(Icon2, { name: icon, size: iconSize, color: textColor });
     }
     return icon;
   };
@@ -402,6 +417,7 @@ function Badge({
   style,
   textStyle
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, flair, resolveRadius: resolveRadius2, getVariantPalette: getVariantPalette2, getStatusColor: getStatusColor2, isCompact } = usePluginTheme();
   const radius = resolveRadius2("pill");
   const palette = getVariantPalette2(variant);
@@ -434,7 +450,7 @@ function Badge({
     }
     if (!icon) return null;
     if (typeof icon === "string") {
-      return /* @__PURE__ */ jsx(Icon, { name: icon, size: isCompact ? 10 : 11, color: textColor });
+      return /* @__PURE__ */ jsx(Icon2, { name: icon, size: isCompact ? 10 : 11, color: textColor });
     }
     return icon;
   };
@@ -565,10 +581,11 @@ function CardHeader({
   style,
   titleStyle
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, flair, isCompact } = usePluginTheme();
   return /* @__PURE__ */ jsxs(View, { style: [styles4.headerContainer, style], children: [
     /* @__PURE__ */ jsxs(View, { style: styles4.headerLeft, children: [
-      icon ? /* @__PURE__ */ jsx(Icon, { name: icon, size: 15, color: colors.foregroundMuted }) : null,
+      icon ? /* @__PURE__ */ jsx(Icon2, { name: icon, size: 15, color: colors.foregroundMuted }) : null,
       /* @__PURE__ */ jsxs(View, { style: styles4.titleColumn, children: [
         /* @__PURE__ */ jsx(
           Text,
@@ -694,6 +711,7 @@ function Tabs({
   mode = "auto",
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const scrollRef = useRef(null);
   const tabLayouts = useRef({});
@@ -810,7 +828,7 @@ function Tabs({
         ],
         children: [
           tab.icon ? /* @__PURE__ */ jsx(
-            Icon,
+            Icon2,
             {
               name: tab.icon,
               size: isCompact ? 11 : 13,
@@ -905,7 +923,7 @@ function Tabs({
               }
             ],
             accessibilityLabel: "Scroll tabs left",
-            children: /* @__PURE__ */ jsx(Icon, { name: "ChevronLeft", size: 14, color: colors.foreground })
+            children: /* @__PURE__ */ jsx(Icon2, { name: "ChevronLeft", size: 14, color: colors.foreground })
           }
         ),
         /* @__PURE__ */ jsx(
@@ -938,7 +956,7 @@ function Tabs({
               }
             ],
             accessibilityLabel: "Scroll tabs right",
-            children: /* @__PURE__ */ jsx(Icon, { name: "ChevronRight", size: 14, color: colors.foreground })
+            children: /* @__PURE__ */ jsx(Icon2, { name: "ChevronRight", size: 14, color: colors.foreground })
           }
         )
       ]
@@ -1089,6 +1107,7 @@ function CodeBlock({
   style,
   textStyle
 }) {
+  const { Icon: Icon2, useToast } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -1147,7 +1166,7 @@ function CodeBlock({
                   ],
                   children: [
                     /* @__PURE__ */ jsx(
-                      Icon,
+                      Icon2,
                       {
                         name: copied ? "Check" : "Copy",
                         size: 12,
@@ -1253,6 +1272,7 @@ function SearchInput({
   inputStyle,
   testID
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, isCompact } = usePluginTheme();
   const radius = resolveRadius2("sm");
   const handleClear = () => {
@@ -1273,7 +1293,7 @@ function SearchInput({
         style
       ],
       children: [
-        /* @__PURE__ */ jsx(View, { style: styles7.iconWrapper, children: /* @__PURE__ */ jsx(Icon, { name: "Search", size: 16, color: colors.foregroundMuted }) }),
+        /* @__PURE__ */ jsx(View, { style: styles7.iconWrapper, children: /* @__PURE__ */ jsx(Icon2, { name: "Search", size: 16, color: colors.foregroundMuted }) }),
         /* @__PURE__ */ jsx(
           TextInput,
           {
@@ -1302,7 +1322,7 @@ function SearchInput({
             style: styles7.clearButton,
             hitSlop: 8,
             accessibilityLabel: "Clear search",
-            children: /* @__PURE__ */ jsx(Icon, { name: "X", size: 14, color: colors.foregroundMuted })
+            children: /* @__PURE__ */ jsx(Icon2, { name: "X", size: 14, color: colors.foregroundMuted })
           }
         )
       ]
@@ -1567,6 +1587,7 @@ function Collapsible({
   icon,
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
   const [internalExpanded, setInternalExpanded] = useState(initiallyExpanded);
   const isExpanded = controlledExpanded !== void 0 ? controlledExpanded : internalExpanded;
@@ -1607,14 +1628,14 @@ function Collapsible({
             children: [
               /* @__PURE__ */ jsxs(View, { style: styles10.headerLeft, children: [
                 /* @__PURE__ */ jsx(
-                  Icon,
+                  Icon2,
                   {
                     name: isExpanded ? "ChevronDown" : "ChevronRight",
                     size: 14,
                     color: colors.foregroundMuted
                   }
                 ),
-                icon && /* @__PURE__ */ jsx(Icon, { name: icon, size: 14, color: colors.accent }),
+                icon && /* @__PURE__ */ jsx(Icon2, { name: icon, size: 14, color: colors.accent }),
                 /* @__PURE__ */ jsx(
                   Text,
                   {
@@ -2148,6 +2169,7 @@ function KeyValue({
   labelStyle,
   valueStyle
 }) {
+  const { Icon: Icon2, useToast } = getClientHost();
   const { colors, flair, isCompact, touchTargetMin } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -2174,7 +2196,7 @@ function KeyValue({
       accessibilityRole: "button",
       accessibilityLabel: `Copy ${label}`,
       children: /* @__PURE__ */ jsx(
-        Icon,
+        Icon2,
         {
           name: copied ? "Check" : "Copy",
           size: isCompact ? 12 : 13,
@@ -2358,10 +2380,11 @@ function EmptyState({
   onAction,
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, isCompact } = usePluginTheme();
   const resolvedAction = action ? action : actionLabel && onAction ? { label: actionLabel, onPress: onAction, variant: "secondary" } : void 0;
   return /* @__PURE__ */ jsxs(View, { style: [styles15.container, { padding: isCompact ? 20 : 32 }, style], children: [
-    icon ? typeof icon === "string" ? /* @__PURE__ */ jsx(View, { style: [styles15.iconWrapper, { backgroundColor: colors.surface1 }], children: /* @__PURE__ */ jsx(Icon, { name: icon, size: isCompact ? 24 : 32, color: colors.foregroundMuted }) }) : icon : null,
+    icon ? typeof icon === "string" ? /* @__PURE__ */ jsx(View, { style: [styles15.iconWrapper, { backgroundColor: colors.surface1 }], children: /* @__PURE__ */ jsx(Icon2, { name: icon, size: isCompact ? 24 : 32, color: colors.foregroundMuted }) }) : icon : null,
     /* @__PURE__ */ jsx(Text, { style: [styles15.title, { color: colors.foreground, fontSize: isCompact ? 14 : 16 }], children: title }),
     description ? /* @__PURE__ */ jsx(
       Text,
@@ -2465,6 +2488,7 @@ function AboutSection({
   showDiagnosticsCopy = true,
   style
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors, flair, resolveRadius: resolveRadius2 } = usePluginTheme();
   const { isCompact, platform } = useResponsive();
   const [copied, setCopied] = useState(false);
@@ -2492,7 +2516,7 @@ function AboutSection({
                 borderColor: colors.border
               }
             ],
-            children: /* @__PURE__ */ jsx(Icon, { name: logo, size: 26, color: colors.accent })
+            children: /* @__PURE__ */ jsx(Icon2, { name: logo, size: 26, color: colors.accent })
           }
         );
       }
@@ -2527,7 +2551,7 @@ function AboutSection({
               borderColor: colors.border
             }
           ],
-          children: /* @__PURE__ */ jsx(Icon, { name: "Layers", size: 26, color: colors.accent })
+          children: /* @__PURE__ */ jsx(Icon2, { name: "Layers", size: 26, color: colors.accent })
         }
       );
     }
@@ -2835,6 +2859,7 @@ var styles19 = StyleSheet.create({
   }
 });
 function registerComposerPill(client, options) {
+  const { Icon: Icon2, Modal } = getClientHost();
   const openers = /* @__PURE__ */ new Map();
   const pills = /* @__PURE__ */ new Map();
   function PillHost(props) {
@@ -2856,7 +2881,7 @@ function registerComposerPill(client, options) {
       }
       const iconName = typeof options.modalIcon === "string" ? options.modalIcon : options.icon;
       if (iconName) {
-        return /* @__PURE__ */ jsx(Icon, { name: iconName, size: 16, color: props.theme.colors.foreground });
+        return /* @__PURE__ */ jsx(Icon2, { name: iconName, size: 16, color: props.theme.colors.foreground });
       }
       return void 0;
     }, [options.modalIcon, options.icon, props.theme.colors.foreground]);
@@ -2931,12 +2956,14 @@ function registerComposerPill(client, options) {
     openers.delete(agentId);
   }
   const unsubscribe = client.paseo.agents.subscribe((update) => {
-    if (update.kind === "remove") {
+    if ("agentId" in update && update.kind === "remove") {
       removePill(update.agentId);
       return;
     }
-    const { id, workspaceId } = update.agent;
-    if (workspaceId) addPill(id, workspaceId);
+    if ("agent" in update) {
+      const { id, workspaceId } = update.agent;
+      if (workspaceId) addPill(id, workspaceId);
+    }
   });
   client.paseo.agents.list().then((result) => {
     for (const { agent } of result.entries) {
@@ -2962,12 +2989,13 @@ function DefaultPillBody({
   compactBadgeText,
   theme
 }) {
+  const { Icon: Icon2 } = getClientHost();
   const { isCompact } = useResponsive();
   const effectiveTitle = isCompact && compactTitle ? compactTitle : title;
   const effectiveIcon = isCompact && compactIcon ? compactIcon : icon;
   const effectiveBadge = isCompact && compactBadgeText !== void 0 ? compactBadgeText : badgeText;
   return /* @__PURE__ */ jsxs(View, { style: styles20.pillContainer, children: [
-    effectiveIcon && /* @__PURE__ */ jsx(Icon, { name: effectiveIcon, size: 13, color: theme.colors.foreground }),
+    effectiveIcon && /* @__PURE__ */ jsx(Icon2, { name: effectiveIcon, size: 13, color: theme.colors.foreground }),
     effectiveTitle ? /* @__PURE__ */ jsx(Text, { style: [styles20.title, { color: theme.colors.foreground }], children: effectiveTitle }) : null,
     effectiveBadge && /* @__PURE__ */ jsx(View, { style: [styles20.badge, { backgroundColor: theme.colors.surface1 }], children: /* @__PURE__ */ jsx(Text, { style: [styles20.badgeText, { color: theme.colors.foregroundMuted }], children: effectiveBadge }) })
   ] });
@@ -3028,6 +3056,7 @@ function registerAgentPanel(plugin, options) {
   });
 }
 function useRpcQuery(contract, input, options) {
+  const { useRpc } = getClientHost();
   const callRpc = useRpc(contract);
   return useQuery({
     queryKey: [contract.name, input],
@@ -3036,6 +3065,7 @@ function useRpcQuery(contract, input, options) {
   });
 }
 function useRpcMutation(contract, options) {
+  const { useRpc } = getClientHost();
   const callRpc = useRpc(contract);
   return useMutation({
     mutationFn: (input) => callRpc(input),
@@ -3076,6 +3106,7 @@ function useAutoRefreshQuery(contract, input, options) {
   };
 }
 function usePluginSettings(contract, options = {}) {
+  const { useRpc } = getClientHost();
   const queryClient = useQueryClient();
   const queryKey = ["plugin-settings", contract.name];
   const callGet = useRpc(contract.get);
@@ -3158,12 +3189,13 @@ function usePluginSettings(contract, options = {}) {
   };
 }
 function CustomPillBody({ state }) {
+  const { Icon: Icon2 } = getClientHost();
   const { colors } = usePluginTheme();
   const { isCompact } = useResponsive();
   const title = isCompact && state.compactTitle ? state.compactTitle : state.title;
   const icon = isCompact && state.compactIcon ? state.compactIcon : state.icon;
   return /* @__PURE__ */ jsxs(View, { style: styles21.pillContainer, children: [
-    icon && /* @__PURE__ */ jsx(Icon, { name: icon, size: 13, color: colors.foreground }),
+    icon && /* @__PURE__ */ jsx(Icon2, { name: icon, size: 13, color: colors.foreground }),
     title ? /* @__PURE__ */ jsx(Text, { style: [styles21.pillTitle, { color: colors.foreground }], children: title }) : null,
     /* @__PURE__ */ jsx(
       Badge,
@@ -3299,7 +3331,11 @@ var styles21 = StyleSheet.create({
     fontSize: 11
   }
 });
+function Icon(props) {
+  const { Icon: HostIconComponent } = getClientHost();
+  return /* @__PURE__ */ jsx(HostIconComponent, { ...props });
+}
 
-export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, CustomPillBody, CustomPillModalContent, DataTable, EmptyState, FormRow, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput2 as TextInput, Toggle, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, CustomPillBody, CustomPillModalContent, DataTable, EmptyState, FormRow, Icon, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput2 as TextInput, Toggle, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getClientHost, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, initClientHelpers, isClientHostInitialized, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

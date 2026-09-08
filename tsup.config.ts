@@ -19,7 +19,9 @@ export default defineConfig({
   target: "es2022",
   external: [
     "@getpaseo/plugin",
-    "@getpaseo/plugin/react-native",
+    "@getpaseo/plugin/client",
+    "@getpaseo/plugin/client/react-native",
+    "@getpaseo/plugin/server",
     "@getpaseo/client",
     "@tanstack/react-query",
     "react",

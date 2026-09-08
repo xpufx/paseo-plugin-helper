@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { PluginRpcContract } from "@getpaseo/plugin";
+import type { PluginRpcContract } from "../shared/rpc.js";
 import { useRpcQuery, type RpcQueryOptions } from "./query.js";
 import type { RpcInput, RpcOutput } from "../shared/rpc.js";
 

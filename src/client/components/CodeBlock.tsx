@@ -10,7 +10,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { Icon, useToast } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 import { copyToClipboard } from "../utils/clipboard.js";
 
@@ -33,6 +33,7 @@ export function CodeBlock({
   style,
   textStyle,
 }: CodeBlockProps) {
+  const { Icon, useToast } = getClientHost();
   const { colors, resolveRadius, isCompact, touchTargetMin, alpha } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = useState(false);

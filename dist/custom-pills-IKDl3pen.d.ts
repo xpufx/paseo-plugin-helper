@@ -1,8 +1,30 @@
 import { ZodType, z } from 'zod';
-import { P as PluginRpcContract } from './rpc-Ja20I4uK.cjs';
-import { PluginTheme } from '@getpaseo/plugin';
+import { P as PluginRpcContract } from './rpc-D27pph91.js';
 
-type ThemeColors = PluginTheme["colors"];
+/**
+ * Structural theme types for Paseo plugins.
+ *
+ * These interfaces mirror the Paseo host theme shapes without importing any
+ * Paseo SDK module, so `paseo-plugin-helper/shared` (and everything
+ * built on it) typechecks and bundles identically against Paseo v0.7 and
+ * Paseo v0.8 SDKs.
+ */
+interface ThemeColors {
+    readonly surface0: string;
+    readonly surface1: string;
+    readonly surface2: string;
+    readonly border: string;
+    readonly foreground: string;
+    readonly foregroundMuted: string;
+    readonly accent: string;
+    readonly accentForeground: string;
+    readonly statusSuccess: string;
+    readonly statusWarning: string;
+    readonly statusDanger: string;
+}
+interface PluginTheme {
+    readonly colors: ThemeColors;
+}
 type PlatformType = "ios" | "android" | "web";
 interface ResponsiveLayout {
     compact: boolean;
@@ -120,4 +142,4 @@ declare function resolveCustomPillStatus(numericValue: number | undefined, thres
  */
 declare function formatPillDisplay(rawValue: string, prefix?: string, suffix?: string): string;
 
-export { type CustomPillDefinition as C, type DefineSettingsContractOptions as D, type PlatformType as P, type ResponsiveLayout as R, type StatusVariant as S, type ThemeColors as T, type SettingsContract as a, type CustomPillState as b, CustomPillDefinitionSchema as c, type CustomPillModal as d, CustomPillModalSchema as e, type CustomPillThresholds as f, CustomPillThresholdsSchema as g, type SettingsEmptyInput as h, SettingsEmptyInputSchema as i, defineSettingsContract as j, formatPillDisplay as k, parseNumericPillValue as p, resolveCustomPillStatus as r };
+export { type CustomPillDefinition as C, type DefineSettingsContractOptions as D, type PlatformType as P, type ResponsiveLayout as R, type StatusVariant as S, type ThemeColors as T, type SettingsContract as a, type CustomPillState as b, type PluginTheme as c, CustomPillDefinitionSchema as d, type CustomPillModal as e, CustomPillModalSchema as f, type CustomPillThresholds as g, CustomPillThresholdsSchema as h, type SettingsEmptyInput as i, SettingsEmptyInputSchema as j, defineSettingsContract as k, formatPillDisplay as l, parseNumericPillValue as p, resolveCustomPillStatus as r };

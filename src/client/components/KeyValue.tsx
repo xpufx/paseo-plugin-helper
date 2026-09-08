@@ -9,7 +9,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { Icon, useToast } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 import { copyToClipboard } from "../utils/clipboard.js";
 
@@ -36,6 +36,7 @@ export function KeyValue({
   labelStyle,
   valueStyle,
 }: KeyValueProps) {
+  const { Icon, useToast } = getClientHost();
   const { colors, flair, isCompact, touchTargetMin } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = useState(false);

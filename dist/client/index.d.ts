@@ -1,15 +1,13 @@
-import { S as StatusVariant, T as ThemeColors, P as PlatformType, R as ResponsiveLayout, a as SettingsContract, b as CustomPillState } from '../custom-pills-ivI-Xmi3.js';
+import { S as StatusVariant, T as ThemeColors, P as PlatformType, R as ResponsiveLayout, c as PluginTheme, a as SettingsContract, b as CustomPillState } from '../custom-pills-IKDl3pen.js';
 import * as React from 'react';
 import React__default, { ReactNode, ComponentType } from 'react';
-import { PluginTheme, PluginCleanup, PluginRpcContract } from '@getpaseo/plugin';
-import { PluginHostProps, PluginComposerPillProps, PluginClientContext, PluginSurfaceProps, PluginAgentPanelProps, PluginWorkspacePanelProps } from '@getpaseo/plugin/client';
+import { c as HostLayout, d as HostPillProps, e as ComposerPillRegistrar, P as PluginCleanup, a as HostSurfaceProps, f as HostAgentPanelProps, g as HostWorkspacePanelProps, h as HostToast, i as HostIconProps } from '../host-CI3xo45X.js';
+export { j as ClientHostDeps, C as ComposerPillContribution, H as HostAgentRef, b as HostAgentUpdate, k as HostAgentsApi, l as HostIcon, m as HostModal, n as HostModalContentProps, o as HostModalProps, p as HostRpcContract, q as HostTheme, r as HostThemeColors, s as HostUseRpc, t as HostUseToast, u as getClientHost, v as initClientHelpers, w as isClientHostInitialized } from '../host-CI3xo45X.js';
 import { StyleProp, ViewStyle, TextStyle, KeyboardTypeOptions, ImageSourcePropType } from 'react-native';
-import { M as MetricThresholds } from '../formatters-D_q6wnn5.js';
-import { R as RpcInput, a as RpcOutput } from '../rpc-Ja20I4uK.js';
+import { M as MetricThresholds } from '../formatters-CUdI4vcB.js';
+import { P as PluginRpcContract, R as RpcInput, a as RpcOutput } from '../rpc-D27pph91.js';
 import { UseMutationOptions, UseQueryOptions, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import * as _tanstack_query_core from '@tanstack/query-core';
-import { ToastApi } from '@getpaseo/plugin/client/react-native';
-export { Icon } from '@getpaseo/plugin/client/react-native';
 import 'zod';
 
 type RadiusStyle = "sharp" | "rounded" | "pill";
@@ -161,7 +159,7 @@ declare const defaultLightTheme: PluginTheme;
 declare function getDefaultTheme(): PluginTheme;
 interface PluginThemeProviderProps {
     theme: PluginTheme;
-    layout?: PluginHostProps["layout"];
+    layout?: HostLayout;
     flair?: Partial<VisualFlair>;
     children: ReactNode;
 }
@@ -583,13 +581,13 @@ interface FormRowProps {
 }
 declare function FormRow({ label, description, children, style }: FormRowProps): React__default.JSX.Element;
 
-interface RenderPillProps<TPayload = any> extends PluginComposerPillProps {
+interface RenderPillProps<TPayload = any> extends HostPillProps {
     isOpen: boolean;
     open: (payload?: TPayload) => void;
     close: () => void;
     toggle: (payload?: TPayload) => void;
 }
-interface RenderModalProps<TPayload = any> extends PluginComposerPillProps {
+interface RenderModalProps<TPayload = any> extends HostPillProps {
     close: () => void;
     payload?: TPayload;
 }
@@ -660,21 +658,21 @@ interface RegisterComposerPillOptions<TPayload = any> {
  * Registers an agent-scoped composer pill and modal lifecycle.
  * Manages agent subscription events, unmount cleanup, and pill-to-modal activation.
  */
-declare function registerComposerPill<TPayload = any>(client: PluginClientContext, options: RegisterComposerPillOptions<TPayload>): PluginCleanup;
+declare function registerComposerPill<TPayload = any>(client: ComposerPillRegistrar, options: RegisterComposerPillOptions<TPayload>): PluginCleanup;
 
 /**
  * Structural registrar interface satisfied by both Paseo v0.7 PluginContext
  * and Paseo v0.8 PluginClientContext.
  */
 interface SidebarSurfaceRegistrar {
-    addSurface(surfaceId: string, Component: ComponentType<PluginSurfaceProps>): any;
+    addSurface(surfaceId: string, Component: ComponentType<HostSurfaceProps>): any;
     addSidebarItem(contribution: any): any;
 }
 interface RegisterSidebarSurfaceOptions {
     id: string;
     title: string;
     icon: string;
-    Component: ComponentType<PluginSurfaceProps>;
+    Component: ComponentType<HostSurfaceProps>;
     flair?: VisualFlair;
 }
 /**
@@ -695,14 +693,14 @@ interface RegisterWorkspacePanelOptions {
     id: string;
     title: string;
     icon: string;
-    Component: ComponentType<PluginWorkspacePanelProps>;
+    Component: ComponentType<HostWorkspacePanelProps>;
     flair?: VisualFlair;
 }
 interface RegisterAgentPanelOptions {
     id: string;
     title: string;
     icon: string;
-    Component: ComponentType<PluginAgentPanelProps>;
+    Component: ComponentType<HostAgentPanelProps>;
     flair?: VisualFlair;
 }
 /**
@@ -1009,11 +1007,7 @@ interface UsePluginSettingsResult<TSettings> {
 declare function usePluginSettings<TSettings extends Record<string, any>>(contract: SettingsContract<TSettings>, options?: UsePluginSettingsOptions<TSettings>): UsePluginSettingsResult<TSettings>;
 
 interface CopyToClipboardOptions {
-    toast?: ToastApi | {
-        show?: (message: string, options?: unknown) => void;
-        copied?: (label?: string) => void;
-        error?: (message: string) => void;
-    };
+    toast?: HostToast;
     toastMessage?: string;
 }
 /**
@@ -1073,6 +1067,8 @@ interface RegisterCustomPillsOptions {
  * Registers one or more declarative custom metric pills into Paseo's composer trackbar.
  * Automatically handles pill lifecycle, responsive layouts, and drill-down inspection modals.
  */
-declare function registerCustomPills(client: PluginClientContext, options: RegisterCustomPillsOptions): PluginCleanup;
+declare function registerCustomPills(client: ComposerPillRegistrar, options: RegisterCustomPillsOptions): PluginCleanup;
 
-export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, type CopyToClipboardOptions, CustomPillBody, type CustomPillBodyProps, CustomPillModalContent, type CustomPillModalContentProps, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterCustomPillsOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+declare function Icon(props: HostIconProps): React__default.JSX.Element;
+
+export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, ComposerPillRegistrar, type CopyToClipboardOptions, CustomPillBody, type CustomPillBodyProps, CustomPillModalContent, type CustomPillModalContentProps, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, HostAgentPanelProps, HostIconProps, HostLayout, HostPillProps, HostSurfaceProps, HostToast, HostWorkspacePanelProps, Icon, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, PluginCleanup, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterCustomPillsOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };

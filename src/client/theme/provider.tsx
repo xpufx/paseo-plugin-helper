@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, type ReactNode } from "react";
-import type { PluginTheme } from "@getpaseo/plugin";
-import type { PluginHostProps } from "@getpaseo/plugin/client";
+import type { PluginTheme } from "../../shared/types.js";
+import type { HostLayout } from "../host.js";
 import { Appearance } from "react-native";
 import { defaultFlair, resolveRadius, type VisualFlair } from "./flair.js";
 import { alpha, getContrastColor, getStatusColor, getVariantPalette } from "./color-utils.js";
@@ -92,7 +92,7 @@ const PluginThemeContext = createContext<PluginThemeContextValue>({
 
 export interface PluginThemeProviderProps {
   theme: PluginTheme;
-  layout?: PluginHostProps["layout"];
+  layout?: HostLayout;
   flair?: Partial<VisualFlair>;
   children: ReactNode;
 }

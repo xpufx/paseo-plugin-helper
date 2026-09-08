@@ -13,7 +13,7 @@ const RPC_NAME = /^[a-z][a-z0-9._-]*$/;
 
 /**
  * Define a typed Paseo RPC contract conforming to the Paseo RPC protocol.
- * Implemented locally without runtime dependency on @getpaseo/plugin.
+ * Implemented locally without a runtime dependency on the Paseo SDK.
  */
 export function defineRpc<InputSchema extends ZodType, OutputSchema extends ZodType>(
   definition: { name: string; input: InputSchema; output: OutputSchema },

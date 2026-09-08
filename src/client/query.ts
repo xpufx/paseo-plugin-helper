@@ -1,5 +1,5 @@
-import { useRpc } from "@getpaseo/plugin/client";
-import type { PluginRpcContract } from "@getpaseo/plugin";
+import { getClientHost, type HostRpcContract } from "./host.js";
+import type { PluginRpcContract } from "../shared/rpc.js";
 import type { RpcInput, RpcOutput } from "../shared/rpc.js";
 import {
   useQuery,
@@ -28,6 +28,7 @@ export function useRpcQuery<
   input: TInput,
   options?: RpcQueryOptions<TOutput>,
 ): UseQueryResult<TOutput, Error> {
+  const { useRpc } = getClientHost();
   const callRpc = useRpc(contract);
 
   return useQuery({
@@ -55,6 +56,7 @@ export function useRpcMutation<
   contract: TContract,
   options?: RpcMutationOptions<TInput, TOutput>,
 ): UseMutationResult<TOutput, Error, TInput, unknown> {
+  const { useRpc } = getClientHost();
   const callRpc = useRpc(contract);
 
   return useMutation({

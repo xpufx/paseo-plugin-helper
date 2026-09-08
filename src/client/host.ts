@@ -1,0 +1,173 @@
+import type { ComponentType, ReactNode } from "react";
+
+/**
+ * Structural host types for Paseo client integration.
+ *
+ * These interfaces describe the shapes `paseo-plugin-helper/client` needs
+ * from the Paseo host app. They are intentionally decoupled from any
+ * Paseo SDK version: this module (and every client module built on
+ * it) contains zero Paseo SDK imports, so a single published helper
+ * bundle satisfies both the Paseo v0.7 SDK entry points and the Paseo
+ * v0.8 runtime-owned entry points.
+ *
+ * The plugin author provides the real host implementations once, in the
+ * client entry, using whichever specifiers match their installed SDK.
+ * See docs/client.md for the per-version import paths.
+ */
+
+export interface HostThemeColors {
+  surface0: string;
+  surface1: string;
+  surface2: string;
+  border: string;
+  foreground: string;
+  foregroundMuted: string;
+  accent: string;
+  accentForeground: string;
+  statusSuccess: string;
+  statusWarning: string;
+  statusDanger: string;
+}
+
+export interface HostTheme {
+  colors: HostThemeColors;
+}
+
+export interface HostLayout {
+  compact: boolean;
+  platform: "ios" | "android" | "web";
+  width?: number;
+  height?: number;
+}
+
+export interface HostIconProps {
+  name: string;
+  size?: number;
+  color?: string;
+}
+
+export type HostIcon = ComponentType<HostIconProps>;
+
+export interface HostModalContentProps {
+  children: ReactNode;
+}
+
+export interface HostModalProps {
+  title: string;
+  icon?: ReactNode;
+  open: boolean;
+  onOpenChange(open: boolean): void;
+  children: ReactNode;
+}
+
+export type HostModal = ComponentType<HostModalProps> & {
+  Content: ComponentType<HostModalContentProps>;
+};
+
+export interface HostToast {
+  show?: (message: string, options?: any) => void;
+  copied?: (label?: string) => void;
+  error?: (message: string) => void;
+}
+
+export type HostUseToast = () => HostToast;
+
+export interface HostRpcContract {
+  name: string;
+}
+
+// Takes `any` contract deliberately: both SDK generations type their own
+// contract shapes, and structural acceptance in both directions only holds
+// for `any`. Call sites in useRpcQuery/usePluginSettings keep full typing
+// through their own generics.
+export type HostUseRpc = (contract: any) => (input: any) => Promise<any>;
+
+export interface HostAgentRef {
+  id: string;
+  workspaceId?: string | null;
+}
+
+export type HostAgentUpdate =
+  | { kind: "remove"; agentId: string }
+  | { kind: string; agent: HostAgentRef };
+
+export interface HostAgentsApi {
+  subscribe(cb: (update: HostAgentUpdate) => void): () => void;
+  list(): Promise<{ entries: Array<{ agent: HostAgentRef }> }>;
+}
+
+export type PluginCleanup = () => void;
+
+export interface ClientHostDeps {
+  Icon: HostIcon;
+  Modal: HostModal;
+  useRpc: HostUseRpc;
+  useToast: HostUseToast;
+}
+
+let deps: ClientHostDeps | undefined;
+
+export function initClientHelpers(host: ClientHostDeps): void {
+  deps = host;
+}
+
+export function getClientHost(): ClientHostDeps {
+  if (!deps) {
+    throw new Error(
+      "paseo-plugin-helper/client used before initClientHelpers(). " +
+        "Call initClientHelpers({ Icon, Modal, useRpc, useToast }) in the plugin client entry.",
+    );
+  }
+  return deps;
+}
+
+export interface HostPillProps {
+  agentId: string;
+  workspaceId: string;
+  theme: HostTheme;
+  layout: HostLayout;
+  host: {
+    id: string;
+    label: string;
+  };
+}
+
+export interface HostWorkspacePanelProps {
+  context: "workspace";
+  workspaceId: string;
+  theme: HostTheme;
+  layout: HostLayout;
+}
+
+export interface HostAgentPanelProps {
+  context: "agent";
+  workspaceId: string;
+  agentId: string;
+  theme: HostTheme;
+  layout: HostLayout;
+}
+
+export interface HostSurfaceProps {
+  theme: HostTheme;
+  layout: HostLayout;
+}
+
+export interface ComposerPillContribution {
+  id: string;
+  title: string;
+  workspaceId: string;
+  agentId: string;
+  Component: ComponentType<HostPillProps>;
+  onPress(): void | Promise<void>;
+}
+
+export interface ComposerPillRegistrar {
+  addComposerPill(contribution: ComposerPillContribution): PluginCleanup;
+  paseo: {
+    agents: HostAgentsApi;
+  };
+}
+
+export function isClientHostInitialized(): boolean {
+  return deps !== undefined;
+}

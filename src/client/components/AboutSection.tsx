@@ -9,7 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 import { useResponsive } from "../theme/useResponsive.js";
 import { Card } from "./Card.js";
@@ -141,6 +141,7 @@ export function AboutSection({
   showDiagnosticsCopy = true,
   style,
 }: AboutSectionProps) {
+  const { Icon } = getClientHost();
   const { colors, flair, resolveRadius } = usePluginTheme();
   const { isCompact, platform } = useResponsive();
   const [copied, setCopied] = useState(false);

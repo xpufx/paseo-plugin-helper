@@ -8,7 +8,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
@@ -41,6 +41,7 @@ export function Button({
   textStyle,
   accessibilityLabel,
 }: ButtonProps) {
+  const { Icon } = getClientHost();
   const { colors, resolveRadius, touchTargetMin, isCompact, alpha } = usePluginTheme();
 
   const radius = resolveRadius(size === "sm" ? "sm" : size === "lg" ? "lg" : "md");

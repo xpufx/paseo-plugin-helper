@@ -1,4 +1,4 @@
-import { useRpc } from "@getpaseo/plugin/client";
+import { getClientHost } from "./host.js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { SettingsContract } from "../shared/settings.js";
 
@@ -85,6 +85,7 @@ export function usePluginSettings<TSettings extends Record<string, any>>(
   contract: SettingsContract<TSettings>,
   options: UsePluginSettingsOptions<TSettings> = {},
 ): UsePluginSettingsResult<TSettings> {
+  const { useRpc } = getClientHost();
   const queryClient = useQueryClient();
   const queryKey = ["plugin-settings", contract.name] as const;
 

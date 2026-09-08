@@ -1,7 +1,5 @@
 import React, { type ComponentType } from "react";
-import type {
-  PluginSurfaceProps,
-} from "@getpaseo/plugin/client";
+import type { HostSurfaceProps as PluginSurfaceProps } from "./host.js";
 import { PluginThemeProvider } from "./theme/provider.js";
 import type { VisualFlair } from "./theme/flair.js";
 

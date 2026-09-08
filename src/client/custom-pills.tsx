@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import type { PluginClientContext } from "@getpaseo/plugin/client";
-import type { PluginCleanup } from "@getpaseo/plugin";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import type { ComposerPillRegistrar, PluginCleanup } from "./host.js";
+import { getClientHost } from "./host.js";
 import { usePluginTheme } from "./theme/provider.js";
 import { useResponsive } from "./theme/useResponsive.js";
 import type { VisualFlair } from "./theme/flair.js";
@@ -22,6 +21,7 @@ export interface CustomPillBodyProps {
  * Automatically adapts to responsive compact/mobile modes and shows threshold status.
  */
 export function CustomPillBody({ state }: CustomPillBodyProps) {
+  const { Icon } = getClientHost();
   const { colors } = usePluginTheme();
   const { isCompact } = useResponsive();
 
@@ -127,7 +127,7 @@ export interface RegisterCustomPillsOptions {
  * Automatically handles pill lifecycle, responsive layouts, and drill-down inspection modals.
  */
 export function registerCustomPills(
-  client: PluginClientContext,
+  client: ComposerPillRegistrar,
   options: RegisterCustomPillsOptions,
 ): PluginCleanup {
   const cleanups: PluginCleanup[] = [];

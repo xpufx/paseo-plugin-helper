@@ -1,33 +1,70 @@
-import type {
-  PluginClientContext,
-  PluginComposerPillContribution,
-  PluginSurfaceProps,
-} from "@getpaseo/plugin/client";
-import type { PluginCleanup } from "@getpaseo/plugin";
-import type { PaseoAgent, PaseoAgentUpdate, PaseoAgentListResult } from "@getpaseo/client";
 import type { ComponentType } from "react";
+import type {
+  ComposerPillRegistrar,
+  ComposerPillContribution,
+  HostAgentRef,
+  HostAgentUpdate,
+  HostSurfaceProps,
+  PluginCleanup,
+} from "../client/host.js";
 
-export interface MockClientContext extends PluginClientContext {
-  registeredPills: PluginComposerPillContribution[];
-  registeredSurfaces: Array<{ id: string; Component: ComponentType<PluginSurfaceProps> }>;
-  simulateAgentAdded: (agent: Partial<PaseoAgent> & { id: string; workspaceId: string }) => void;
+export interface MockAgent extends HostAgentRef {
+  [key: string]: any;
+}
+
+export interface MockClientContext {
+  registeredPills: ComposerPillContribution[];
+  registeredSurfaces: Array<{ id: string; Component: ComponentType<HostSurfaceProps> }>;
+  addComposerPill(contribution: ComposerPillContribution): PluginCleanup;
+  openPanel(id: string, options?: unknown): void;
+  rpc(contract: { name: string }, input: unknown): Promise<unknown>;
+  openSurface(id: string): void;
+  openSettings(id: string): void;
+  addSettingsScreen(contribution: unknown): PluginCleanup;
+  addSurface(id: string, component: unknown): PluginCleanup;
+  addSidebarItem(contribution: unknown): PluginCleanup;
+  addWorkspacePanel(contribution: unknown): PluginCleanup;
+  addCommandCenterItem(contribution: unknown): PluginCleanup;
+  addSlashCommand(contribution: unknown): PluginCleanup;
+  addAttachmentSource(contribution: unknown): PluginCleanup;
+  addTheme(contribution: unknown): PluginCleanup;
+  addTimelineTransformer(contribution: unknown): PluginCleanup;
+  addTimelineRenderer(contribution: unknown): PluginCleanup;
+  paseo: {
+    workspaces: unknown;
+    projects: unknown;
+    providers: unknown;
+    config: unknown;
+    terminals: unknown;
+    agents: {
+      list(): Promise<{ entries: Array<{ agent: MockAgent }> }>;
+      ref(id: string): unknown;
+      create(options: unknown): Promise<unknown>;
+      subscribe(cb: (update: HostAgentUpdate) => void): () => void;
+    };
+  };
+  simulateAgentAdded: (agent: Partial<MockAgent> & { id: string; workspaceId: string }) => void;
   simulateAgentRemoved: (agentId: string) => void;
 }
 
+const noopCleanup: PluginCleanup = () => {};
+
 /**
- * Creates a fully functional mock PluginClientContext for testing client plugin contributions.
+ * Creates a fully functional mock client context for testing client plugin
+ * contributions. Implements the same structural shapes as the real Paseo
+ * v0.7 and v0.8 client contexts without importing any SDK module.
  */
 export function createMockClientContext(): MockClientContext {
-  const registeredPills: PluginComposerPillContribution[] = [];
-  const registeredSurfaces: Array<{ id: string; Component: ComponentType<PluginSurfaceProps> }> = [];
-  const agentSubscribers = new Set<(update: PaseoAgentUpdate) => void>();
-  const agents = new Map<string, PaseoAgent>();
+  const registeredPills: ComposerPillContribution[] = [];
+  const registeredSurfaces: Array<{ id: string; Component: ComponentType<HostSurfaceProps> }> = [];
+  const agentSubscribers = new Set<(update: HostAgentUpdate) => void>();
+  const agents = new Map<string, MockAgent>();
 
   const mock: MockClientContext = {
     registeredPills,
     registeredSurfaces,
 
-    addComposerPill(contribution: PluginComposerPillContribution): PluginCleanup {
+    addComposerPill(contribution: ComposerPillContribution): PluginCleanup {
       registeredPills.push(contribution);
       return () => {
         const index = registeredPills.indexOf(contribution);
@@ -43,16 +80,16 @@ export function createMockClientContext(): MockClientContext {
 
     openSettings: () => {},
 
-    addSettingsScreen: () => () => {},
-    addSurface: () => () => {},
-    addSidebarItem: () => () => {},
-    addWorkspacePanel: () => () => {},
-    addCommandCenterItem: () => () => {},
-    addSlashCommand: () => () => {},
-    addAttachmentSource: () => () => {},
-    addTheme: () => () => {},
-    addTimelineTransformer: () => () => {},
-    addTimelineRenderer: () => () => {},
+    addSettingsScreen: () => noopCleanup,
+    addSurface: () => noopCleanup,
+    addSidebarItem: () => noopCleanup,
+    addWorkspacePanel: () => noopCleanup,
+    addCommandCenterItem: () => noopCleanup,
+    addSlashCommand: () => noopCleanup,
+    addAttachmentSource: () => noopCleanup,
+    addTheme: () => noopCleanup,
+    addTimelineTransformer: () => noopCleanup,
+    addTimelineRenderer: () => noopCleanup,
 
     paseo: {
       workspaces: {} as any,
@@ -61,26 +98,12 @@ export function createMockClientContext(): MockClientContext {
       config: {} as any,
       terminals: {} as any,
       agents: {
-        list: async (): Promise<PaseoAgentListResult> => ({
-          requestId: "mock-list-req",
-          subscriptionId: null,
-          entries: Array.from(agents.values()).map((agent) => ({
-            agent,
-            project: {
-              id: "mock-project",
-              title: "Mock Project",
-              rootPath: "/mock",
-            } as any,
-          })),
-          pageInfo: {
-            nextCursor: null,
-            prevCursor: null,
-            hasMore: false,
-          },
+        list: async () => ({
+          entries: Array.from(agents.values()).map((agent) => ({ agent })),
         }),
         ref: () => ({} as any),
         create: async () => ({} as any),
-        subscribe: (cb: (update: PaseoAgentUpdate) => void) => {
+        subscribe: (cb: (update: HostAgentUpdate) => void) => {
           agentSubscribers.add(cb);
           return () => {
             agentSubscribers.delete(cb);
@@ -90,7 +113,7 @@ export function createMockClientContext(): MockClientContext {
     },
 
     simulateAgentAdded(agentData) {
-      const snapshot: PaseoAgent = {
+      const snapshot: MockAgent = {
         provider: "mock-provider",
         cwd: "/workspace",
         model: "mock-model",
@@ -99,7 +122,7 @@ export function createMockClientContext(): MockClientContext {
         lastUserMessageAt: null,
         status: "idle",
         ...agentData,
-      } as PaseoAgent;
+      } as MockAgent;
 
       agents.set(snapshot.id, snapshot);
       for (const subscriber of agentSubscribers) {

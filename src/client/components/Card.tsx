@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 import type { SurfaceStyle } from "../theme/flair.js";
 
@@ -32,6 +32,7 @@ export function CardHeader({
   style,
   titleStyle,
 }: CardHeaderProps) {
+  const { Icon } = getClientHost();
   const { colors, flair, isCompact } = usePluginTheme();
 
   return (

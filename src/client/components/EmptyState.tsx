@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 import { Button, type ButtonProps } from "./Button.js";
 
@@ -23,6 +23,7 @@ export function EmptyState({
   onAction,
   style,
 }: EmptyStateProps) {
+  const { Icon } = getClientHost();
   const { colors, isCompact } = usePluginTheme();
 
   const resolvedAction: ButtonProps | undefined = action

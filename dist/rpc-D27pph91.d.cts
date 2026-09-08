@@ -7,7 +7,7 @@ interface PluginRpcContract<InputSchema extends ZodType = ZodType, OutputSchema 
 }
 /**
  * Define a typed Paseo RPC contract conforming to the Paseo RPC protocol.
- * Implemented locally without runtime dependency on @getpaseo/plugin.
+ * Implemented locally without a runtime dependency on the Paseo SDK.
  */
 declare function defineRpc<InputSchema extends ZodType, OutputSchema extends ZodType>(definition: {
     name: string;

@@ -1,36 +1,81 @@
-import { PluginClientContext, PluginComposerPillContribution, PluginSurfaceProps } from '@getpaseo/plugin/client';
-import { PaseoAgent } from '@getpaseo/client';
 import { ComponentType } from 'react';
-import { PluginServerContext } from '@getpaseo/plugin/server';
-import { PluginRpcContract } from '@getpaseo/plugin';
-import { R as RpcInput, a as RpcOutput } from '../rpc-Ja20I4uK.cjs';
+import { H as HostAgentRef, C as ComposerPillContribution, a as HostSurfaceProps, P as PluginCleanup, b as HostAgentUpdate } from '../host-CI3xo45X.cjs';
+import { P as PluginRpcContract, R as RpcInput, a as RpcOutput } from '../rpc-D27pph91.cjs';
 import 'zod';
 
-interface MockClientContext extends PluginClientContext {
-    registeredPills: PluginComposerPillContribution[];
+interface MockAgent extends HostAgentRef {
+    [key: string]: any;
+}
+interface MockClientContext {
+    registeredPills: ComposerPillContribution[];
     registeredSurfaces: Array<{
         id: string;
-        Component: ComponentType<PluginSurfaceProps>;
+        Component: ComponentType<HostSurfaceProps>;
     }>;
-    simulateAgentAdded: (agent: Partial<PaseoAgent> & {
+    addComposerPill(contribution: ComposerPillContribution): PluginCleanup;
+    openPanel(id: string, options?: unknown): void;
+    rpc(contract: {
+        name: string;
+    }, input: unknown): Promise<unknown>;
+    openSurface(id: string): void;
+    openSettings(id: string): void;
+    addSettingsScreen(contribution: unknown): PluginCleanup;
+    addSurface(id: string, component: unknown): PluginCleanup;
+    addSidebarItem(contribution: unknown): PluginCleanup;
+    addWorkspacePanel(contribution: unknown): PluginCleanup;
+    addCommandCenterItem(contribution: unknown): PluginCleanup;
+    addSlashCommand(contribution: unknown): PluginCleanup;
+    addAttachmentSource(contribution: unknown): PluginCleanup;
+    addTheme(contribution: unknown): PluginCleanup;
+    addTimelineTransformer(contribution: unknown): PluginCleanup;
+    addTimelineRenderer(contribution: unknown): PluginCleanup;
+    paseo: {
+        workspaces: unknown;
+        projects: unknown;
+        providers: unknown;
+        config: unknown;
+        terminals: unknown;
+        agents: {
+            list(): Promise<{
+                entries: Array<{
+                    agent: MockAgent;
+                }>;
+            }>;
+            ref(id: string): unknown;
+            create(options: unknown): Promise<unknown>;
+            subscribe(cb: (update: HostAgentUpdate) => void): () => void;
+        };
+    };
+    simulateAgentAdded: (agent: Partial<MockAgent> & {
         id: string;
         workspaceId: string;
     }) => void;
     simulateAgentRemoved: (agentId: string) => void;
 }
 /**
- * Creates a fully functional mock PluginClientContext for testing client plugin contributions.
+ * Creates a fully functional mock client context for testing client plugin
+ * contributions. Implements the same structural shapes as the real Paseo
+ * v0.7 and v0.8 client contexts without importing any SDK module.
  */
 declare function createMockClientContext(): MockClientContext;
 
 type MockRpcHandler = (input: any, context: any) => Promise<any> | any;
-interface MockServerContext extends PluginServerContext {
+interface MockServerContext {
+    handle(contract: {
+        name: string;
+    }, handler: MockRpcHandler): void;
+    registerSettings(definition: unknown): void;
+    registerProvider(provider: unknown): void;
+    on(name: string, handler: (...args: any[]) => void | Promise<void>): () => void;
+    before(name: string, handler: (...args: any[]) => unknown): () => void;
     handlers: Map<string, MockRpcHandler>;
     callRpc: <TContract extends PluginRpcContract<any, any>>(contract: TContract, input: RpcInput<TContract>) => Promise<RpcOutput<TContract>>;
 }
 /**
- * Creates a mock PluginServerContext for testing server RPC handlers and plugin contributions.
+ * Creates a mock server context for testing server RPC handlers and plugin
+ * contributions. Implements the structural handler shape shared by the Paseo
+ * v0.7 and v0.8 server contexts without importing any SDK module.
  */
 declare function createMockServerContext(): MockServerContext;
 
-export { type MockClientContext, type MockRpcHandler, type MockServerContext, createMockClientContext, createMockServerContext };
+export { type MockAgent, type MockClientContext, type MockRpcHandler, type MockServerContext, createMockClientContext, createMockServerContext };

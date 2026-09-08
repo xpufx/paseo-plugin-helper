@@ -1,23 +1,23 @@
 import React, { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type {
-  PluginClientContext,
-  PluginComposerPillProps,
-} from "@getpaseo/plugin/client";
-import type { PluginCleanup } from "@getpaseo/plugin";
-import { Icon, Modal } from "@getpaseo/plugin/client/react-native";
+import {
+  getClientHost,
+  type ComposerPillRegistrar,
+  type HostPillProps,
+  type PluginCleanup,
+} from "./host.js";
 import { PluginThemeProvider } from "./theme/provider.js";
 import { useResponsive } from "./theme/useResponsive.js";
 import type { VisualFlair } from "./theme/flair.js";
 
-export interface RenderPillProps<TPayload = any> extends PluginComposerPillProps {
+export interface RenderPillProps<TPayload = any> extends HostPillProps {
   isOpen: boolean;
   open: (payload?: TPayload) => void;
   close: () => void;
   toggle: (payload?: TPayload) => void;
 }
 
-export interface RenderModalProps<TPayload = any> extends PluginComposerPillProps {
+export interface RenderModalProps<TPayload = any> extends HostPillProps {
   close: () => void;
   payload?: TPayload;
 }
@@ -100,13 +100,14 @@ export interface RegisterComposerPillOptions<TPayload = any> {
  * Manages agent subscription events, unmount cleanup, and pill-to-modal activation.
  */
 export function registerComposerPill<TPayload = any>(
-  client: PluginClientContext,
+  client: ComposerPillRegistrar,
   options: RegisterComposerPillOptions<TPayload>,
 ): PluginCleanup {
+  const { Icon, Modal } = getClientHost();
   const openers = new Map<string, (payload?: TPayload) => void>();
   const pills = new Map<string, () => void>();
 
-  function PillHost(props: PluginComposerPillProps) {
+  function PillHost(props: HostPillProps) {
     const [open, setOpen] = useState(false);
     const [payload, setPayload] = useState<TPayload | undefined>(undefined);
 
@@ -218,12 +219,14 @@ export function registerComposerPill<TPayload = any>(
   }
 
   const unsubscribe = client.paseo.agents.subscribe((update) => {
-    if (update.kind === "remove") {
+    if ("agentId" in update && update.kind === "remove") {
       removePill(update.agentId);
       return;
     }
-    const { id, workspaceId } = update.agent;
-    if (workspaceId) addPill(id, workspaceId);
+    if ("agent" in update) {
+      const { id, workspaceId } = update.agent;
+      if (workspaceId) addPill(id, workspaceId);
+    }
   });
 
   client.paseo.agents
@@ -252,7 +255,7 @@ interface DefaultPillBodyProps {
   compactIcon?: string;
   badgeText?: string;
   compactBadgeText?: string;
-  theme: PluginComposerPillProps["theme"];
+  theme: HostPillProps["theme"];
 }
 
 function DefaultPillBody({
@@ -264,6 +267,7 @@ function DefaultPillBody({
   compactBadgeText,
   theme,
 }: DefaultPillBodyProps) {
+  const { Icon } = getClientHost();
   const { isCompact } = useResponsive();
 
   const effectiveTitle = isCompact && compactTitle ? compactTitle : title;

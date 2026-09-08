@@ -1,8 +1,8 @@
 import React, { type ComponentType } from "react";
 import type {
-  PluginWorkspacePanelProps,
-  PluginAgentPanelProps,
-} from "@getpaseo/plugin/client";
+  HostWorkspacePanelProps as PluginWorkspacePanelProps,
+  HostAgentPanelProps as PluginAgentPanelProps,
+} from "./host.js";
 import { PluginThemeProvider } from "./theme/provider.js";
 import type { VisualFlair } from "./theme/flair.js";
 

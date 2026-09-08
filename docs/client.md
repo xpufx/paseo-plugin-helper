@@ -92,6 +92,30 @@ Or via render prop:
 
 ## 3. Lifecycle Registration Helpers
 
+### `initClientHelpers({ Icon, Modal, useRpc, useToast })`
+Required once per plugin client entry, before any other helper client API is
+used. The helper never imports the Paseo SDK itself, so one published build
+runs on both Paseo v0.7 and v0.8: the plugin supplies the host
+implementations using whichever specifiers match its installed SDK.
+
+```tsx
+// Paseo v0.7
+import { useRpc } from "@getpaseo/plugin";
+import { Icon, Modal, useToast } from "@getpaseo/plugin/react-native";
+import { initClientHelpers } from "paseo-plugin-helper/client";
+
+initClientHelpers({ Icon, Modal, useRpc, useToast });
+```
+
+```tsx
+// Paseo v0.8
+import { useRpc } from "@getpaseo/plugin/client";
+import { Icon, Modal, useToast } from "@getpaseo/plugin/client/react-native";
+import { initClientHelpers } from "paseo-plugin-helper/client";
+
+initClientHelpers({ Icon, Modal, useRpc, useToast });
+```
+
 ### `registerComposerPill(client, options)`
 Handles the complete lifecycle of injecting a composer pill for each active agent, subscribing to agent updates, opening modals, and unmounting cleanly.
 

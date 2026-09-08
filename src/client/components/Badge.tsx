@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 import type { StatusVariant } from "../../shared/types.js";
 
@@ -25,6 +25,7 @@ export function Badge({
   style,
   textStyle,
 }: BadgeProps) {
+  const { Icon } = getClientHost();
   const { colors, flair, resolveRadius, getVariantPalette, getStatusColor, isCompact } =
     usePluginTheme();
 

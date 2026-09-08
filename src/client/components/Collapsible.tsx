@@ -7,7 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { Icon } from "@getpaseo/plugin/client/react-native";
+import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export interface CollapsibleProps {
@@ -31,6 +31,7 @@ export function Collapsible({
   icon,
   style,
 }: CollapsibleProps) {
+  const { Icon } = getClientHost();
   const { colors, resolveRadius, isCompact, touchTargetMin, alpha } = usePluginTheme();
   const [internalExpanded, setInternalExpanded] = useState(initiallyExpanded);
 
