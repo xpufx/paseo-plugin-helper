@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
-import type { PluginClientContext } from "@getpaseo/plugin/client";
+import { useRpc } from "@getpaseo/plugin/client";
+import { Icon, Modal, useToast } from "@getpaseo/plugin/client/react-native";
+import {
+  initClientHelpers,
+  type ComposerPillRegistrar,
+} from "paseo-plugin-helper/client";
+
+initClientHelpers({ Icon, Modal, useRpc, useToast });
 import {
   registerComposerPill,
   PluginThemeProvider,
@@ -735,7 +742,7 @@ function DemoModal({ close }: RenderModalProps) {
   );
 }
 
-export function contributeClient(client: PluginClientContext) {
+export function contributeClient(client: ComposerPillRegistrar) {
   return registerComposerPill(client, {
     id: "helper-demo",
     title: "demo",
