@@ -30,6 +30,23 @@ npx paseo-plugin-helper doctor . --format json
 
 ---
 
+## Adopt (`paseo-plugin-helper adopt`)
+
+Layers the helper onto a plugin directory created by `paseo plugin init`:
+adds the `paseo-plugin-helper` dependency to `package.json` and injects the
+required `initClientHelpers()` call into `index.client.tsx`, using import
+specifiers that match the installed SDK generation (v7 or v8). Safe to run
+twice.
+
+```bash
+paseo plugin init ~/code/my-plugin
+cd ~/code/my-plugin && npm install
+npx paseo-plugin-helper adopt .
+npm install && npm run typecheck
+```
+
+---
+
 ## CLI Options
 
 | Flag | Type | Description |

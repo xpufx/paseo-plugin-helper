@@ -18,6 +18,17 @@ Use this skill when starting a NEW Paseo plugin that uses
 `paseo-plugin-helper` from the beginning. For migrating an existing plugin,
 use the `audit-plugin` skill instead.
 
+The fastest path is the official scaffold plus the helper adopt command,
+which writes the dependency and the version-correct `initClientHelpers()`
+block for you:
+
+```bash
+paseo plugin init ~/code/my-plugin
+cd ~/code/my-plugin && npm install
+npx paseo-plugin-helper adopt .
+npm install && npm run typecheck
+```
+
 The golden reference is `demo-v8/` in the helper repo: every pattern below
 appears there in working form. For migrating an existing plugin, use the
 `audit-plugin` skill instead.

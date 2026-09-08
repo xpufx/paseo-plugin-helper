@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import process from 'process';
-import fs from 'fs';
+import fs2 from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
 
 // src/cli/rules.ts
 var AUDIT_RULES = {
@@ -98,7 +99,7 @@ function findFiles(dir, ignoredCustom) {
   function walk(current) {
     let entries = [];
     try {
-      entries = fs.readdirSync(current, { withFileTypes: true });
+      entries = fs2.readdirSync(current, { withFileTypes: true });
     } catch {
       return;
     }
@@ -126,7 +127,7 @@ function auditProject(targetDir, options = {}) {
   const issues = [];
   for (const filePath of files) {
     const relPath = path.relative(resolvedTarget, filePath);
-    const content = fs.readFileSync(filePath, "utf-8");
+    const content = fs2.readFileSync(filePath, "utf-8");
     const lines = content.split("\n");
     const inTest = isTestFile(relPath);
     const inBuildOrTool = isBuildOrToolFile(relPath);
@@ -320,6 +321,116 @@ function auditProject(targetDir, options = {}) {
   };
 }
 var doctorProject = auditProject;
+function readJson(filePath) {
+  return JSON.parse(fs2.readFileSync(filePath, "utf8"));
+}
+function resolveHelperVersion(explicit) {
+  if (explicit) return explicit;
+  try {
+    const require2 = createRequire(import.meta.url);
+    const pkg = require2("../../package.json");
+    if (typeof pkg?.version === "string") {
+      const [major, minor] = pkg.version.split(".");
+      return `^${major}.${minor}.0`;
+    }
+  } catch {
+  }
+  return "^0.4.0";
+}
+function detectSdkMajor(pkg) {
+  const version = pkg?.devDependencies?.["@getpaseo/plugin"] ?? pkg?.dependencies?.["@getpaseo/plugin"];
+  if (typeof version !== "string") return void 0;
+  const match = version.match(/(\d+)\.(\d+)/);
+  if (!match) return void 0;
+  const major = Number(match[1]);
+  if (major !== 0) return 8;
+  return Number(match[2]) >= 8 ? 8 : 7;
+}
+function initBlock(sdkMajor) {
+  if (sdkMajor === 8) {
+    return [
+      `import { useRpc } from "@getpaseo/plugin/client";`,
+      `import { Icon, Modal, useToast } from "@getpaseo/plugin/client/react-native";`,
+      `import { initClientHelpers } from "paseo-plugin-helper/client";`,
+      ``,
+      `initClientHelpers({ Icon, Modal, useRpc, useToast });`
+    ].join("\n");
+  }
+  return [
+    `import { useRpc } from "@getpaseo/plugin";`,
+    `import { Icon, Modal, useToast } from "@getpaseo/plugin/react-native";`,
+    `import { initClientHelpers } from "paseo-plugin-helper/client";`,
+    ``,
+    `initClientHelpers({ Icon, Modal, useRpc, useToast });`
+  ].join("\n");
+}
+function adoptProject(targetDir, options = {}) {
+  const directory = path.resolve(targetDir);
+  const packagePath = path.join(directory, "package.json");
+  const clientEntry = path.join(directory, "index.client.tsx");
+  if (!fs2.existsSync(packagePath)) {
+    throw new Error(
+      `No package.json in ${directory}. Run \`paseo plugin init\` there first.`
+    );
+  }
+  if (!fs2.existsSync(clientEntry)) {
+    throw new Error(
+      `No index.client.tsx in ${directory}. Adopt needs a client entry to wire init into.`
+    );
+  }
+  const pkg = readJson(packagePath);
+  const sdkMajor = detectSdkMajor(pkg);
+  if (sdkMajor === void 0) {
+    throw new Error(
+      `Cannot determine @getpaseo/plugin SDK generation in ${packagePath}.`
+    );
+  }
+  const helperVersion = resolveHelperVersion(options.helperVersion);
+  let addedDependency = false;
+  pkg.dependencies = pkg.dependencies ?? {};
+  if (!pkg.dependencies["paseo-plugin-helper"]) {
+    pkg.dependencies["paseo-plugin-helper"] = helperVersion;
+    addedDependency = true;
+  }
+  let content = fs2.readFileSync(clientEntry, "utf8");
+  let addedInit = false;
+  if (!content.includes("initClientHelpers")) {
+    const block = initBlock(sdkMajor);
+    const lines = content.split("\n");
+    let insertAt = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (/^\s*import[\s(]/.test(lines[i])) {
+        insertAt = i + 1;
+      } else if (lines[i].trim() !== "") {
+        break;
+      }
+    }
+    lines.splice(insertAt, 0, "", block);
+    content = lines.join("\n");
+    fs2.writeFileSync(clientEntry, content);
+    addedInit = true;
+  }
+  if (addedDependency) {
+    fs2.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}
+`);
+  }
+  return {
+    directory,
+    sdkMajor,
+    addedDependency,
+    addedInit,
+    alreadyAdopted: !addedDependency && !addedInit
+  };
+}
+function formatAdoptResult(result) {
+  const lines = [
+    `Adopted ${result.directory} (SDK v${result.sdkMajor}).`,
+    result.addedDependency ? `- Added paseo-plugin-helper dependency. Run \`npm install\`.` : `- Dependency already present.`,
+    result.addedInit ? `- Wired initClientHelpers() into index.client.tsx.` : `- initClientHelpers() already wired.`,
+    `Next: npm install && npm run typecheck`
+  ];
+  return lines.join("\n");
+}
 
 // src/cli/formatter.ts
 function formatReportPretty(report) {
@@ -367,7 +478,12 @@ Paseo Plugin Helper CLI (audit & lint)
 Usage:
   npx paseo-plugin-helper audit [path] [options]
   npx paseo-plugin-helper doctor [path] [options]
+  npx paseo-plugin-helper adopt [path]
   npx paseo-plugin-helper [path] [options]
+
+Commands:
+  audit / doctor    Scan for bespoke patterns replaceable by helper primitives
+  adopt             Layer paseo-plugin-helper onto a \`paseo plugin init\` scaffold
 
 Options:
   --strict             Exit with code 1 if any warnings or errors are found
@@ -378,10 +494,22 @@ Options:
 Examples:
   npx paseo-plugin-helper audit .
   npx paseo-plugin-helper doctor .
+  npx paseo-plugin-helper adopt ~/code/my-plugin
   npx paseo-plugin-helper audit ~/code/my-plugin --strict
   npx paseo-plugin-helper audit . --format json
 `);
     return 0;
+  }
+  if (argv[0] === "adopt") {
+    const targetDir2 = argv[1] && !argv[1].startsWith("-") ? argv[1] : ".";
+    try {
+      const result = adoptProject(targetDir2);
+      console.log(formatAdoptResult(result));
+      return 0;
+    } catch (err) {
+      console.error(`adopt failed: ${err instanceof Error ? err.message : String(err)}`);
+      return 1;
+    }
   }
   let targetDir = ".";
   const options = {
@@ -421,6 +549,6 @@ if (isMain) {
   }
 }
 
-export { AUDIT_RULES, auditProject, doctorProject, formatReportJson, formatReportPretty, runCli };
+export { AUDIT_RULES, adoptProject, auditProject, doctorProject, formatAdoptResult, formatReportJson, formatReportPretty, runCli };
 //# sourceMappingURL=cli.js.map
 //# sourceMappingURL=cli.js.map
