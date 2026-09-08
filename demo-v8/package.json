@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@getpaseo/plugin": "^0.7.2",
+    "@getpaseo/plugin": "0.8.0-beta.1",
     "@tanstack/react-query": "^5.90.11",
     "@types/react": "~19.2.0",
     "react": "19.1.0",
@@ -17,6 +17,6 @@
     "zod": "^4.4.3"
   },
   "dependencies": {
-    "paseo-plugin-helper": "^0.2.0"
+    "paseo-plugin-helper": "^0.3.2"
   }
 }
