@@ -380,6 +380,8 @@ var McpHttpClient = class {
     if (this.sessionId) {
       const sid = this.sessionId;
       this.sessionId = void 0;
+      const teardownController = new AbortController();
+      const teardownTimer = setTimeout(() => teardownController.abort(), 2e3);
       try {
         await fetch(this.postUrl, {
           method: "DELETE",
@@ -387,9 +389,11 @@ var McpHttpClient = class {
             "Mcp-Session-Id": sid,
             ...this.options.headers
           },
-          signal: AbortSignal.timeout(2e3)
+          signal: teardownController.signal
         });
       } catch {
+      } finally {
+        clearTimeout(teardownTimer);
       }
     }
     this.abortController.abort();

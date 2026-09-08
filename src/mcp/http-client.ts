@@ -367,20 +367,24 @@ export class McpHttpClient {
 
   async close(): Promise<void> {
     if (this.sessionId) {
-      const sid = this.sessionId;
-      this.sessionId = undefined;
-      try {
-        await fetch(this.postUrl, {
-          method: "DELETE",
-          headers: {
-            "Mcp-Session-Id": sid,
-            ...this.options.headers,
-          },
-          signal: AbortSignal.timeout(2000),
-        });
-      } catch {
-        // Ignore session teardown errors
-      }
+    const sid = this.sessionId;
+    this.sessionId = undefined;
+    const teardownController = new AbortController();
+    const teardownTimer = setTimeout(() => teardownController.abort(), 2000);
+    try {
+      await fetch(this.postUrl, {
+        method: "DELETE",
+        headers: {
+          "Mcp-Session-Id": sid,
+          ...this.options.headers,
+        },
+        signal: teardownController.signal,
+      });
+    } catch {
+      // Ignore session teardown errors
+    } finally {
+      clearTimeout(teardownTimer);
+    }
     }
 
     this.abortController.abort();
