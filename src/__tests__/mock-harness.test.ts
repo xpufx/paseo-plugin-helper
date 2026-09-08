@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { createMockClientContext } from "../testing/mock-client.js";
 import { createMockServerContext } from "../testing/mock-server.js";
+import {
+  initClientHelpers,
+  getClientHost,
+  isClientHostInitialized,
+} from "../client/host.js";
+import { registerComposerPill } from "../client/pill.js";
 import { defineContract } from "../shared/rpc.js";
 import { z } from "zod";
 
@@ -43,5 +49,31 @@ describe("Testing Mock Harness", () => {
 
     const response = await server.callRpc(echoContract, { msg: "Hello Paseo" });
     expect(response.reply).toBe("Echo: Hello Paseo");
+  });
+
+  it("registers pills through injected host deps without any SDK import", async () => {
+    initClientHelpers({
+      Icon: () => null,
+      Modal: Object.assign(() => null, { Content: () => null }),
+      useRpc: () => async () => ({}),
+      useToast: () => ({}),
+    });
+    expect(isClientHostInitialized()).toBe(true);
+    expect(getClientHost().Icon).toBeDefined();
+
+    const client = createMockClientContext();
+    const cleanup = registerComposerPill(client, {
+      id: "di-pill",
+      title: "DI",
+      renderModal: () => null,
+    });
+
+    client.simulateAgentAdded({ id: "agent-9", workspaceId: "ws-9" });
+    expect(client.registeredPills).toHaveLength(1);
+    expect(client.registeredPills[0].agentId).toBe("agent-9");
+
+    client.simulateAgentRemoved("agent-9");
+    cleanup();
+    expect(client.registeredPills).toHaveLength(0);
   });
 });

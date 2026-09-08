@@ -10,7 +10,7 @@
 > [!NOTE]
 > **Developer Library**: `paseo-plugin-helper` is an npm developer toolkit / SDK used by plugin authors (it is **not** a standalone Paseo plugin itself and cannot be installed directly via `paseo plugin add`).
 >
-> **Compatibility**: `paseo-plugin-helper/server`, `/shared`, `/mcp`, and `/testing` carry no runtime `@getpaseo/plugin` imports and run unchanged on **Paseo v0.7 and v0.8** (`@getpaseo/plugin@>=0.7.0 || >=0.8.0-beta.1`). `paseo-plugin-helper/client` targets the **v0.7** SDK entry points (`@getpaseo/plugin`, `@getpaseo/plugin/react-native`); a v8-native client using `@getpaseo/plugin/client` entry points will ship as a major helper update once Paseo v0.8 is stable.
+> **Compatibility**: this line targets **Paseo v0.8** (`@getpaseo/plugin@0.8.0-beta.1`) while staying source-compatible with **v0.7** through host injection: `paseo-plugin-helper/client` imports zero Paseo SDK modules and instead receives `Icon`, `Modal`, `useRpc`, and `useToast` via `initClientHelpers()` in the plugin client entry (see `docs/client.md`). `server`, `shared`, `mcp`, and `testing` carry no SDK imports at all.
 
 ---
 
