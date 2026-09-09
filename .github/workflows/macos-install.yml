@@ -71,3 +71,40 @@ jobs:
             { [ -z "$FLEET_FILTER" ] || case "$id" in *$FLEET_FILTER*) ;; *) continue;; esac; }
             paseo plugin remove "$id" || true
           done
+
+  gate-fails-clean:
+    runs-on: macos-latest
+    steps:
+      - name: Probe stock toolchain
+        run: |
+          sw_vers
+          which node && node -v
+
+      - name: Install Paseo CLI (beta)
+        run: |
+          tag="${{ inputs.cli_tag }}"
+          npm install -g "@getpaseo/cli@${tag:-beta}"
+
+      - name: Start ephemeral daemon (broken toolchain simulation)
+        run: |
+          export PASEO_HOME="$(mktemp -d)/paseo-home"
+          echo "PASEO_HOME=$PASEO_HOME" >> "$GITHUB_ENV"
+          echo "CHECK_BIN_NODE=node-definitely-missing" >> "$GITHUB_ENV"
+          echo "CHECK_BIN_NPM=npm-definitely-missing" >> "$GITHUB_ENV"
+          export CHECK_BIN_NODE=node-definitely-missing CHECK_BIN_NPM=npm-definitely-missing
+          paseo daemon start
+          paseo status
+
+      - name: Install must fail with readable error
+        run: |
+          set +e
+          out=$(paseo plugin add xpufx/paseo-plugin-helper:demo-v8 --ref v8 2>&1)
+          code=$?
+          set -e
+          echo "$out"
+          [ $code -ne 0 ] || { echo "expected install to fail"; exit 1; }
+          echo "$out" | grep -F "required binary"
+
+      - name: Remove fleet
+        if: always()
+        run: paseo plugin remove helper-demo-v8 || true
