@@ -260,6 +260,12 @@ Plugins powered by `paseo-plugin-helper`:
 
 ---
 
+## My other Paseo plugins
+
+More from the same author: [xpufx.github.io/#paseo](https://xpufx.github.io/#paseo)
+
+---
+
 ## License
 
 MIT © [xpufx](LICENSE)

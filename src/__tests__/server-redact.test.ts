@@ -59,4 +59,9 @@ describe("redactSecrets", () => {
     expect(redacted.note).toBe("see https://app.paseo.sh/#offer=[REDACTED]");
     expect(redacted.nested.link).toBe("https://app.paseo.sh/#offer=[REDACTED]");
   });
+
+  it("masks standard-base64 offer tails without leaking suffix", () => {
+    const msg = "see https://app.paseo.sh/#offer=abc+def/ghi==";
+    expect(redactSecrets(msg)).toBe("see https://app.paseo.sh/#offer=[REDACTED]");
+  });
 });

@@ -111,6 +111,51 @@ var DEFAULT_IGNORED_DIRS = /* @__PURE__ */ new Set([
   "coverage"
 ]);
 var SCANNABLE_EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
+var BARE_NODE_BUILTINS = /* @__PURE__ */ new Set([
+  "assert",
+  "async_hooks",
+  "buffer",
+  "child_process",
+  "cluster",
+  "crypto",
+  "dgram",
+  "diagnostics_channel",
+  "dns",
+  "domain",
+  "events",
+  "fs",
+  "http",
+  "http2",
+  "https",
+  "inspector",
+  "module",
+  "net",
+  "os",
+  "path",
+  "perf_hooks",
+  "process",
+  "punycode",
+  "querystring",
+  "readline",
+  "repl",
+  "stream",
+  "string_decoder",
+  "timers",
+  "tls",
+  "trace_events",
+  "tty",
+  "url",
+  "util",
+  "v8",
+  "vm",
+  "wasi",
+  "worker_threads",
+  "zlib"
+]);
+function isBareNodeBuiltin(specifier) {
+  const root = specifier.split("/")[0];
+  return BARE_NODE_BUILTINS.has(root);
+}
 function isTestFile(filePath) {
   return filePath.includes("__tests__") || filePath.includes(".test.") || filePath.includes(".spec.") || filePath.endsWith(".d.ts");
 }
@@ -204,7 +249,8 @@ function auditProject(targetDir, options = {}) {
         }
         const reachesServer = /from\s+["'](\.\.\/)+server\//.test(line);
         const reachesClient = /from\s+["'](\.\.\/)+client\//.test(line);
-        const importsNode = /from\s+["']node:/.test(line);
+        const specifier = /from\s+["']([^"']+)["']/.exec(line)?.[1] ?? "";
+        const importsNode = specifier.startsWith("node:") || isBareNodeBuiltin(specifier);
         if (inClientDir && (reachesServer || importsNode) || inServerDir && reachesClient) {
           pushIssue("v8-crossed-import", relPath, i + 1, trimmed);
           break;

@@ -222,4 +222,30 @@ describe("Audit CLI & Scanner", () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("flags bare Node builtins in client code, not just node: prefix", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-audit-bare-"));
+
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, "paseo-plugin.json"),
+        JSON.stringify({ id: "demo", requirements: { paseo: ">=0.8.0" } }),
+      );
+      fs.writeFileSync(path.join(tmpDir, "index.client.tsx"), "export default function c() {}");
+      fs.mkdirSync(path.join(tmpDir, "client"));
+      fs.writeFileSync(
+        path.join(tmpDir, "client", "loader.tsx"),
+        `import fs from "fs";\nexport const present = typeof fs === "object";`,
+      );
+      fs.writeFileSync(
+        path.join(tmpDir, "client", "joins.tsx"),
+        `import path from "path/posix";\nexport const sep = path.sep;`,
+      );
+
+      const report = auditProject(tmpDir);
+      expect(report.issues.filter((i) => i.ruleId === "v8-crossed-import")).toHaveLength(2);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });

@@ -16,6 +16,20 @@ const DEFAULT_IGNORED_DIRS = new Set([
 
 const SCANNABLE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 
+const BARE_NODE_BUILTINS = new Set([
+  "assert", "async_hooks", "buffer", "child_process", "cluster", "crypto",
+  "dgram", "diagnostics_channel", "dns", "domain", "events", "fs", "http",
+  "http2", "https", "inspector", "module", "net", "os", "path", "perf_hooks",
+  "process", "punycode", "querystring", "readline", "repl", "stream",
+  "string_decoder", "timers", "tls", "trace_events", "tty", "url", "util",
+  "v8", "vm", "wasi", "worker_threads", "zlib",
+]);
+
+function isBareNodeBuiltin(specifier: string): boolean {
+  const root = specifier.split("/")[0];
+  return BARE_NODE_BUILTINS.has(root);
+}
+
 function isTestFile(filePath: string): boolean {
   return (
     filePath.includes("__tests__") ||
@@ -170,7 +184,8 @@ export function auditProject(targetDir: string, options: AuditOptions = {}): Aud
         }
         const reachesServer = /from\s+["'](\.\.\/)+server\//.test(line);
         const reachesClient = /from\s+["'](\.\.\/)+client\//.test(line);
-        const importsNode = /from\s+["']node:/.test(line);
+        const specifier = /from\s+["']([^"']+)["']/.exec(line)?.[1] ?? "";
+        const importsNode = specifier.startsWith("node:") || isBareNodeBuiltin(specifier);
         if ((inClientDir && (reachesServer || importsNode)) || (inServerDir && reachesClient)) {
           pushIssue("v8-crossed-import", relPath, i + 1, trimmed);
           break;

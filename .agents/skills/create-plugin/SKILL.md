@@ -153,3 +153,12 @@ on the relevant Forgejo issue (`fgj issue comment <id> --body ...`),
 not as chat chatter. Move the issue through labels yourself
 (`queued` -> `wip` -> `verify`). Chat is for decisions, approvals, and
 escalations only. One closing line in chat with the SHA when done.
+
+## Traceability
+
+No PR flow exists on the Forgejo side, so link work by hand, both
+directions, every time:
+- Commit messages name the issue: `feat: ... (#12)`.
+- The completion comment on the issue names the commit SHA.
+- An issue is not `verify` until both links exist. A SHA without an
+  issue, or an issue without a SHA, is unfinished work.

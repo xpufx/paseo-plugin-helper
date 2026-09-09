@@ -53,8 +53,10 @@ export function redactSecrets<T>(target: T, options: RedactOptions = {}): T {
     result = result.replace(/(https?:\/\/[^:]+:)[^@]+(@)/gi, `$1${mask}$2`);
     // Redact Paseo pairing offers (password-equivalent): app.paseo.sh/#offer=
     // plus the base64 tail, optionally JSON-sniffed by serverId key below.
+    // Tail covers standard (+/=) and URL-safe (-_) base64 so partial
+    // offers never leak through a truncated match.
     result = result.replace(
-      /(https?:\/\/app\.paseo\.sh\/#offer=)[A-Za-z0-9\-_]+=*/gi,
+      /(https?:\/\/app\.paseo\.sh\/#offer=)[A-Za-z0-9\-_.~+/]+=*/gi,
       `$1${mask}`,
     );
     return result as unknown as T;
