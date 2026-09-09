@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, type ComponentType, type Ref } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,9 +6,12 @@ import {
   View,
   type KeyboardTypeOptions,
   type StyleProp,
+  type TextInputProps as RNTextInputProps,
+  type TextInput as RNTextInputInstance,
   type TextStyle,
   type ViewStyle,
 } from "react-native";
+import { getOptionalClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export interface TextInputProps {
@@ -52,6 +55,8 @@ export function TextInput({
 }: TextInputProps) {
   const { colors, resolveRadius, isCompact, touchTargetMin, alpha } = usePluginTheme();
   const [isFocused, setIsFocused] = useState(false);
+  const ResolvedInput = (getOptionalClientHost()?.TextInput ??
+    RNTextInput) as ComponentType<RNTextInputProps & { ref?: Ref<RNTextInputInstance> }>;
 
   const radius = resolveRadius("md");
   const hasError = Boolean(errorText);
@@ -80,7 +85,7 @@ export function TextInput({
         </Text>
       ) : null}
 
-      <RNTextInput
+      <ResolvedInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}

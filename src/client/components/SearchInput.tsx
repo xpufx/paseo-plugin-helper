@@ -1,14 +1,16 @@
-import React from "react";
+import React, { type ComponentType, type Ref } from "react";
 import {
   StyleSheet,
-  TextInput,
+  TextInput as RNTextInput,
   View,
   Pressable,
   type StyleProp,
   type ViewStyle,
   type TextStyle,
+  type TextInputProps as RNTextInputProps,
+  type TextInput as RNTextInputInstance,
 } from "react-native";
-import { getClientHost } from "../host.js";
+import { getClientHost, getOptionalClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export interface SearchInputProps {
@@ -34,6 +36,8 @@ export function SearchInput({
   testID,
 }: SearchInputProps) {
   const { Icon } = getClientHost();
+  const ResolvedInput = (getOptionalClientHost()?.TextInput ??
+    RNTextInput) as ComponentType<RNTextInputProps & { ref?: Ref<RNTextInputInstance> }>;
   const { colors, resolveRadius, isCompact } = usePluginTheme();
   const radius = resolveRadius("sm");
 
@@ -58,7 +62,7 @@ export function SearchInput({
       <View style={styles.iconWrapper}>
         <Icon name="Search" size={16} color={colors.foregroundMuted} />
       </View>
-      <TextInput
+      <ResolvedInput
         testID={testID}
         value={value}
         onChangeText={onChangeText}

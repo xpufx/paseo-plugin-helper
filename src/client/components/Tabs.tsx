@@ -1,14 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, type ComponentType, type Ref } from "react";
 import {
-  PanResponder,
   Pressable,
-  ScrollView,
+  ScrollView as FallbackScrollView,
   StyleSheet,
   Text,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type ScrollView as ScrollViewInstance,
+  type ScrollViewProps,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
@@ -42,9 +43,11 @@ export function Tabs({
   mode = "auto",
   style,
 }: TabsProps) {
-  const { Icon } = getClientHost();
+  const { Icon, ScrollView: HostScrollView } = getClientHost();
+  const ResolvedScrollView = (HostScrollView ??
+    FallbackScrollView) as ComponentType<ScrollViewProps & { ref?: Ref<ScrollViewInstance> }>;
   const { colors, resolveRadius, touchTargetMin, isCompact, alpha } = usePluginTheme();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});
   const [viewportWidth, setViewportWidth] = useState<number>(0);
   const [contentWidth, setContentWidth] = useState<number>(0);
@@ -58,8 +61,6 @@ export function Tabs({
 
   // Current scroll position tracker
   const currentScrollX = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
-  const dragStartScrollX = useRef<number>(0);
 
   const checkOverflow = (cWidth: number, vWidth: number, scrollX: number) => {
     if (vWidth <= 0 || cWidth <= 0) return;
@@ -117,38 +118,6 @@ export function Tabs({
     currentScrollX.current = nextX;
   };
 
-  // PanResponder to claim horizontal swipe gestures BEFORE parent BottomSheet cancels them
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        // Capture move events when motion is predominantly horizontal
-        onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-          const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-          return isHorizontal && Math.abs(gestureState.dx) > 6;
-        },
-        onPanResponderGrant: () => {
-          isDragging.current = true;
-          dragStartScrollX.current = currentScrollX.current;
-        },
-        onPanResponderMove: (_, gestureState) => {
-          if (scrollRef.current) {
-            const nextX = Math.max(0, dragStartScrollX.current - gestureState.dx);
-            currentScrollX.current = nextX;
-            scrollRef.current.scrollTo({ x: nextX, animated: false });
-          }
-        },
-        onPanResponderRelease: () => {
-          setTimeout(() => {
-            isDragging.current = false;
-          }, 80);
-        },
-        onPanResponderTerminate: () => {
-          isDragging.current = false;
-        },
-      }),
-    []
-  );
-
   const renderTab = (tab: TabItem) => {
     const isActive = tab.id === activeTab;
     const displayLabel = shouldFit && isCompact && tab.shortLabel ? tab.shortLabel : tab.label;
@@ -157,9 +126,7 @@ export function Tabs({
       <Pressable
         key={tab.id}
         onPress={() => {
-          if (!isDragging.current) {
-            onTabChange(tab.id);
-          }
+          onTabChange(tab.id);
         }}
         onLayout={(e) => handleTabLayout(tab.id, e)}
         accessibilityRole="tab"
@@ -248,7 +215,7 @@ export function Tabs({
     );
   }
 
-  // 2. SCROLL MODE: Closed outer frame with PanResponder & Universal Navigation Arrows
+  // 2. SCROLL MODE: Closed outer frame with host-gesture ScrollView & Navigation Arrows
   return (
     <View
       onLayout={handleContainerLayout}
@@ -261,7 +228,6 @@ export function Tabs({
         },
         style,
       ]}
-      {...panResponder.panHandlers}
     >
       {/* Left Scroll Arrow (Visible on both Desktop & Mobile when scrollable) */}
       {canScrollLeft && (
@@ -281,7 +247,7 @@ export function Tabs({
         </Pressable>
       )}
 
-      <ScrollView
+      <ResolvedScrollView
         ref={scrollRef}
         horizontal
         nestedScrollEnabled={true}
@@ -295,7 +261,7 @@ export function Tabs({
         contentContainerStyle={styles.scrollContent}
       >
         {tabs.map((tab) => renderTab(tab))}
-      </ScrollView>
+      </ResolvedScrollView>
 
       {/* Right Scroll Arrow (Visible on both Desktop & Mobile when scrollable) */}
       {canScrollRight && (

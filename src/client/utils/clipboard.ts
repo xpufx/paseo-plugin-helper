@@ -1,4 +1,5 @@
 import type { HostToast } from "../host.js";
+import { getOptionalClientHost } from "../host.js";
 
 export interface CopyToClipboardOptions {
   toast?: HostToast;
@@ -10,9 +11,10 @@ export interface CopyToClipboardOptions {
  * Works seamlessly across React Native (Hermes / mobile), web, and desktop.
  *
  * Precedence:
- * 1. React Native's Clipboard (react-native / react-native-web)
- * 2. Web navigator.clipboard.writeText (modern secure web contexts)
- * 3. Fallback: document.execCommand("copy") (older web / non-secure contexts)
+ * 1. Host copyText from initClientHelpers (Paseo v0.8, optional)
+ * 2. React Native's Clipboard (react-native / react-native-web)
+ * 3. Web navigator.clipboard.writeText (modern secure web contexts)
+ * 4. Fallback: document.execCommand("copy") (older web / non-secure contexts)
  */
 export async function copyToClipboard(
   text: string,
@@ -22,15 +24,29 @@ export async function copyToClipboard(
   const str = String(text);
   let success = false;
 
-  // 1. Try React Native Clipboard (works in React Native / react-native-web)
+  // 0. Try host copyText when the plugin supplied it via initClientHelpers.
+  // Rejection falls through to the remaining tiers.
   try {
-    const rn = require("react-native");
-    if (rn?.Clipboard?.setString) {
-      rn.Clipboard.setString(str);
+    const copyText = getOptionalClientHost()?.copyText;
+    if (copyText) {
+      await copyText(str);
       success = true;
     }
   } catch {
-    // Ignore require error if not in RN context
+    // Ignore host copy failure and fall through
+  }
+
+  // 1. Try React Native Clipboard (works in React Native / react-native-web)
+  if (!success) {
+    try {
+      const rn = require("react-native");
+      if (rn?.Clipboard?.setString) {
+        rn.Clipboard.setString(str);
+        success = true;
+      }
+    } catch {
+      // Ignore require error if not in RN context
+    }
   }
 
   // 2. Try modern Web navigator.clipboard

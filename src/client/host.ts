@@ -1,4 +1,19 @@
-import type { ComponentType, ReactNode } from "react";
+import type {
+  ComponentType,
+  ForwardRefExoticComponent,
+  ReactElement,
+  ReactNode,
+  Ref,
+  RefAttributes,
+} from "react";
+import type {
+  FlatList as RNFlatList,
+  FlatListProps,
+  ScrollView as RNScrollView,
+  ScrollViewProps,
+  TextInput as RNTextInput,
+  TextInputProps,
+} from "react-native";
 
 /**
  * Structural host types for Paseo client integration.
@@ -98,11 +113,29 @@ export interface HostAgentsApi {
 
 export type PluginCleanup = () => void;
 
+export type HostCopyText = (text: string) => Promise<void>;
+
+export type HostScrollView = ForwardRefExoticComponent<
+  ScrollViewProps & RefAttributes<RNScrollView>
+>;
+
+export type HostFlatList = <ItemT>(
+  props: FlatListProps<ItemT> & { ref?: Ref<RNFlatList<ItemT>> },
+) => ReactElement;
+
+export type HostTextInput = ForwardRefExoticComponent<
+  TextInputProps & RefAttributes<RNTextInput>
+>;
+
 export interface ClientHostDeps {
   Icon: HostIcon;
   Modal: HostModal;
   useRpc: HostUseRpc;
   useToast: HostUseToast;
+  copyText?: HostCopyText;
+  ScrollView?: HostScrollView;
+  FlatList?: HostFlatList;
+  TextInput?: HostTextInput;
 }
 
 let deps: ClientHostDeps | undefined;
@@ -118,6 +151,10 @@ export function getClientHost(): ClientHostDeps {
         "Call initClientHelpers({ Icon, Modal, useRpc, useToast }) in the plugin client entry.",
     );
   }
+  return deps;
+}
+
+export function getOptionalClientHost(): ClientHostDeps | undefined {
   return deps;
 }
 
