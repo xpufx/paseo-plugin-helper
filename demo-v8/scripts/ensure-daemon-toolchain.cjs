@@ -9,7 +9,7 @@ for (const b of bins) {
   const r = spawnSync(b, ["--version"], { stdio: "ignore" });
   if (r.error || r.status !== 0) {
     console.error(
-      `\nERROR: required binary '${b}' could not be started by the daemon host (install node and npm; see README prerequisites)`,
+      `\nERROR: required binary '${b}' could not be started by the daemon host (this plugin requires node and npm — not a Paseo error; see the plugin README prerequisites)`,
     );
     failed = true;
   }
