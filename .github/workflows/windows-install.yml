@@ -58,16 +58,6 @@ jobs:
             & paseo plugin add @specParts
           }
 
-      - name: Enable fleet
-        run: |
-          $env:FLEET -split '\r?\n' | ForEach-Object {
-            $line = $_.Trim()
-            if ([string]::IsNullOrWhiteSpace($line)) { return }
-            $id, $spec = $line -split ' ', 2
-            if ($env:FLEET_FILTER -and $id -notlike "*$($env:FLEET_FILTER)*") { return }
-            & paseo plugin enable $id
-          }
-
       - name: List fleet
         run: |
           paseo plugin ls
