@@ -23,16 +23,20 @@ jobs:
       - name: Install fleet (sequential, one runner)
         run: |
           for spec in \
-            "xpufx/paseo-plugin-helper:demo-v8" \
+            "xpufx/paseo-plugin-helper:demo-v8 --ref v8" \
           ; do
+            # shellcheck disable=SC2086
             paseo plugin add $spec
           done
+
+      - name: Enable fleet
+        run: paseo plugin enable helper-demo-v8
 
       - name: Assert all running
         run: |
           paseo plugin ls
-          paseo plugin ls | grep -E 'helper-demo-v8[[:space:]]+running'
           paseo plugin logs helper-demo-v8 | tail -20
+          paseo plugin ls | grep -E 'helper-demo-v8[[:space:]]+running'
 
       - name: Remove fleet
         if: always()
