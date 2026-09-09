@@ -94,7 +94,3 @@ jobs:
           echo "$out"
           [ $code -ne 0 ] || { echo "expected install to fail"; exit 1; }
           echo "$out" | grep -F "required binary"
-
-      - name: Remove fleet
-        if: always()
-        run: paseo plugin remove helper-demo-v8 || true
