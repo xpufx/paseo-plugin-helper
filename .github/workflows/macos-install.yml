@@ -1,6 +1,9 @@
 name: macos-install
 on:
   push:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       cli_tag:
@@ -11,12 +14,16 @@ on:
         description: 'Only run plugins whose id contains this string (empty = all)'
         default: ''
         required: false
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   install-fleet:
     runs-on: macos-latest
+    timeout-minutes: 20
     env:
-      # Single source of truth: "<plugin-id> <add-args...>" per line.
       FLEET_FILTER: ${{ inputs.fleet_filter }}
+      # Single source of truth: "<plugin-id> <add-args...>" per line.
       FLEET: |
         helper-demo-v8 xpufx/paseo-plugin-helper:demo-v8 --ref v8
         top xpufx/paseo-top --ref v0.8
@@ -43,15 +50,19 @@ jobs:
 
       - name: Install fleet (sequential, one runner)
         run: |
-          echo "$FLEET" | while read -r id spec; do
+          matched=0
+          while read -r id spec; do
             [ -z "$id" ] && continue
             # shellcheck disable=SC2053
             { [ -z "$FLEET_FILTER" ] || case "$id" in *$FLEET_FILTER*) ;; *) continue;; esac; }
+            matched=$((matched + 1))
             # shellcheck disable=SC2086
             paseo plugin add $spec
-          done
+          done <<< "$FLEET"
+          [ -z "$FLEET_FILTER" ] || [ "$matched" -gt 0 ] || { echo "no plugins matched filter '$FLEET_FILTER'"; exit 1; }
 
       - name: List fleet
+        if: always()
         run: |
           set -o pipefail
           paseo plugin ls
@@ -64,6 +75,7 @@ jobs:
 
   gate-fails-clean:
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - name: Probe stock toolchain
         run: |
