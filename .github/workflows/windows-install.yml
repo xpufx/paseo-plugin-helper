@@ -1,0 +1,72 @@
+name: windows-install
+on: [push, workflow_dispatch]
+jobs:
+  install-fleet:
+    runs-on: windows-latest
+    env:
+      # Single source of truth: "<plugin-id> <add-args...>" per line.
+      # Mirrors macos-install.yml.
+      FLEET: |
+        helper-demo-v8 xpufx/paseo-plugin-helper:demo-v8 --ref v8
+        top xpufx/paseo-top --ref v0.8
+        mcp-tools xpufx/paseo-mcp-tools --ref v0.8
+        x-comms xpufx/paseo-x-comms --ref v0.8
+    steps:
+      - name: Probe stock toolchain
+        run: |
+          [System.Environment]::OSVersion | Format-List
+          where.exe node
+          node -v
+          where.exe npm
+          npm -v
+
+      - name: Install Paseo CLI (beta)
+        run: npm install -g @getpaseo/cli@beta
+
+      - name: Start ephemeral daemon
+        run: |
+          $tmp = New-Item -ItemType Directory -Path (Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName()))
+          $paseoHome = Join-Path $tmp.FullName "paseo-home"
+          $env:PASEO_HOME = $paseoHome
+          "PASEO_HOME=$paseoHome" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          paseo daemon start
+          paseo status
+
+      - name: Install fleet (sequential, one runner)
+        run: |
+          $env:FLEET -split '\r?\n' | ForEach-Object {
+            $line = $_.Trim()
+            if ([string]::IsNullOrWhiteSpace($line)) { return }
+            $id, $spec = $line -split ' ', 2
+            $specParts = $spec -split '\s+'
+            & paseo plugin add @specParts
+          }
+
+      - name: Enable fleet
+        run: |
+          $env:FLEET -split '\r?\n' | ForEach-Object {
+            $line = $_.Trim()
+            if ([string]::IsNullOrWhiteSpace($line)) { return }
+            $id, $spec = $line -split ' ', 2
+            & paseo plugin enable $id
+          }
+
+      - name: List fleet
+        run: |
+          paseo plugin ls
+          $env:FLEET -split '\r?\n' | ForEach-Object {
+            $line = $_.Trim()
+            if ([string]::IsNullOrWhiteSpace($line)) { return }
+            $id, $spec = $line -split ' ', 2
+            & paseo plugin logs $id | Select-Object -Last 10
+          }
+
+      - name: Remove fleet
+        if: always()
+        run: |
+          $env:FLEET -split '\r?\n' | ForEach-Object {
+            $line = $_.Trim()
+            if ([string]::IsNullOrWhiteSpace($line)) { return }
+            $id, $spec = $line -split ' ', 2
+            & paseo plugin remove $id
+          }
