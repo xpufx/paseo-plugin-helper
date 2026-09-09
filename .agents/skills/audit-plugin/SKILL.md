@@ -60,7 +60,10 @@ if (!report.passed) {
 
 Work in silence: post progress, blockers, and completion notes as comments
 on the relevant Forgejo issue (`fgj issue comment <id> --body ...`),
-not as chat chatter. Move the issue through labels yourself
+not as chat chatter. `fgj` resolves repo context from the `origin` remote
+and does not fall through to configured hosts, so pass explicit
+`--hostname`/`-R` on every call unless the Forgejo remote is literally
+named `origin` (#18). Move the issue through labels yourself
 (`queued` -> `wip` -> `verify`). Chat is for decisions, approvals, and
 escalations only. One closing line in chat with the SHA when done.
 

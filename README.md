@@ -240,6 +240,65 @@ The repository includes a runnable reference plugin in [`demo/`](demo/README.md)
 
 ---
 
+## Issues-Centered Workflow
+
+Day-to-day coordination runs on Forgejo issues, not chat. Agents work in
+silence, report via issue comments, and move their own cards through labels.
+Chat is for decisions, approvals, and escalations only.
+
+The [`fgjx` wrapper](https://forge.mrs.aager.de/xpufx/paseo-plugin-helper/issues/23)
+fills gaps in the `fgj` CLI that matter for this flow: labeled issue
+listings and views, query flags (`--not-by`, `--sort`, `--since`), and
+`--help` patched so agents discover the extensions. Everything else passes
+straight through to `fgj`.
+
+```bash
+fgjx issue list --sort updated --not-by xpufx   # what moved without you
+fgjx issue view 12                              # labels, body, comments
+```
+
+### Labels, in importance order
+
+| Label | Meaning |
+| :--- | :--- |
+| `green-light` | Ready for an agent to pick up |
+| `high priority` | Do before routine work |
+| `spec` | Needs a detailed spec before building |
+| `triage` | Needs initial sorting before it enters the queue |
+| `discussion` | Open question, decide before building |
+| `idea` | Raw idea, not yet shaped |
+| `checklistify-issue` | Make a checklist of deliverables or steps |
+| `format-issue` | Agent reformats issue for clarity |
+| `agent-attention` | Agent needs to check this |
+| `agent-finished` | Agent finished its check, pairs with agent-attention |
+| `verify` | Built, awaiting human verification on device |
+| `wip` | An agent is actively working it |
+| `blocked` | Waiting on upstream, a human decision, or another issue |
+| `blocker` | This issue blocks others |
+| `blockee` | Blocked by another issue |
+| `stop-work` | Halt all work on this immediately |
+| `bug` | Defect, not a feature |
+| `security` | Secrets, credentials, exfiltration surface |
+| `upstream` | Blocked on upstream Paseo changes |
+| `upstream-check` | Check upstream PRs, issues, and discussions first |
+| `audit` | Needs a doctor/audit pass |
+| `chore` | Routine maintenance, no product change |
+| `meta` | Repo and Forgejo housekeeping |
+| `evergreen` | Living tracker, grows instead of closing |
+| `new-plugin` | Idea grown into a plugin proposal |
+| `expensive` | Big build, think before starting |
+| `cheap` | Small, safe to just do |
+| `low priority` | Whenever, no urgency |
+| `plugin:helper` | Concerns paseo-plugin-helper |
+| `plugin:top` | Concerns the top plugin |
+| `plugin:mcp-tools` | Concerns the mcp-tools plugin |
+| `plugin:x-comms` | Concerns the x-comms plugin |
+
+Label instructions are work orders: `format-issue` and `checklistify-issue`
+mean reformat and checklist the issue, then remove those labels when done.
+
+---
+
 ## Documentation
 
 Comprehensive API and module documentation:
