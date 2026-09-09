@@ -145,3 +145,11 @@ paseo plugin ls
 Require `running` with no error. For UI plugins, open the pill and modal on
 both desktop and mobile: no horizontal overflow, no clipped text, copy
 actions toast on both.
+
+## Reporting Norm
+
+Work in silence: post progress, blockers, and completion notes as comments
+on the relevant Forgejo issue (`fgj issue comment <id> --body ...`),
+not as chat chatter. Move the issue through labels yourself
+(`queued` -> `wip` -> `verify`). Chat is for decisions, approvals, and
+escalations only. One closing line in chat with the SHA when done.

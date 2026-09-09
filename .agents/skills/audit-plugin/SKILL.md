@@ -55,3 +55,11 @@ if (!report.passed) {
 - **Raw MCP subprocess**: `child_process.spawn` for MCP stdio -> use `McpClient`
 - **Raw host metrics**: direct `os.loadavg` / `/proc` reads -> use `getSystemMetrics`
 - **Manual version parsing**: reading `package.json` manually -> use `resolvePluginVersion` / `stampVersion`
+
+## Reporting Norm
+
+Work in silence: post progress, blockers, and completion notes as comments
+on the relevant Forgejo issue (`fgj issue comment <id> --body ...`),
+not as chat chatter. Move the issue through labels yourself
+(`queued` -> `wip` -> `verify`). Chat is for decisions, approvals, and
+escalations only. One closing line in chat with the SHA when done.
