@@ -1,0 +1,1 @@
+This repo is not for code. It's for issues. Use github for code/actions etc.
