@@ -40,6 +40,8 @@ jobs:
           export PASEO_HOME="$(mktemp -d)/paseo-home"
           echo "PASEO_HOME=$PASEO_HOME" >> "$GITHUB_ENV"
           paseo daemon start
+          python3 -c "import json; p='$PASEO_HOME/config.json'; d=json.load(open(p)); d['pluginsEnabled']=True; json.dump(d, open(p, 'w'), indent=2)"
+          paseo daemon reload
           paseo status
 
       - name: Install fleet (sequential, one runner)
@@ -50,15 +52,6 @@ jobs:
             { [ -z "$FLEET_FILTER" ] || case "$id" in *$FLEET_FILTER*) ;; *) continue;; esac; }
             # shellcheck disable=SC2086
             paseo plugin add $spec
-          done
-
-      - name: Enable fleet
-        run: |
-          echo "$FLEET" | while read -r id spec; do
-            [ -z "$id" ] && continue
-            # shellcheck disable=SC2053
-            { [ -z "$FLEET_FILTER" ] || case "$id" in *$FLEET_FILTER*) ;; *) continue;; esac; }
-            paseo plugin enable "$id"
           done
 
       - name: List fleet
