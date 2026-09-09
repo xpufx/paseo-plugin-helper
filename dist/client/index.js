@@ -1,5 +1,5 @@
 import React7, { createContext, useMemo, useContext, useRef, useEffect, useState, useCallback } from 'react';
-import { StyleSheet, Appearance, Pressable, ActivityIndicator, Text, View, Animated, PanResponder, ScrollView, Platform, TextInput, Image, RefreshControl, Linking } from 'react-native';
+import { StyleSheet, Appearance, Pressable, ActivityIndicator, Text, View, Animated, ScrollView, Platform, TextInput as TextInput$1, Image, RefreshControl, Linking } from 'react-native';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -297,6 +297,9 @@ function getClientHost() {
       "paseo-plugin-helper/client used before initClientHelpers(). Call initClientHelpers({ Icon, Modal, useRpc, useToast }) in the plugin client entry."
     );
   }
+  return deps;
+}
+function getOptionalClientHost() {
   return deps;
 }
 function isClientHostInitialized() {
@@ -711,7 +714,8 @@ function Tabs({
   mode = "auto",
   style
 }) {
-  const { Icon: Icon2 } = getClientHost();
+  const { Icon: Icon2, ScrollView: HostScrollView } = getClientHost();
+  const ResolvedScrollView = HostScrollView ?? ScrollView;
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const scrollRef = useRef(null);
   const tabLayouts = useRef({});
@@ -722,8 +726,6 @@ function Tabs({
   const radius = resolveRadius2("sm");
   const shouldFit = mode === "fit" || mode === "auto" && (isCompact || tabs.length <= 4);
   const currentScrollX = useRef(0);
-  const isDragging = useRef(false);
-  const dragStartScrollX = useRef(0);
   const checkOverflow = (cWidth, vWidth, scrollX) => {
     if (vWidth <= 0 || cWidth <= 0) return;
     setCanScrollLeft(scrollX > 4);
@@ -772,35 +774,6 @@ function Tabs({
     });
     currentScrollX.current = nextX;
   };
-  const panResponder = useMemo(
-    () => PanResponder.create({
-      // Capture move events when motion is predominantly horizontal
-      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-        const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-        return isHorizontal && Math.abs(gestureState.dx) > 6;
-      },
-      onPanResponderGrant: () => {
-        isDragging.current = true;
-        dragStartScrollX.current = currentScrollX.current;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (scrollRef.current) {
-          const nextX = Math.max(0, dragStartScrollX.current - gestureState.dx);
-          currentScrollX.current = nextX;
-          scrollRef.current.scrollTo({ x: nextX, animated: false });
-        }
-      },
-      onPanResponderRelease: () => {
-        setTimeout(() => {
-          isDragging.current = false;
-        }, 80);
-      },
-      onPanResponderTerminate: () => {
-        isDragging.current = false;
-      }
-    }),
-    []
-  );
   const renderTab = (tab) => {
     const isActive = tab.id === activeTab;
     const displayLabel = shouldFit && isCompact && tab.shortLabel ? tab.shortLabel : tab.label;
@@ -808,9 +781,7 @@ function Tabs({
       Pressable,
       {
         onPress: () => {
-          if (!isDragging.current) {
-            onTabChange(tab.id);
-          }
+          onTabChange(tab.id);
         },
         onLayout: (e) => handleTabLayout(tab.id, e),
         accessibilityRole: "tab",
@@ -908,7 +879,6 @@ function Tabs({
         },
         style
       ],
-      ...panResponder.panHandlers,
       children: [
         canScrollLeft && /* @__PURE__ */ jsx(
           Pressable,
@@ -927,7 +897,7 @@ function Tabs({
           }
         ),
         /* @__PURE__ */ jsx(
-          ScrollView,
+          ResolvedScrollView,
           {
             ref: scrollRef,
             horizontal: true,
@@ -1045,12 +1015,22 @@ async function copyToClipboard(text, options) {
   const str = String(text);
   let success = false;
   try {
-    const rn = __require("react-native");
-    if (rn?.Clipboard?.setString) {
-      rn.Clipboard.setString(str);
+    const copyText = getOptionalClientHost()?.copyText;
+    if (copyText) {
+      await copyText(str);
       success = true;
     }
   } catch {
+  }
+  if (!success) {
+    try {
+      const rn = __require("react-native");
+      if (rn?.Clipboard?.setString) {
+        rn.Clipboard.setString(str);
+        success = true;
+      }
+    } catch {
+    }
   }
   if (!success) {
     try {
@@ -1273,6 +1253,7 @@ function SearchInput({
   testID
 }) {
   const { Icon: Icon2 } = getClientHost();
+  const ResolvedInput = getOptionalClientHost()?.TextInput ?? TextInput$1;
   const { colors, resolveRadius: resolveRadius2, isCompact } = usePluginTheme();
   const radius = resolveRadius2("sm");
   const handleClear = () => {
@@ -1295,7 +1276,7 @@ function SearchInput({
       children: [
         /* @__PURE__ */ jsx(View, { style: styles7.iconWrapper, children: /* @__PURE__ */ jsx(Icon2, { name: "Search", size: 16, color: colors.foregroundMuted }) }),
         /* @__PURE__ */ jsx(
-          TextInput,
+          ResolvedInput,
           {
             testID,
             value,
@@ -1351,7 +1332,7 @@ var styles7 = StyleSheet.create({
     marginLeft: 4
   }
 });
-function TextInput2({
+function TextInput({
   value,
   onChangeText,
   label,
@@ -1372,6 +1353,7 @@ function TextInput2({
 }) {
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
   const [isFocused, setIsFocused] = useState(false);
+  const ResolvedInput = getOptionalClientHost()?.TextInput ?? TextInput$1;
   const radius = resolveRadius2("md");
   const hasError = Boolean(errorText);
   const borderColor = hasError ? colors.statusDanger : isFocused ? colors.accent : colors.border;
@@ -1391,7 +1373,7 @@ function TextInput2({
       }
     ) : null,
     /* @__PURE__ */ jsx(
-      TextInput,
+      ResolvedInput,
       {
         value,
         onChangeText,
@@ -1459,7 +1441,8 @@ function Toggle({
   label,
   description,
   disabled = false,
-  style
+  style,
+  labelStyle
 }) {
   const { colors, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const handlePress = () => {
@@ -1497,7 +1480,8 @@ function Toggle({
                 {
                   color: colors.foreground,
                   fontSize: isCompact ? 13 : 14
-                }
+                },
+                labelStyle
               ],
               children: label
             }
@@ -2714,9 +2698,21 @@ function ModalBody({
   contentContainerStyle,
   extraBottomInset = 0,
   refreshing = false,
-  onRefresh
+  onRefresh,
+  stickToEnd = false,
+  scrollRef
 }) {
   const { isCompact, padding, colors } = usePluginTheme();
+  const ResolvedScrollView = getOptionalClientHost()?.ScrollView ?? ScrollView;
+  const innerRef = useRef(null);
+  const setRefs = (node) => {
+    innerRef.current = node;
+    if (typeof scrollRef === "function") {
+      scrollRef(node);
+    } else if (scrollRef) {
+      scrollRef.current = node;
+    }
+  };
   const bottomPadding = (isCompact ? 48 : 20) + extraBottomInset;
   const refreshControl = onRefresh ? /* @__PURE__ */ jsx(
     RefreshControl,
@@ -2748,13 +2744,15 @@ function ModalBody({
     );
   }
   return /* @__PURE__ */ jsx(
-    ScrollView,
+    ResolvedScrollView,
     {
+      ref: setRefs,
       style: [{ backgroundColor: colors.surface0 }, styles17.container, style],
       nestedScrollEnabled: true,
       keyboardShouldPersistTaps: "handled",
       showsVerticalScrollIndicator: true,
       refreshControl,
+      onContentSizeChange: stickToEnd ? () => innerRef.current?.scrollToEnd({ animated: true }) : void 0,
       contentContainerStyle: [
         styles17.content,
         {
@@ -3571,6 +3569,6 @@ function Icon(props) {
   return /* @__PURE__ */ jsx(HostIconComponent, { ...props });
 }
 
-export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, CustomPillBody, CustomPillModalContent, DataTable, EmptyState, FormRow, Icon, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput2 as TextInput, Toggle, alpha, contractSchemaToFields, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getClientHost, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, initClientHelpers, isClientHostInitialized, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerHelperSettingsScreen, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, CustomPillBody, CustomPillModalContent, DataTable, EmptyState, FormRow, Icon, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput, Toggle, alpha, contractSchemaToFields, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getClientHost, getContrastColor, getDefaultTheme, getLuminance, getOptionalClientHost, getStatusColor, getTouchTargetMin, getVariantPalette, initClientHelpers, isClientHostInitialized, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerHelperSettingsScreen, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

@@ -305,6 +305,9 @@ function getClientHost() {
   }
   return deps;
 }
+function getOptionalClientHost() {
+  return deps;
+}
 function isClientHostInitialized() {
   return deps !== void 0;
 }
@@ -717,7 +720,8 @@ function Tabs({
   mode = "auto",
   style
 }) {
-  const { Icon: Icon2 } = getClientHost();
+  const { Icon: Icon2, ScrollView: HostScrollView } = getClientHost();
+  const ResolvedScrollView = HostScrollView ?? reactNative.ScrollView;
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const scrollRef = React7.useRef(null);
   const tabLayouts = React7.useRef({});
@@ -728,8 +732,6 @@ function Tabs({
   const radius = resolveRadius2("sm");
   const shouldFit = mode === "fit" || mode === "auto" && (isCompact || tabs.length <= 4);
   const currentScrollX = React7.useRef(0);
-  const isDragging = React7.useRef(false);
-  const dragStartScrollX = React7.useRef(0);
   const checkOverflow = (cWidth, vWidth, scrollX) => {
     if (vWidth <= 0 || cWidth <= 0) return;
     setCanScrollLeft(scrollX > 4);
@@ -778,35 +780,6 @@ function Tabs({
     });
     currentScrollX.current = nextX;
   };
-  const panResponder = React7.useMemo(
-    () => reactNative.PanResponder.create({
-      // Capture move events when motion is predominantly horizontal
-      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-        const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-        return isHorizontal && Math.abs(gestureState.dx) > 6;
-      },
-      onPanResponderGrant: () => {
-        isDragging.current = true;
-        dragStartScrollX.current = currentScrollX.current;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (scrollRef.current) {
-          const nextX = Math.max(0, dragStartScrollX.current - gestureState.dx);
-          currentScrollX.current = nextX;
-          scrollRef.current.scrollTo({ x: nextX, animated: false });
-        }
-      },
-      onPanResponderRelease: () => {
-        setTimeout(() => {
-          isDragging.current = false;
-        }, 80);
-      },
-      onPanResponderTerminate: () => {
-        isDragging.current = false;
-      }
-    }),
-    []
-  );
   const renderTab = (tab) => {
     const isActive = tab.id === activeTab;
     const displayLabel = shouldFit && isCompact && tab.shortLabel ? tab.shortLabel : tab.label;
@@ -814,9 +787,7 @@ function Tabs({
       reactNative.Pressable,
       {
         onPress: () => {
-          if (!isDragging.current) {
-            onTabChange(tab.id);
-          }
+          onTabChange(tab.id);
         },
         onLayout: (e) => handleTabLayout(tab.id, e),
         accessibilityRole: "tab",
@@ -914,7 +885,6 @@ function Tabs({
         },
         style
       ],
-      ...panResponder.panHandlers,
       children: [
         canScrollLeft && /* @__PURE__ */ jsxRuntime.jsx(
           reactNative.Pressable,
@@ -933,7 +903,7 @@ function Tabs({
           }
         ),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative.ScrollView,
+          ResolvedScrollView,
           {
             ref: scrollRef,
             horizontal: true,
@@ -1051,12 +1021,22 @@ async function copyToClipboard(text, options) {
   const str = String(text);
   let success = false;
   try {
-    const rn = __require("react-native");
-    if (rn?.Clipboard?.setString) {
-      rn.Clipboard.setString(str);
+    const copyText = getOptionalClientHost()?.copyText;
+    if (copyText) {
+      await copyText(str);
       success = true;
     }
   } catch {
+  }
+  if (!success) {
+    try {
+      const rn = __require("react-native");
+      if (rn?.Clipboard?.setString) {
+        rn.Clipboard.setString(str);
+        success = true;
+      }
+    } catch {
+    }
   }
   if (!success) {
     try {
@@ -1279,6 +1259,7 @@ function SearchInput({
   testID
 }) {
   const { Icon: Icon2 } = getClientHost();
+  const ResolvedInput = getOptionalClientHost()?.TextInput ?? reactNative.TextInput;
   const { colors, resolveRadius: resolveRadius2, isCompact } = usePluginTheme();
   const radius = resolveRadius2("sm");
   const handleClear = () => {
@@ -1301,7 +1282,7 @@ function SearchInput({
       children: [
         /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles7.iconWrapper, children: /* @__PURE__ */ jsxRuntime.jsx(Icon2, { name: "Search", size: 16, color: colors.foregroundMuted }) }),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative.TextInput,
+          ResolvedInput,
           {
             testID,
             value,
@@ -1357,7 +1338,7 @@ var styles7 = reactNative.StyleSheet.create({
     marginLeft: 4
   }
 });
-function TextInput2({
+function TextInput({
   value,
   onChangeText,
   label,
@@ -1378,6 +1359,7 @@ function TextInput2({
 }) {
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
   const [isFocused, setIsFocused] = React7.useState(false);
+  const ResolvedInput = getOptionalClientHost()?.TextInput ?? reactNative.TextInput;
   const radius = resolveRadius2("md");
   const hasError = Boolean(errorText);
   const borderColor = hasError ? colors.statusDanger : isFocused ? colors.accent : colors.border;
@@ -1397,7 +1379,7 @@ function TextInput2({
       }
     ) : null,
     /* @__PURE__ */ jsxRuntime.jsx(
-      reactNative.TextInput,
+      ResolvedInput,
       {
         value,
         onChangeText,
@@ -1465,7 +1447,8 @@ function Toggle({
   label,
   description,
   disabled = false,
-  style
+  style,
+  labelStyle
 }) {
   const { colors, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const handlePress = () => {
@@ -1503,7 +1486,8 @@ function Toggle({
                 {
                   color: colors.foreground,
                   fontSize: isCompact ? 13 : 14
-                }
+                },
+                labelStyle
               ],
               children: label
             }
@@ -2720,9 +2704,21 @@ function ModalBody({
   contentContainerStyle,
   extraBottomInset = 0,
   refreshing = false,
-  onRefresh
+  onRefresh,
+  stickToEnd = false,
+  scrollRef
 }) {
   const { isCompact, padding, colors } = usePluginTheme();
+  const ResolvedScrollView = getOptionalClientHost()?.ScrollView ?? reactNative.ScrollView;
+  const innerRef = React7.useRef(null);
+  const setRefs = (node) => {
+    innerRef.current = node;
+    if (typeof scrollRef === "function") {
+      scrollRef(node);
+    } else if (scrollRef) {
+      scrollRef.current = node;
+    }
+  };
   const bottomPadding = (isCompact ? 48 : 20) + extraBottomInset;
   const refreshControl = onRefresh ? /* @__PURE__ */ jsxRuntime.jsx(
     reactNative.RefreshControl,
@@ -2754,13 +2750,15 @@ function ModalBody({
     );
   }
   return /* @__PURE__ */ jsxRuntime.jsx(
-    reactNative.ScrollView,
+    ResolvedScrollView,
     {
+      ref: setRefs,
       style: [{ backgroundColor: colors.surface0 }, styles17.container, style],
       nestedScrollEnabled: true,
       keyboardShouldPersistTaps: "handled",
       showsVerticalScrollIndicator: true,
       refreshControl,
+      onContentSizeChange: stickToEnd ? () => innerRef.current?.scrollToEnd({ animated: true }) : void 0,
       contentContainerStyle: [
         styles17.content,
         {
@@ -3602,7 +3600,7 @@ exports.Responsive = Responsive;
 exports.SearchInput = SearchInput;
 exports.StatusDot = StatusDot;
 exports.Tabs = Tabs;
-exports.TextInput = TextInput2;
+exports.TextInput = TextInput;
 exports.Toggle = Toggle;
 exports.alpha = alpha;
 exports.contractSchemaToFields = contractSchemaToFields;
@@ -3614,6 +3612,7 @@ exports.getClientHost = getClientHost;
 exports.getContrastColor = getContrastColor;
 exports.getDefaultTheme = getDefaultTheme;
 exports.getLuminance = getLuminance;
+exports.getOptionalClientHost = getOptionalClientHost;
 exports.getStatusColor = getStatusColor;
 exports.getTouchTargetMin = getTouchTargetMin;
 exports.getVariantPalette = getVariantPalette;

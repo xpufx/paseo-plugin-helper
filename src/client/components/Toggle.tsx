@@ -5,6 +5,7 @@ import {
   Text,
   View,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from "react-native";
 import { usePluginTheme } from "../theme/provider.js";
@@ -16,6 +17,7 @@ export interface ToggleProps {
   description?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
 }
 
 export function Toggle({
@@ -25,6 +27,7 @@ export function Toggle({
   description,
   disabled = false,
   style,
+  labelStyle,
 }: ToggleProps) {
   const { colors, touchTargetMin, isCompact, alpha } = usePluginTheme();
 
@@ -71,6 +74,7 @@ export function Toggle({
                   color: colors.foreground,
                   fontSize: isCompact ? 13 : 14,
                 },
+                labelStyle,
               ]}
             >
               {label}

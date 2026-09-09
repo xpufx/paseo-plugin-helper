@@ -1,9 +1,9 @@
 import { S as StatusVariant, T as ThemeColors, P as PlatformType, R as ResponsiveLayout, c as PluginTheme, a as SettingsContract, b as CustomPillState } from '../custom-pills-BRMMkgfE.js';
 import * as React from 'react';
-import React__default, { ReactNode, ComponentType } from 'react';
-import { c as HostLayout, d as HostPillProps, e as ComposerPillRegistrar, P as PluginCleanup, a as HostSurfaceProps, f as HostAgentPanelProps, g as HostWorkspacePanelProps, h as HostToast, i as HostIconProps } from '../host-CI3xo45X.js';
-export { j as ClientHostDeps, C as ComposerPillContribution, H as HostAgentRef, b as HostAgentUpdate, k as HostAgentsApi, l as HostIcon, m as HostModal, n as HostModalContentProps, o as HostModalProps, p as HostRpcContract, q as HostTheme, r as HostThemeColors, s as HostUseRpc, t as HostUseToast, u as getClientHost, v as initClientHelpers, w as isClientHostInitialized } from '../host-CI3xo45X.js';
-import { StyleProp, ViewStyle, TextStyle, KeyboardTypeOptions, ImageSourcePropType } from 'react-native';
+import React__default, { ReactNode, Ref, ComponentType } from 'react';
+import { c as HostLayout, d as HostPillProps, e as ComposerPillRegistrar, P as PluginCleanup, a as HostSurfaceProps, f as HostAgentPanelProps, g as HostWorkspacePanelProps, h as HostToast, i as HostIconProps } from '../host-DFZVj1k-.js';
+export { j as ClientHostDeps, C as ComposerPillContribution, H as HostAgentRef, b as HostAgentUpdate, k as HostAgentsApi, l as HostCopyText, m as HostFlatList, n as HostIcon, o as HostModal, p as HostModalContentProps, q as HostModalProps, r as HostRpcContract, s as HostScrollView, t as HostTextInput, u as HostTheme, v as HostThemeColors, w as HostUseRpc, x as HostUseToast, y as getClientHost, z as getOptionalClientHost, A as initClientHelpers, B as isClientHostInitialized } from '../host-DFZVj1k-.js';
+import { StyleProp, ViewStyle, TextStyle, KeyboardTypeOptions, ImageSourcePropType, ScrollView } from 'react-native';
 import { M as MetricThresholds } from '../formatters-BtMZotvg.js';
 import { P as PluginRpcContract, R as RpcInput, a as RpcOutput } from '../rpc-D27pph91.js';
 import { UseMutationOptions, UseQueryOptions, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
@@ -334,8 +334,9 @@ interface ToggleProps {
     description?: string;
     disabled?: boolean;
     style?: StyleProp<ViewStyle>;
+    labelStyle?: StyleProp<TextStyle>;
 }
-declare function Toggle({ value, onValueChange, label, description, disabled, style, }: ToggleProps): React__default.JSX.Element;
+declare function Toggle({ value, onValueChange, label, description, disabled, style, labelStyle, }: ToggleProps): React__default.JSX.Element;
 
 interface CollapsibleProps {
     title: string;
@@ -552,14 +553,20 @@ interface ModalBodyProps {
     extraBottomInset?: number;
     refreshing?: boolean;
     onRefresh?: () => void | Promise<void>;
+    stickToEnd?: boolean;
+    scrollRef?: Ref<ScrollView>;
 }
 /**
  * Mobile-safe scrollable body for Paseo <Modal.Content>.
  * Automatically calculates responsive bottom padding so controls are not cut off
  * by mobile home bars or virtual keyboards.
  * Supports pull-to-refresh on mobile via `refreshing` and `onRefresh`.
+ * Uses the host ScrollView from initClientHelpers when supplied (sheet-gesture
+ * integrated on Paseo v0.8), otherwise plain React Native ScrollView.
+ * Pass `stickToEnd` for conversation-style views that track new content, or
+ * `scrollRef` for imperative scrolling.
  */
-declare function ModalBody({ children, style, contentContainerStyle, extraBottomInset, refreshing, onRefresh, }: ModalBodyProps): React__default.JSX.Element;
+declare function ModalBody({ children, style, contentContainerStyle, extraBottomInset, refreshing, onRefresh, stickToEnd, scrollRef, }: ModalBodyProps): React__default.JSX.Element;
 
 interface ActionBarProps {
     children: ReactNode;
@@ -1094,9 +1101,10 @@ interface CopyToClipboardOptions {
  * Works seamlessly across React Native (Hermes / mobile), web, and desktop.
  *
  * Precedence:
- * 1. React Native's Clipboard (react-native / react-native-web)
- * 2. Web navigator.clipboard.writeText (modern secure web contexts)
- * 3. Fallback: document.execCommand("copy") (older web / non-secure contexts)
+ * 1. Host copyText from initClientHelpers (Paseo v0.8, optional)
+ * 2. React Native's Clipboard (react-native / react-native-web)
+ * 3. Web navigator.clipboard.writeText (modern secure web contexts)
+ * 4. Fallback: document.execCommand("copy") (older web / non-secure contexts)
  */
 declare function copyToClipboard(text: string, options?: CopyToClipboardOptions): Promise<boolean>;
 

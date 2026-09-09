@@ -1,4 +1,5 @@
-import { ComponentType, ReactNode } from 'react';
+import { ComponentType, ReactNode, ForwardRefExoticComponent, RefAttributes, Ref, ReactElement } from 'react';
+import { ScrollViewProps, ScrollView, FlatListProps, FlatList, TextInputProps, TextInput } from 'react-native';
 
 /**
  * Structural host types for Paseo client integration.
@@ -85,14 +86,25 @@ interface HostAgentsApi {
     }>;
 }
 type PluginCleanup = () => void;
+type HostCopyText = (text: string) => Promise<void>;
+type HostScrollView = ForwardRefExoticComponent<ScrollViewProps & RefAttributes<ScrollView>>;
+type HostFlatList = <ItemT>(props: FlatListProps<ItemT> & {
+    ref?: Ref<FlatList<ItemT>>;
+}) => ReactElement;
+type HostTextInput = ForwardRefExoticComponent<TextInputProps & RefAttributes<TextInput>>;
 interface ClientHostDeps {
     Icon: HostIcon;
     Modal: HostModal;
     useRpc: HostUseRpc;
     useToast: HostUseToast;
+    copyText?: HostCopyText;
+    ScrollView?: HostScrollView;
+    FlatList?: HostFlatList;
+    TextInput?: HostTextInput;
 }
 declare function initClientHelpers(host: ClientHostDeps): void;
 declare function getClientHost(): ClientHostDeps;
+declare function getOptionalClientHost(): ClientHostDeps | undefined;
 interface HostPillProps {
     agentId: string;
     workspaceId: string;
@@ -136,4 +148,4 @@ interface ComposerPillRegistrar {
 }
 declare function isClientHostInitialized(): boolean;
 
-export { type ComposerPillContribution as C, type HostAgentRef as H, type PluginCleanup as P, type HostSurfaceProps as a, type HostAgentUpdate as b, type HostLayout as c, type HostPillProps as d, type ComposerPillRegistrar as e, type HostAgentPanelProps as f, type HostWorkspacePanelProps as g, type HostToast as h, type HostIconProps as i, type ClientHostDeps as j, type HostAgentsApi as k, type HostIcon as l, type HostModal as m, type HostModalContentProps as n, type HostModalProps as o, type HostRpcContract as p, type HostTheme as q, type HostThemeColors as r, type HostUseRpc as s, type HostUseToast as t, getClientHost as u, initClientHelpers as v, isClientHostInitialized as w };
+export { initClientHelpers as A, isClientHostInitialized as B, type ComposerPillContribution as C, type HostAgentRef as H, type PluginCleanup as P, type HostSurfaceProps as a, type HostAgentUpdate as b, type HostLayout as c, type HostPillProps as d, type ComposerPillRegistrar as e, type HostAgentPanelProps as f, type HostWorkspacePanelProps as g, type HostToast as h, type HostIconProps as i, type ClientHostDeps as j, type HostAgentsApi as k, type HostCopyText as l, type HostFlatList as m, type HostIcon as n, type HostModal as o, type HostModalContentProps as p, type HostModalProps as q, type HostRpcContract as r, type HostScrollView as s, type HostTextInput as t, type HostTheme as u, type HostThemeColors as v, type HostUseRpc as w, type HostUseToast as x, getClientHost as y, getOptionalClientHost as z };
