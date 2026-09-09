@@ -63,3 +63,10 @@ on the relevant Forgejo issue (`fgj issue comment <id> --body ...`),
 not as chat chatter. Move the issue through labels yourself
 (`queued` -> `wip` -> `verify`). Chat is for decisions, approvals, and
 escalations only. One closing line in chat with the SHA when done.
+
+## Label Instructions
+
+Labels on an issue can be work orders: `format-issue` means reformat the
+body for clarity, `checklistify-issue` means turn deliverables into a
+checklist. When the work is done, remove those labels. Transient
+instruction labels never stay on finished work.
