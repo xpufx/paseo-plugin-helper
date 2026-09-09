@@ -1,0 +1,40 @@
+name: macos-install
+on: [push, workflow_dispatch]
+jobs:
+  install-fleet:
+    runs-on: macos-latest
+    steps:
+      - name: Probe stock toolchain
+        run: |
+          sw_vers
+          which node && node -v
+          which npm && npm -v
+
+      - name: Install Paseo CLI (beta)
+        run: npm install -g @getpaseo/cli@beta
+
+      - name: Start ephemeral daemon
+        run: |
+          export PASEO_HOME="$(mktemp -d)/paseo-home"
+          echo "PASEO_HOME=$PASEO_HOME" >> "$GITHUB_ENV"
+          paseo daemon start
+          paseo status
+
+      - name: Install fleet (sequential, one runner)
+        run: |
+          for spec in \
+            "xpufx/paseo-plugin-helper:demo-v8" \
+          ; do
+            paseo plugin add $spec
+          done
+
+      - name: Assert all running
+        run: |
+          paseo plugin ls
+          paseo plugin ls | grep -E 'helper-demo-v8[[:space:]]+running'
+          paseo plugin logs helper-demo-v8 | tail -20
+
+      - name: Remove fleet
+        if: always()
+        run: |
+          paseo plugin remove helper-demo-v8 || true
