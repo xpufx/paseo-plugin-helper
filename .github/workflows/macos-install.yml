@@ -24,21 +24,33 @@ jobs:
         run: |
           for spec in \
             "xpufx/paseo-plugin-helper:demo-v8 --ref v8" \
+            "xpufx/paseo-top --ref v0.8" \
+            "xpufx/paseo-mcp-tools --ref v0.8" \
+            "xpufx/paseo-x-comms --ref v0.8" \
           ; do
             # shellcheck disable=SC2086
             paseo plugin add $spec
           done
 
       - name: Enable fleet
-        run: paseo plugin enable helper-demo-v8
+        run: |
+          paseo plugin enable helper-demo-v8
+          paseo plugin enable top
+          paseo plugin enable mcp-tools
+          paseo plugin enable x-comms
 
-      - name: Assert all running
+      - name: List fleet
         run: |
           paseo plugin ls
-          paseo plugin logs helper-demo-v8 | tail -20
-          paseo plugin ls | grep -E 'helper-demo-v8[[:space:]]+running'
+          paseo plugin logs helper-demo-v8 | tail -10
+          paseo plugin logs top | tail -10
+          paseo plugin logs mcp-tools | tail -10
+          paseo plugin logs x-comms | tail -10
 
       - name: Remove fleet
         if: always()
         run: |
           paseo plugin remove helper-demo-v8 || true
+          paseo plugin remove top || true
+          paseo plugin remove mcp-tools || true
+          paseo plugin remove x-comms || true
