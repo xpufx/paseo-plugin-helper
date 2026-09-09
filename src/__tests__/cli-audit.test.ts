@@ -72,7 +72,8 @@ describe("Audit CLI & Scanner", () => {
       fs.writeFileSync(
         path.join(tmpDir, "pill.client.tsx"),
         `
-        import { registerComposerPill } from "paseo-plugin-helper/client";
+        import { registerComposerPill, initClientHelpers } from "paseo-plugin-helper/client";
+        initClientHelpers({ Icon: {}, Modal: {}, useRpc: () => async () => ({}), useToast: () => ({}) });
         export function contributeClient(client) {
           return registerComposerPill(client, { id: "test", title: "Clean" });
         }
@@ -100,8 +101,7 @@ describe("Audit CLI & Scanner", () => {
     }
   });
 
-  it("doctorProject alias works identically and ignores bundled/minified files", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-doctor-test-"));
+  it("doctorProject alias works identically and ignores bundled/minified files", () => {    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-doctor-test-"));
 
     try {
       // Bundled file with raw regex exec or spawn shouldn't trigger warnings
@@ -117,7 +117,8 @@ describe("Audit CLI & Scanner", () => {
       fs.writeFileSync(
         path.join(tmpDir, "client.tsx"),
         `
-        import { registerComposerPill } from "paseo-plugin-helper/client";
+        import { registerComposerPill, initClientHelpers } from "paseo-plugin-helper/client";
+        initClientHelpers({ Icon: {}, Modal: {}, useRpc: () => async () => ({}), useToast: () => ({}) });
         export const setup = (client) => registerComposerPill(client, { id: "test", title: "OK" });
         `,
       );
@@ -127,6 +128,96 @@ describe("Audit CLI & Scanner", () => {
       expect(report.scannedFiles).toBe(1);
       expect(report.issues.length).toBe(0);
       expect(report.passed).toBe(true);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("flags missing requirements.paseo as error for v8 layouts, warn otherwise", () => {
+    const v8Dir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-audit-v8-"));
+    const v7Dir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-audit-v7-"));
+
+    try {
+      fs.writeFileSync(
+        path.join(v8Dir, "paseo-plugin.json"),
+        JSON.stringify({ id: "demo", build: [["npm", "install"]] }),
+      );
+      fs.writeFileSync(path.join(v8Dir, "index.client.tsx"), "export default function c() {}");
+
+      const v8Report = auditProject(v8Dir);
+      const v8Issue = v8Report.issues.find((i) => i.ruleId === "v8-missing-requirements");
+      expect(v8Issue).toBeDefined();
+      expect(v8Issue?.severity).toBe("error");
+
+      fs.writeFileSync(
+        path.join(v7Dir, "paseo-plugin.json"),
+        JSON.stringify({ id: "demo", build: [["npm", "install"]] }),
+      );
+      fs.writeFileSync(path.join(v7Dir, "index.ts"), "export default function c() {}");
+
+      const v7Report = auditProject(v7Dir);
+      const v7Issue = v7Report.issues.find((i) => i.ruleId === "v8-missing-requirements");
+      expect(v7Issue).toBeDefined();
+      expect(v7Issue?.severity).toBe("warn");
+    } finally {
+      fs.rmSync(v8Dir, { recursive: true, force: true });
+      fs.rmSync(v7Dir, { recursive: true, force: true });
+    }
+  });
+
+  it("flags root modules and crossed imports in v8 layouts", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-audit-v8b-"));
+
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, "paseo-plugin.json"),
+        JSON.stringify({ id: "demo", requirements: { paseo: ">=0.8.0" } }),
+      );
+      fs.writeFileSync(path.join(tmpDir, "index.client.tsx"), "export default function c() {}");
+      fs.writeFileSync(path.join(tmpDir, "leftover.ts"), "export const x = 1;");
+      fs.mkdirSync(path.join(tmpDir, "client"));
+      fs.writeFileSync(
+        path.join(tmpDir, "client", "view.tsx"),
+        `import { thing } from "../server/thing";\nexport const v = thing;`,
+      );
+      fs.writeFileSync(
+        path.join(tmpDir, "client", "sysinfo.tsx"),
+        `import os from "node:os";\nexport const platform = os.platform();`,
+      );
+      fs.mkdirSync(path.join(tmpDir, "server"));
+      fs.writeFileSync(
+        path.join(tmpDir, "server", "ops.ts"),
+        `import { theme } from "../client/theme";\nexport const present = typeof theme === "object";`,
+      );
+
+      const report = auditProject(tmpDir);
+      const ruleIds = report.issues.map((i) => i.ruleId);
+      expect(ruleIds).toContain("v8-root-module");
+      expect(ruleIds.filter((id) => id === "v8-crossed-import")).toHaveLength(3);
+      expect(ruleIds).not.toContain("v8-missing-requirements");
+      expect(ruleIds).not.toContain("missing-client-init");
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("flags helper client usage without initClientHelpers", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "paseo-audit-init-"));
+
+    try {
+      fs.mkdirSync(path.join(tmpDir, "client"));
+      fs.writeFileSync(
+        path.join(tmpDir, "client", "pill.tsx"),
+        `
+        import { ModalBody } from "paseo-plugin-helper/client";
+        export function view() { return ModalBody; }
+        `,
+      );
+
+      const report = auditProject(tmpDir);
+      const issue = report.issues.find((i) => i.ruleId === "missing-client-init");
+      expect(issue).toBeDefined();
+      expect(issue?.severity).toBe("warn");
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

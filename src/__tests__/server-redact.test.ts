@@ -40,4 +40,23 @@ describe("redactSecrets", () => {
     expect(redacted.token).toBe("sec•••678");
     expect(redacted.shortSecret).toBe("•••");
   });
+
+  it("masks pairing-offer URLs but leaves normal URLs alone", () => {
+    const msg =
+      "pair me: https://app.paseo.sh/#offer=eyJ2IjoyLCJzZXJ2ZXJJZCI6InNydl9fbE9WSEIyMjNoelQiLCJkYWVtb25QdWJsaWNLZXlCNjQiOiJLM2syZkhlVGlBMldSeGpYU1lNRjlTOG1rZldrT0tPV0hTYmRYNWRzMkdNPSIsInJlbGF5Ijp7ImVuZHBvaW50IjoicmVsYXkucGFzZW8uc2g6NDQzIiwidXNlVGxzIjp0cnVlfX0 and https://example.com/docs";
+    const redacted = redactSecrets(msg);
+    expect(redacted).toContain("https://app.paseo.sh/#offer=[REDACTED]");
+    expect(redacted).toContain("https://example.com/docs");
+    expect(redacted).not.toContain("eyJ2Ijoy");
+  });
+
+  it("masks pairing offers nested in objects", () => {
+    const raw = {
+      note: "see https://app.paseo.sh/#offer=abcDEF123_-",
+      nested: { link: "https://app.paseo.sh/#offer=xyz" },
+    };
+    const redacted = redactSecrets(raw);
+    expect(redacted.note).toBe("see https://app.paseo.sh/#offer=[REDACTED]");
+    expect(redacted.nested.link).toBe("https://app.paseo.sh/#offer=[REDACTED]");
+  });
 });

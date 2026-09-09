@@ -68,6 +68,34 @@ var AUDIT_RULES = {
     description: "Manual reading and parsing of package.json for plugin version resolution.",
     replacement: "resolvePluginVersion / stampVersion from 'paseo-plugin-helper/server'",
     docUrl: "https://github.com/xpufx/paseo-plugin-helper/blob/main/docs/server.md#6-plugin-version-resolution-resolvepluginversion"
+  },
+  "v8-missing-requirements": {
+    id: "v8-missing-requirements",
+    severity: "error",
+    description: "paseo-plugin.json has no requirements.paseo, which a v0.8 daemon reads as pre-0.8 and rejects.",
+    replacement: 'Add "requirements": { "paseo": ">=0.8.0" } to paseo-plugin.json (migration guide step 7)',
+    docUrl: "https://paseo.sh/docs/plugins/v0.8/migration"
+  },
+  "v8-root-module": {
+    id: "v8-root-module",
+    severity: "error",
+    description: "Code module at the plugin root in a v0.8-layout plugin. The v0.8 compiler only accepts client/, server/, and shared/ directories.",
+    replacement: "Move the file into client/, server/, or shared/ and fix its imports",
+    docUrl: "https://paseo.sh/docs/plugins/v0.8/migration"
+  },
+  "v8-crossed-import": {
+    id: "v8-crossed-import",
+    severity: "error",
+    description: "Cross-runtime import: client code reaching into server/ (or vice versa), or a Node API imported into the client bundle. The v0.8 compiler rejects these.",
+    replacement: "Move the operation behind an RPC defined in shared/ and call it from the client",
+    docUrl: "https://paseo.sh/docs/plugins/v0.8/migration"
+  },
+  "missing-client-init": {
+    id: "missing-client-init",
+    severity: "warn",
+    description: "Client code uses paseo-plugin-helper/client components or hooks but never calls initClientHelpers(). Every helper component throws without it.",
+    replacement: "Call initClientHelpers({ Icon, Modal, useRpc, useToast }) once in the client entry with version-correct SDK imports",
+    docUrl: "https://github.com/xpufx/paseo-plugin-helper/blob/main/docs/client.md"
   }
 };
 
@@ -125,12 +153,64 @@ function auditProject(targetDir, options = {}) {
   const ignoredCustom = new Set(options.ignore ?? []);
   const files = findFiles(resolvedTarget, ignoredCustom);
   const issues = [];
+  const pushIssue = (ruleId, file, line, snippet, severityOverride) => {
+    const rule = AUDIT_RULES[ruleId];
+    issues.push({
+      ruleId: rule.id,
+      severity: severityOverride ?? rule.severity,
+      file,
+      line,
+      column: snippet.indexOf(snippet.trim()),
+      message: rule.description,
+      codeSnippet: snippet.trim(),
+      replacement: rule.replacement,
+      docUrl: rule.docUrl
+    });
+  };
+  const hasV8Entries = files.some((f) => {
+    const rel = path.relative(resolvedTarget, f);
+    return rel === "index.client.ts" || rel === "index.client.tsx" || rel === "index.server.ts" || rel === "index.server.tsx";
+  });
+  let helperClientUsed = false;
+  let initCalled = false;
   for (const filePath of files) {
     const relPath = path.relative(resolvedTarget, filePath);
     const content = fs2.readFileSync(filePath, "utf-8");
     const lines = content.split("\n");
     const inTest = isTestFile(relPath);
     const inBuildOrTool = isBuildOrToolFile(relPath);
+    if (content.includes("paseo-plugin-helper/client")) {
+      helperClientUsed = true;
+    }
+    if (content.includes("initClientHelpers(")) {
+      initCalled = true;
+    }
+    if (hasV8Entries && !relPath.includes(path.sep)) {
+      const base = path.basename(relPath);
+      const isCode = /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(base);
+      const isLegalRoot = /^(index\.client|index\.server)\.(ts|tsx|js)$/.test(base) || base === "version.ts" || base.endsWith(".d.ts");
+      if (isCode && !isLegalRoot && !inTest) {
+        pushIssue("v8-root-module", relPath, 1, lines[0]?.trim() || base);
+      }
+    }
+    if (!inTest && !inBuildOrTool) {
+      const inClientDir = relPath.split(path.sep).includes("client");
+      const inServerDir = relPath.split(path.sep).includes("server");
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("import") && !trimmed.startsWith("} from") && !trimmed.startsWith("export")) {
+          continue;
+        }
+        const reachesServer = /from\s+["'](\.\.\/)+server\//.test(line);
+        const reachesClient = /from\s+["'](\.\.\/)+client\//.test(line);
+        const importsNode = /from\s+["']node:/.test(line);
+        if (inClientDir && (reachesServer || importsNode) || inServerDir && reachesClient) {
+          pushIssue("v8-crossed-import", relPath, i + 1, trimmed);
+          break;
+        }
+      }
+    }
     if (!inTest && !inBuildOrTool) {
       content.includes(".agents.subscribe(");
       const hasAddComposerPill = content.includes(".addComposerPill(");
@@ -304,6 +384,32 @@ function auditProject(targetDir, options = {}) {
         }
       }
     }
+  }
+  try {
+    const manifestPath = path.join(resolvedTarget, "paseo-plugin.json");
+    if (fs2.existsSync(manifestPath)) {
+      const manifest = JSON.parse(fs2.readFileSync(manifestPath, "utf-8"));
+      const hasRequirements = manifest && typeof manifest === "object" && manifest.requirements && typeof manifest.requirements.paseo === "string";
+      if (!hasRequirements) {
+        pushIssue(
+          "v8-missing-requirements",
+          "paseo-plugin.json",
+          1,
+          '"id" without "requirements.paseo"',
+          hasV8Entries ? void 0 : "warn"
+        );
+      }
+    }
+  } catch {
+  }
+  if (helperClientUsed && !initCalled) {
+    const entry = files.map((f) => path.relative(resolvedTarget, f)).find((rel) => rel === "index.client.tsx" || rel === "index.client.ts") ?? "index.client.tsx";
+    pushIssue(
+      "missing-client-init",
+      entry,
+      1,
+      "paseo-plugin-helper/client used without initClientHelpers()"
+    );
   }
   const summary = {
     errorCount: issues.filter((i) => i.severity === "error").length,

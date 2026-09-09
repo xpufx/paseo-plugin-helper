@@ -281,6 +281,10 @@ function redactSecrets(target, options = {}) {
   if (typeof target === "string") {
     let result = target.replace(/(Bearer\s+)[A-Za-z0-9\-._~+/]+=*/gi, `$1${mask}`);
     result = result.replace(/(https?:\/\/[^:]+:)[^@]+(@)/gi, `$1${mask}$2`);
+    result = result.replace(
+      /(https?:\/\/app\.paseo\.sh\/#offer=)[A-Za-z0-9\-_]+=*/gi,
+      `$1${mask}`
+    );
     return result;
   }
   if (Array.isArray(target)) {

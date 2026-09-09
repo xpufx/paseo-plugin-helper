@@ -89,6 +89,46 @@ export function auditProject(targetDir: string, options: AuditOptions = {}): Aud
   const files = findFiles(resolvedTarget, ignoredCustom);
   const issues: AuditIssue[] = [];
 
+  const pushIssue = (
+    ruleId: keyof typeof AUDIT_RULES,
+    file: string,
+    line: number,
+    snippet: string,
+    severityOverride?: AuditIssue["severity"],
+  ) => {
+    const rule = AUDIT_RULES[ruleId];
+    issues.push({
+      ruleId: rule.id,
+      severity: severityOverride ?? rule.severity,
+      file,
+      line,
+      column: snippet.indexOf(snippet.trim()),
+      message: rule.description,
+      codeSnippet: snippet.trim(),
+      replacement: rule.replacement,
+      docUrl: rule.docUrl,
+    });
+  };
+
+  // Project-level: v8-missing-requirements from paseo-plugin.json.
+  // Error for v0.8-layout plugins (the daemon rejects them); warn for
+  // older layouts as a migration heads-up. Manifest parsing happens after
+  // hasV8Entries is known, so this check runs after the file loop below
+  // (see the project-level checks at the end of this function).
+
+  const hasV8Entries = files.some((f) => {
+    const rel = path.relative(resolvedTarget, f);
+    return (
+      rel === "index.client.ts" ||
+      rel === "index.client.tsx" ||
+      rel === "index.server.ts" ||
+      rel === "index.server.tsx"
+    );
+  });
+
+  let helperClientUsed = false;
+  let initCalled = false;
+
   for (const filePath of files) {
     const relPath = path.relative(resolvedTarget, filePath);
     const content = fs.readFileSync(filePath, "utf-8");
@@ -96,6 +136,47 @@ export function auditProject(targetDir: string, options: AuditOptions = {}): Aud
 
     const inTest = isTestFile(relPath);
     const inBuildOrTool = isBuildOrToolFile(relPath);
+
+    // v8 init tracking (any file; the call itself belongs in client code)
+    if (content.includes("paseo-plugin-helper/client")) {
+      helperClientUsed = true;
+    }
+    if (content.includes("initClientHelpers(")) {
+      initCalled = true;
+    }
+
+    // v8-root-module: stray code modules at the plugin root in v8 layouts.
+    // Entry points, the generated version stamp, and type shims are legal.
+    if (hasV8Entries && !relPath.includes(path.sep)) {
+      const base = path.basename(relPath);
+      const isCode = /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(base);
+      const isLegalRoot = /^(index\.client|index\.server)\.(ts|tsx|js)$/.test(base) ||
+        base === "version.ts" ||
+        base.endsWith(".d.ts");
+      if (isCode && !isLegalRoot && !inTest) {
+        pushIssue("v8-root-module", relPath, 1, lines[0]?.trim() || base);
+      }
+    }
+
+    // v8-crossed-import: runtime boundary violations by directory.
+    if (!inTest && !inBuildOrTool) {
+      const inClientDir = relPath.split(path.sep).includes("client");
+      const inServerDir = relPath.split(path.sep).includes("server");
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("import") && !trimmed.startsWith("} from") && !trimmed.startsWith("export")) {
+          continue;
+        }
+        const reachesServer = /from\s+["'](\.\.\/)+server\//.test(line);
+        const reachesClient = /from\s+["'](\.\.\/)+client\//.test(line);
+        const importsNode = /from\s+["']node:/.test(line);
+        if ((inClientDir && (reachesServer || importsNode)) || (inServerDir && reachesClient)) {
+          pushIssue("v8-crossed-import", relPath, i + 1, trimmed);
+          break;
+        }
+      }
+    }
 
     // Rule 1: no-manual-agent-subscription
     if (!inTest && !inBuildOrTool) {
@@ -342,6 +423,44 @@ export function auditProject(targetDir: string, options: AuditOptions = {}): Aud
         }
       }
     }
+  }
+
+  // Project-level checks needing whole-tree knowledge.
+  try {
+    const manifestPath = path.join(resolvedTarget, "paseo-plugin.json");
+    if (fs.existsSync(manifestPath)) {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+      const hasRequirements =
+        manifest &&
+        typeof manifest === "object" &&
+        manifest.requirements &&
+        typeof manifest.requirements.paseo === "string";
+      if (!hasRequirements) {
+        pushIssue(
+          "v8-missing-requirements",
+          "paseo-plugin.json",
+          1,
+          '"id" without "requirements.paseo"',
+          hasV8Entries ? undefined : "warn",
+        );
+      }
+    }
+  } catch {
+    // Unparseable manifest is the daemon's complaint, not the audit's
+  }
+
+  if (helperClientUsed && !initCalled) {
+    const entry =
+      files
+        .map((f) => path.relative(resolvedTarget, f))
+        .find((rel) => rel === "index.client.tsx" || rel === "index.client.ts") ??
+      "index.client.tsx";
+    pushIssue(
+      "missing-client-init",
+      entry,
+      1,
+      "paseo-plugin-helper/client used without initClientHelpers()",
+    );
   }
 
   const summary = {

@@ -71,6 +71,10 @@ npm install && npm run typecheck
 | `no-raw-mcp-subprocess` | `warn` | Spawning raw child processes for MCP stdio / JSON-RPC | `McpClient` from `paseo-plugin-helper/mcp` |
 | `no-raw-system-metrics` | `suggestion` | Direct `os.loadavg()`, `os.cpus()`, or `/proc/loadavg` reads | `getSystemMetrics` / `CpuSampler` from `paseo-plugin-helper/server` |
 | `no-manual-version-resolution` | `suggestion` | Reading `package.json` manually to parse plugin version | `resolvePluginVersion` or `stampVersion` from `paseo-plugin-helper/server` |
+| `v8-missing-requirements` | `error` (v8 layout) / `warn` | `paseo-plugin.json` without `requirements.paseo` | Add `"requirements": { "paseo": ">=0.8.0" }` (migration guide step 7) |
+| `v8-root-module` | `error` | Code module at the plugin root in a v0.8 layout | Move into `client/`, `server/`, or `shared/` |
+| `v8-crossed-import` | `error` | Client code reaching into `server/` (or vice versa), or Node APIs in client code | Move the operation behind an RPC defined in `shared/` |
+| `missing-client-init` | `warn` | Helper client usage without `initClientHelpers()` | Call `initClientHelpers()` once in the client entry |
 
 ---
 

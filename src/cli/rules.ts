@@ -64,4 +64,32 @@ export const AUDIT_RULES: Record<string, AuditRule> = {
     replacement: "resolvePluginVersion / stampVersion from 'paseo-plugin-helper/server'",
     docUrl: "https://github.com/xpufx/paseo-plugin-helper/blob/main/docs/server.md#6-plugin-version-resolution-resolvepluginversion",
   },
+  "v8-missing-requirements": {
+    id: "v8-missing-requirements",
+    severity: "error",
+    description: "paseo-plugin.json has no requirements.paseo, which a v0.8 daemon reads as pre-0.8 and rejects.",
+    replacement: "Add \"requirements\": { \"paseo\": \">=0.8.0\" } to paseo-plugin.json (migration guide step 7)",
+    docUrl: "https://paseo.sh/docs/plugins/v0.8/migration",
+  },
+  "v8-root-module": {
+    id: "v8-root-module",
+    severity: "error",
+    description: "Code module at the plugin root in a v0.8-layout plugin. The v0.8 compiler only accepts client/, server/, and shared/ directories.",
+    replacement: "Move the file into client/, server/, or shared/ and fix its imports",
+    docUrl: "https://paseo.sh/docs/plugins/v0.8/migration",
+  },
+  "v8-crossed-import": {
+    id: "v8-crossed-import",
+    severity: "error",
+    description: "Cross-runtime import: client code reaching into server/ (or vice versa), or a Node API imported into the client bundle. The v0.8 compiler rejects these.",
+    replacement: "Move the operation behind an RPC defined in shared/ and call it from the client",
+    docUrl: "https://paseo.sh/docs/plugins/v0.8/migration",
+  },
+  "missing-client-init": {
+    id: "missing-client-init",
+    severity: "warn",
+    description: "Client code uses paseo-plugin-helper/client components or hooks but never calls initClientHelpers(). Every helper component throws without it.",
+    replacement: "Call initClientHelpers({ Icon, Modal, useRpc, useToast }) once in the client entry with version-correct SDK imports",
+    docUrl: "https://github.com/xpufx/paseo-plugin-helper/blob/main/docs/client.md",
+  },
 };
