@@ -116,6 +116,43 @@ import { initClientHelpers } from "paseo-plugin-helper/client";
 initClientHelpers({ Icon, Modal, useRpc, useToast });
 ```
 
+On Paseo v0.8 the host also owns scrolling, input, and clipboard primitives
+with sheet-gesture and keyboard integration. Pass them as optional extras;
+every helper falls back to plain React Native when they are absent, so the
+four-field call above keeps working unchanged:
+
+```tsx
+// Paseo v0.8 with host-owned primitives
+import { useRpc } from "@getpaseo/plugin/client";
+import {
+  Icon,
+  Modal,
+  useToast,
+  ScrollView,
+  FlatList,
+  TextInput as HostTextInput,
+  copyText,
+} from "@getpaseo/plugin/client/react-native";
+import { initClientHelpers } from "paseo-plugin-helper/client";
+
+initClientHelpers({
+  Icon,
+  Modal,
+  useRpc,
+  useToast,
+  copyText,
+  ScrollView,
+  FlatList,
+  TextInput: HostTextInput,
+});
+```
+
+`copyToClipboard` tries host `copyText` first and falls through to the
+React Native, `navigator.clipboard`, and `execCommand` tiers when absent or
+rejected. `ModalBody`, `Tabs`, `TextInput`, and `SearchInput` render through
+the host `ScrollView`/`TextInput` when supplied, which removes the need for
+the helper's PanResponder sheet-gesture workaround in `Tabs`.
+
 Forgetting the call fails fast: every helper component throws `used before
 initClientHelpers()` instead of rendering broken UI, so a missing init shows
 up immediately in development rather than as a silent blank pill.
@@ -272,7 +309,7 @@ Adaptive container styled according to the active `VisualFlair.surfaceStyle` (`f
 ```
 
 ### `<Tabs>`
-Segmented horizontal tab selector designed for Paseo modal and surface environments. Features automatic fitting on mobile with `shortLabel` support, elevated edge navigation chevrons when scrolling, and `PanResponder` gesture capture to prevent mobile bottom sheets from swallowing horizontal swipes.
+Segmented horizontal tab selector designed for Paseo modal and surface environments. Features automatic fitting on mobile with `shortLabel` support and elevated edge navigation chevrons when scrolling. On Paseo v0.8 the tab ribbon renders inside the host `ScrollView`, so sheet gestures work without extra capture handling.
 
 ```tsx
 <Tabs
@@ -397,6 +434,18 @@ Supports native pull-to-refresh on mobile via `refreshing` and `onRefresh`.
     {/* controls and cards */}
   </ModalBody>
 </Modal.Content>
+```
+
+For conversation-style views that track new content, pass `stickToEnd` to
+auto-scroll to the bottom on content size changes, or pass `scrollRef` for
+imperative scrolling:
+
+```tsx
+<ModalBody stickToEnd>
+  {messages.map((m) => (
+    <Text key={m.id}>{m.text}</Text>
+  ))}
+</ModalBody>
 ```
 
 ### `<ActionBar>`
@@ -574,6 +623,7 @@ with `~/...`) rather than as a raw absolute path.
 ### `copyToClipboard(text, options?)`
 Universal cross-platform copy function for Paseo plugins. Works reliably across React Native (Hermes / mobile webviews / touch events), desktop, and modern secure browsers.
 Automatically integrates with Paseo's `useToast()` to display a toast notification on success.
+Tier order: host `copyText` from `initClientHelpers` (Paseo v0.8, when supplied), then React Native Clipboard, then `navigator.clipboard`, then an `execCommand` fallback.
 
 ```tsx
 import { copyToClipboard, useToast } from "paseo-plugin-helper/client";

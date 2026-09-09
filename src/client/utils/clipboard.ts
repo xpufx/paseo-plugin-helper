@@ -24,7 +24,7 @@ export async function copyToClipboard(
   const str = String(text);
   let success = false;
 
-  // 0. Try host copyText when the plugin supplied it via initClientHelpers.
+  // 1. Try host copyText when the plugin supplied it via initClientHelpers.
   // Rejection falls through to the remaining tiers.
   try {
     const copyText = getOptionalClientHost()?.copyText;
@@ -36,7 +36,7 @@ export async function copyToClipboard(
     // Ignore host copy failure and fall through
   }
 
-  // 1. Try React Native Clipboard (works in React Native / react-native-web)
+  // 2. Try React Native Clipboard (works in React Native / react-native-web)
   if (!success) {
     try {
       const rn = require("react-native");
@@ -49,7 +49,7 @@ export async function copyToClipboard(
     }
   }
 
-  // 2. Try modern Web navigator.clipboard
+  // 3. Try modern Web navigator.clipboard
   if (!success) {
     try {
       const globalObj = typeof globalThis !== "undefined" ? (globalThis as any) : {};
@@ -62,7 +62,7 @@ export async function copyToClipboard(
     }
   }
 
-  // 3. Try document.execCommand fallback
+  // 4. Try document.execCommand fallback
   if (!success) {
     try {
       const globalObj = typeof globalThis !== "undefined" ? (globalThis as any) : {};
