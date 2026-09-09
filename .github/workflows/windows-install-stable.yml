@@ -1,6 +1,9 @@
 name: windows-install-stable
 on:
   push:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       cli_tag:
@@ -11,9 +14,13 @@ on:
         description: 'Only run plugins whose id contains this string (empty = all)'
         default: ''
         required: false
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   install-fleet:
     runs-on: windows-latest
+    timeout-minutes: 20
     env:
       # v7-era fleet: main branch, no --ref. Control run for the
       # beta Windows spawn-npm-ENOENT failure.
@@ -49,16 +56,20 @@ jobs:
 
       - name: Install fleet (sequential, one runner)
         run: |
+          $matched = 0
           $env:FLEET -split '\r?\n' | ForEach-Object {
             $line = $_.Trim()
             if ([string]::IsNullOrWhiteSpace($line)) { return }
             $id, $spec = $line -split ' ', 2
             if ($env:FLEET_FILTER -and $id -notlike "*$($env:FLEET_FILTER)*") { return }
+            $matched++
             $specParts = $spec -split '\s+'
             & paseo plugin add @specParts
           }
+          if ($env:FLEET_FILTER -and $matched -eq 0) { throw "no plugins matched filter '$($env:FLEET_FILTER)'" }
 
       - name: List fleet
+        if: always()
         run: |
           paseo plugin ls
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
