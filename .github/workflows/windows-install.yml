@@ -68,14 +68,3 @@ jobs:
             if ($env:FLEET_FILTER -and $id -notlike "*$($env:FLEET_FILTER)*") { return }
             & paseo plugin logs $id | Select-Object -Last 10
           }
-
-      - name: Remove fleet
-        if: always()
-        run: |
-          $env:FLEET -split '\r?\n' | ForEach-Object {
-            $line = $_.Trim()
-            if ([string]::IsNullOrWhiteSpace($line)) { return }
-            $id, $spec = $line -split ' ', 2
-            if ($env:FLEET_FILTER -and $id -notlike "*$($env:FLEET_FILTER)*") { return }
-            & paseo plugin remove $id
-          }

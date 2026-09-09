@@ -62,16 +62,6 @@ jobs:
             paseo plugin logs "$id" | tail -10
           done
 
-      - name: Remove fleet
-        if: always()
-        run: |
-          echo "$FLEET" | while read -r id spec; do
-            [ -z "$id" ] && continue
-            # shellcheck disable=SC2053
-            { [ -z "$FLEET_FILTER" ] || case "$id" in *$FLEET_FILTER*) ;; *) continue;; esac; }
-            paseo plugin remove "$id" || true
-          done
-
   gate-fails-clean:
     runs-on: macos-latest
     steps:
