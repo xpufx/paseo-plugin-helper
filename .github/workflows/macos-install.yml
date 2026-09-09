@@ -17,7 +17,6 @@ jobs:
     env:
       # Single source of truth: "<plugin-id> <add-args...>" per line.
       FLEET_FILTER: ${{ inputs.fleet_filter }}
-      # Single source of truth: "<plugin-id> <add-args...>" per line.
       FLEET: |
         helper-demo-v8 xpufx/paseo-plugin-helper:demo-v8 --ref v8
         top xpufx/paseo-top --ref v0.8
@@ -54,6 +53,7 @@ jobs:
 
       - name: List fleet
         run: |
+          set -o pipefail
           paseo plugin ls
           echo "$FLEET" | while read -r id spec; do
             [ -z "$id" ] && continue
