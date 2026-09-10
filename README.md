@@ -262,6 +262,7 @@ fgjx issue view 12                              # labels, body, comments
 | Label | Meaning |
 | :--- | :--- |
 | `SOS` | **Critical emergency — trumps all.** Immediate pickup required. |
+| `user-attention` | Blocked or ambiguous requirements; requires explicit human direction with a clear comment. |
 | `agent-attention` | Available task signal. If aging with no blocking labels, must be handed out/claimed immediately. |
 | `high priority` | Do before routine work. |
 | `green-light` | Ready for an agent to pick up. |
