@@ -174,6 +174,10 @@ export interface HostWorkspacePanelProps {
   workspaceId: string;
   theme: HostTheme;
   layout: HostLayout;
+  host: {
+    id: string;
+    label: string;
+  };
 }
 
 export interface HostAgentPanelProps {
@@ -182,11 +186,19 @@ export interface HostAgentPanelProps {
   agentId: string;
   theme: HostTheme;
   layout: HostLayout;
+  host: {
+    id: string;
+    label: string;
+  };
 }
 
 export interface HostSurfaceProps {
   theme: HostTheme;
   layout: HostLayout;
+  host: {
+    id: string;
+    label: string;
+  };
 }
 
 export interface ComposerPillContribution {
