@@ -36,6 +36,9 @@ fgjx issue comment <NUMBER> --hostname forge.mrs.aager.de -R xpufx/paseo-plugin-
 fgjx api repos/xpufx/paseo-plugin-helper/issues/<NUMBER> --hostname forge.mrs.aager.de
 ```
 
+> [!IMPORTANT]
+> **Clean Markdown & Backticks**: When posting comments via shell or heredocs, do NOT double-escape backticks with backslashes (e.g. avoid `\`\`\`` or `\`code\``). Backslashes display literally on the Forgejo web UI. Use unescaped single quotes, heredocs (`cat << 'EOF'`), or raw file input (`-F file` or python) to preserve clean triple backticks (` ``` `).
+
 > [!NOTE]
 > Forgejo hosts the **issues board only** for orchestration and observability. Code repositories live on GitHub or in local checkouts/worktrees.
 
