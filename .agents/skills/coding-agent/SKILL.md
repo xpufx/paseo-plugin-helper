@@ -74,14 +74,14 @@ Actual comment text comes first. The agent envelope is placed at the bottom, ren
 ---
 <small>
 
-[x-agent] <AgentName> (<ShortId>) via <Provider/Model> on <Hostname>
+[x-agent] **<AgentName>** (<ShortId>) via <Provider/Model> on <Hostname>
 
-- agentId: <Full UUID or session ID>
-- agentName: <Human/Tab name or role>
-- provider/model: <e.g. opencode/muse-spark, gemini-3.8-flash, etc.>
-- daemon serverId: <srv_... if running inside Paseo, host machine name>
-- workspace: <Absolute path to worktree/repo>, branch <branch-name>
-- action at: <ISO-8601 UTC timestamp>
+- **agentId**: <Full UUID or session ID>
+- **agentName**: <Human/Tab name or role>
+- **provider/model**: <e.g. opencode/muse-spark, gemini-3.8-flash, etc.>
+- **daemon serverId**: <srv_... if running inside Paseo, host machine name>
+- **workspace**: <Absolute path to worktree/repo>, branch <branch-name>
+- **action at**: <ISO-8601 UTC timestamp>
 
 </small>
 ```
