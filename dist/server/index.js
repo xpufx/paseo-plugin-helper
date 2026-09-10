@@ -307,6 +307,19 @@ function redactSecrets(target, options = {}) {
   }
   return target;
 }
+function killProcessGroup(child, signal) {
+  try {
+    if (process.platform !== "win32" && child.pid !== void 0) {
+      process.kill(-child.pid, signal);
+      return;
+    }
+  } catch {
+  }
+  try {
+    child.kill(signal);
+  } catch {
+  }
+}
 function safeSpawn(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
@@ -314,18 +327,20 @@ function safeSpawn(command, args = [], options = {}) {
     const maxBuffer = options.maxBuffer ?? 10 * 1024 * 1024;
     const child = spawn(command, args, {
       ...options,
-      shell: false
+      shell: false,
+      detached: options.detached ?? process.platform !== "win32"
     });
     let stdout = "";
     let stderr = "";
+    let exited = false;
     let timedOut = false;
     let timer = null;
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
         timedOut = true;
-        child.kill("SIGTERM");
+        killProcessGroup(child, "SIGTERM");
         setTimeout(() => {
-          if (!child.killed) child.kill("SIGKILL");
+          if (!exited) killProcessGroup(child, "SIGKILL");
         }, 2e3);
       }, timeoutMs);
     }
@@ -344,6 +359,7 @@ function safeSpawn(command, args = [], options = {}) {
       reject(err);
     });
     child.on("close", (code, signal) => {
+      exited = true;
       if (timer) clearTimeout(timer);
       const durationMs = Date.now() - startTime;
       if (timedOut) {
@@ -367,18 +383,20 @@ function safeExec(command, options = {}) {
     const maxBuffer = options.maxBuffer ?? 10 * 1024 * 1024;
     const child = spawn(command, {
       ...options,
-      shell: true
+      shell: true,
+      detached: options.detached ?? process.platform !== "win32"
     });
     let stdout = "";
     let stderr = "";
+    let exited = false;
     let timedOut = false;
     let timer = null;
     if (timeoutMs > 0) {
       timer = setTimeout(() => {
         timedOut = true;
-        child.kill("SIGTERM");
+        killProcessGroup(child, "SIGTERM");
         setTimeout(() => {
-          if (!child.killed) child.kill("SIGKILL");
+          if (!exited) killProcessGroup(child, "SIGKILL");
         }, 2e3);
       }, timeoutMs);
     }
@@ -397,6 +415,7 @@ function safeExec(command, options = {}) {
       reject(err);
     });
     child.on("close", (code, signal) => {
+      exited = true;
       if (timer) clearTimeout(timer);
       const durationMs = Date.now() - startTime;
       if (timedOut) {
