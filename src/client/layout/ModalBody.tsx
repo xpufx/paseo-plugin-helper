@@ -9,7 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { getOptionalClientHost } from "../host.js";
+import { getOptionalClientHost, selectHostScrollView, type HostScrollView } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export interface ModalBodyProps {
@@ -44,8 +44,11 @@ export function ModalBody({
   scrollRef,
 }: ModalBodyProps) {
   const { isCompact, padding, colors } = usePluginTheme();
-  const ResolvedScrollView = (getOptionalClientHost()?.ScrollView ??
-    FallbackScrollView) as ComponentType<ScrollViewProps & { ref?: Ref<ScrollViewInstance> }>;
+  const hostScrollView = getOptionalClientHost()?.ScrollView;
+  const ResolvedScrollView = selectHostScrollView(
+    getOptionalClientHost(),
+    FallbackScrollView as unknown as HostScrollView,
+  );
   const innerRef = useRef<ScrollViewInstance>(null);
 
   const setRefs = (node: ScrollViewInstance | null) => {
@@ -69,7 +72,11 @@ export function ModalBody({
     />
   ) : undefined;
 
-  if (isCompact) {
+  // Compact without an injected host scroller keeps the legacy plain View:
+  // on pre-0.8 hosts the sheet already scrolls, and a nested RN ScrollView
+  // would fight it. With a host scroller present, use it: it cooperates
+  // with sheet gestures by design.
+  if (isCompact && !hostScrollView) {
     return (
       <View
         style={[

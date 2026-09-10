@@ -158,6 +158,20 @@ export function getOptionalClientHost(): ClientHostDeps | undefined {
   return deps;
 }
 
+/**
+ * Single precedence rule for scrollable surfaces: the host-injected
+ * ScrollView (sheet-aware on Paseo v0.8, cooperates with bottom-sheet
+ * gestures) wins whenever the plugin supplied one to initClientHelpers;
+ * otherwise plain React Native ScrollView (pre-0.8 fallback, where the
+ * caller avoids nesting inside host scrollers itself).
+ */
+export function selectHostScrollView(
+  host: Pick<ClientHostDeps, "ScrollView"> | undefined,
+  fallback: HostScrollView,
+): HostScrollView {
+  return host?.ScrollView ?? fallback;
+}
+
 export interface HostPillProps {
   agentId: string;
   workspaceId: string;

@@ -13,7 +13,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { getClientHost } from "../host.js";
+import { getClientHost, selectHostScrollView, type HostScrollView } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 
 export interface TabItem {
@@ -43,9 +43,11 @@ export function Tabs({
   mode = "auto",
   style,
 }: TabsProps) {
-  const { Icon, ScrollView: HostScrollView } = getClientHost();
-  const ResolvedScrollView = (HostScrollView ??
-    FallbackScrollView) as ComponentType<ScrollViewProps & { ref?: Ref<ScrollViewInstance> }>;
+  const { Icon } = getClientHost();
+  const ResolvedScrollView = selectHostScrollView(
+    getClientHost(),
+    FallbackScrollView as unknown as HostScrollView,
+  );
   const { colors, resolveRadius, touchTargetMin, isCompact, alpha } = usePluginTheme();
   const scrollRef = useRef<ScrollViewInstance>(null);
   const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});

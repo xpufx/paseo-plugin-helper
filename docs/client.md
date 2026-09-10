@@ -153,6 +153,24 @@ rejected. `ModalBody`, `Tabs`, `TextInput`, and `SearchInput` render through
 the host `ScrollView`/`TextInput` when supplied, which removes the need for
 the helper's PanResponder sheet-gesture workaround in `Tabs`.
 
+Scroll resolution follows one rule (`selectHostScrollView` in
+`src/client/host.ts`): injected host component wins, plain React Native is
+the fallback, so pre-0.8 hosts scroll exactly as before:
+
+- `ModalBody`: desktop always scrolls; on compact viewports it uses the host
+  scroller (with pull-to-refresh) when injected, otherwise the legacy flat
+  `View` that defers to the host sheet and avoids the double-scroll trap.
+- `Tabs` (scroll mode) and `CodeBlock` (vertical + horizontal) render through
+  the resolved scroller, keeping `nestedScrollEnabled`/`directionalLockEnabled`
+  for the fallback path.
+- `FlatList` is typed in `ClientHostDeps` and round-trips through init for
+  future virtualized lists; no helper component consumes it yet.
+
+Where the plugin owns a scroll region (menu/popover bodies), set the SDK
+`Modal.Content scrollable={false}` and bring the resolved `ScrollView` - that
+prop lives on the SDK entry point, not on helper types, so consult the SDK
+docs for your installed version.
+
 Forgetting the call fails fast: every helper component throws `used before
 initClientHelpers()` instead of rendering broken UI, so a missing init shows
 up immediately in development rather than as a silent blank pill.

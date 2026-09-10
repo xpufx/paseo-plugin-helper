@@ -302,6 +302,9 @@ function getClientHost() {
 function getOptionalClientHost() {
   return deps;
 }
+function selectHostScrollView(host, fallback) {
+  return host?.ScrollView ?? fallback;
+}
 function isClientHostInitialized() {
   return deps !== void 0;
 }
@@ -714,8 +717,11 @@ function Tabs({
   mode = "auto",
   style
 }) {
-  const { Icon: Icon2, ScrollView: HostScrollView } = getClientHost();
-  const ResolvedScrollView = HostScrollView ?? ScrollView;
+  const { Icon: Icon2 } = getClientHost();
+  const ResolvedScrollView = selectHostScrollView(
+    getClientHost(),
+    ScrollView
+  );
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const scrollRef = useRef(null);
   const tabLayouts = useRef({});
@@ -1088,6 +1094,10 @@ function CodeBlock({
   textStyle
 }) {
   const { Icon: Icon2, useToast } = getClientHost();
+  const ResolvedScrollView = selectHostScrollView(
+    getClientHost(),
+    ScrollView
+  );
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -1170,12 +1180,12 @@ function CodeBlock({
           }
         ),
         /* @__PURE__ */ jsx(
-          ScrollView,
+          ResolvedScrollView,
           {
             nestedScrollEnabled: true,
             style: { maxHeight },
             contentContainerStyle: styles6.scrollContent,
-            children: /* @__PURE__ */ jsx(ScrollView, { horizontal: true, showsHorizontalScrollIndicator: true, children: /* @__PURE__ */ jsx(
+            children: /* @__PURE__ */ jsx(ResolvedScrollView, { horizontal: true, showsHorizontalScrollIndicator: true, children: /* @__PURE__ */ jsx(
               Text,
               {
                 selectable: true,
@@ -2703,7 +2713,11 @@ function ModalBody({
   scrollRef
 }) {
   const { isCompact, padding, colors } = usePluginTheme();
-  const ResolvedScrollView = getOptionalClientHost()?.ScrollView ?? ScrollView;
+  const hostScrollView = getOptionalClientHost()?.ScrollView;
+  const ResolvedScrollView = selectHostScrollView(
+    getOptionalClientHost(),
+    ScrollView
+  );
   const innerRef = useRef(null);
   const setRefs = (node) => {
     innerRef.current = node;
@@ -2723,7 +2737,7 @@ function ModalBody({
       colors: [colors.accent]
     }
   ) : void 0;
-  if (isCompact) {
+  if (isCompact && !hostScrollView) {
     return /* @__PURE__ */ jsx(
       View,
       {
@@ -3679,6 +3693,6 @@ function Icon(props) {
   return /* @__PURE__ */ jsx(HostIconComponent, { ...props });
 }
 
-export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, CustomPillBody, CustomPillModalContent, DataTable, EmptyState, FormRow, Icon, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput, Toggle, alpha, contractSchemaToFields, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getClientHost, getContrastColor, getDefaultTheme, getLuminance, getOptionalClientHost, getStatusColor, getTouchTargetMin, getVariantPalette, initClientHelpers, isClientHostInitialized, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerHelperSettingsScreen, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+export { AboutSection, ActionBar, Badge, Button, Card, CardHeader, CodeBlock, Collapsible, CustomPillBody, CustomPillModalContent, DataTable, EmptyState, FormRow, Icon, KeyValue, KeyValueGroup, MetricGauge, ModalBody, PluginThemeProvider, ProgressBar, REFRESH_INTERVALS, Responsive, SearchInput, StatusDot, Tabs, TextInput, Toggle, alpha, contractSchemaToFields, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getClientHost, getContrastColor, getDefaultTheme, getLuminance, getOptionalClientHost, getStatusColor, getTouchTargetMin, getVariantPalette, initClientHelpers, isClientHostInitialized, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerHelperSettingsScreen, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, selectHostScrollView, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

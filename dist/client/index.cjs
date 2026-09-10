@@ -308,6 +308,9 @@ function getClientHost() {
 function getOptionalClientHost() {
   return deps;
 }
+function selectHostScrollView(host, fallback) {
+  return host?.ScrollView ?? fallback;
+}
 function isClientHostInitialized() {
   return deps !== void 0;
 }
@@ -720,8 +723,11 @@ function Tabs({
   mode = "auto",
   style
 }) {
-  const { Icon: Icon2, ScrollView: HostScrollView } = getClientHost();
-  const ResolvedScrollView = HostScrollView ?? reactNative.ScrollView;
+  const { Icon: Icon2 } = getClientHost();
+  const ResolvedScrollView = selectHostScrollView(
+    getClientHost(),
+    reactNative.ScrollView
+  );
   const { colors, resolveRadius: resolveRadius2, touchTargetMin, isCompact, alpha: alpha2 } = usePluginTheme();
   const scrollRef = React7.useRef(null);
   const tabLayouts = React7.useRef({});
@@ -1094,6 +1100,10 @@ function CodeBlock({
   textStyle
 }) {
   const { Icon: Icon2, useToast } = getClientHost();
+  const ResolvedScrollView = selectHostScrollView(
+    getClientHost(),
+    reactNative.ScrollView
+  );
   const { colors, resolveRadius: resolveRadius2, isCompact, touchTargetMin, alpha: alpha2 } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = React7.useState(false);
@@ -1176,12 +1186,12 @@ function CodeBlock({
           }
         ),
         /* @__PURE__ */ jsxRuntime.jsx(
-          reactNative.ScrollView,
+          ResolvedScrollView,
           {
             nestedScrollEnabled: true,
             style: { maxHeight },
             contentContainerStyle: styles6.scrollContent,
-            children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.ScrollView, { horizontal: true, showsHorizontalScrollIndicator: true, children: /* @__PURE__ */ jsxRuntime.jsx(
+            children: /* @__PURE__ */ jsxRuntime.jsx(ResolvedScrollView, { horizontal: true, showsHorizontalScrollIndicator: true, children: /* @__PURE__ */ jsxRuntime.jsx(
               reactNative.Text,
               {
                 selectable: true,
@@ -2709,7 +2719,11 @@ function ModalBody({
   scrollRef
 }) {
   const { isCompact, padding, colors } = usePluginTheme();
-  const ResolvedScrollView = getOptionalClientHost()?.ScrollView ?? reactNative.ScrollView;
+  const hostScrollView = getOptionalClientHost()?.ScrollView;
+  const ResolvedScrollView = selectHostScrollView(
+    getOptionalClientHost(),
+    reactNative.ScrollView
+  );
   const innerRef = React7.useRef(null);
   const setRefs = (node) => {
     innerRef.current = node;
@@ -2729,7 +2743,7 @@ function ModalBody({
       colors: [colors.accent]
     }
   ) : void 0;
-  if (isCompact) {
+  if (isCompact && !hostScrollView) {
     return /* @__PURE__ */ jsxRuntime.jsx(
       reactNative.View,
       {
@@ -3739,6 +3753,7 @@ exports.resolvePadding = resolvePadding;
 exports.resolveRadius = resolveRadius;
 exports.responsiveSelect = responsiveSelect;
 exports.responsiveValue = responsiveValue;
+exports.selectHostScrollView = selectHostScrollView;
 exports.triggerHaptic = triggerHaptic;
 exports.useAutoRefreshQuery = useAutoRefreshQuery;
 exports.usePluginSettings = usePluginSettings;

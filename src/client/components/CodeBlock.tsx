@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Platform,
   Pressable,
-  ScrollView,
+  ScrollView as FallbackScrollView,
   StyleSheet,
   Text,
   View,
@@ -10,7 +10,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { getClientHost } from "../host.js";
+import { getClientHost, selectHostScrollView, type HostScrollView } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
 import { copyToClipboard } from "../utils/clipboard.js";
 
@@ -34,6 +34,10 @@ export function CodeBlock({
   textStyle,
 }: CodeBlockProps) {
   const { Icon, useToast } = getClientHost();
+  const ResolvedScrollView = selectHostScrollView(
+    getClientHost(),
+    FallbackScrollView as unknown as HostScrollView,
+  );
   const { colors, resolveRadius, isCompact, touchTargetMin, alpha } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -118,12 +122,12 @@ export function CodeBlock({
         </View>
       )}
 
-      <ScrollView
+      <ResolvedScrollView
         nestedScrollEnabled
         style={{ maxHeight }}
         contentContainerStyle={styles.scrollContent}
       >
-        <ScrollView horizontal showsHorizontalScrollIndicator>
+        <ResolvedScrollView horizontal showsHorizontalScrollIndicator>
           <Text
             selectable
             style={[
@@ -138,8 +142,8 @@ export function CodeBlock({
           >
             {code}
           </Text>
-        </ScrollView>
-      </ScrollView>
+        </ResolvedScrollView>
+      </ResolvedScrollView>
     </View>
   );
 }
