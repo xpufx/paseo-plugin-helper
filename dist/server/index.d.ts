@@ -622,4 +622,28 @@ declare class CustomPillPoller {
     private notifyUpdate;
 }
 
-export { type AgentCreateInjectionConfig, type AgentCreateInjectionRequest, type CpuCoreMetrics, CpuSampler, CustomPillPoller, type CustomPillPollerOptions, type HandleableServerContext, type ListPluginsOptions, type LogLevel, McpConfigPaths, type McpConfigTarget, type McpHttpInjectionConfig, type McpInjectionConfig, type McpInjectionFilter, type McpInjectionHookHandler, type McpInjectionServer, type McpMutationResult, type McpServerConfig, type McpSseInjectionConfig, type McpStdioInjectionConfig, type PaseoPluginInfo, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, type PluginStatusFilter, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterMcpInjectionOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, clearPluginCache, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerMcpInjection, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };
+interface RpcGuardOptions<T> {
+    timeoutMs?: number;
+    maxInflight?: number;
+    getStale?: () => T | null | undefined;
+    onTimeout?: (info: {
+        timeoutMs: number;
+        inflight: number;
+    }) => void;
+    onSaturated?: (info: {
+        maxInflight: number;
+    }) => void;
+}
+interface GuardedRpcHandler<TInput, TOutput> {
+    (input?: TInput): Promise<TOutput>;
+    inflight(): number;
+}
+declare function guardRpcHandler<TInput, TOutput>(handler: (input?: TInput) => Promise<TOutput> | TOutput, options?: RpcGuardOptions<TOutput>): GuardedRpcHandler<TInput, TOutput>;
+interface LoopWatchdogOptions {
+    thresholdMs?: number;
+    intervalMs?: number;
+    onLag?: (lagMs: number) => void;
+}
+declare function createLoopWatchdog(options?: LoopWatchdogOptions): () => void;
+
+export { type AgentCreateInjectionConfig, type AgentCreateInjectionRequest, type CpuCoreMetrics, CpuSampler, CustomPillPoller, type CustomPillPollerOptions, type GuardedRpcHandler, type HandleableServerContext, type ListPluginsOptions, type LogLevel, type LoopWatchdogOptions, McpConfigPaths, type McpConfigTarget, type McpHttpInjectionConfig, type McpInjectionConfig, type McpInjectionFilter, type McpInjectionHookHandler, type McpInjectionServer, type McpMutationResult, type McpServerConfig, type McpSseInjectionConfig, type McpStdioInjectionConfig, type PaseoPluginInfo, type PeriodicTaskHandle, type PeriodicTaskOptions, type PingHostOptions, type PluginLogger, type PluginLoggerOptions, type PluginStatusFilter, PluginStorage, type PluginStorageOptions, type RedactOptions, type RegisterMcpInjectionOptions, type RegisterSettingsRpcOptions, type RemoveMcpServerOptions, type ResolveVersionOptions, type RpcGuardOptions, type SafeSpawnOptions, type SafeSpawnResult, type StampVersionOptions, type SystemMetrics, type UpsertMcpServerOptions, clearPluginCache, createLoopWatchdog, createPeriodicTask, createPluginLogger, createSettingsHandlers, discoverCustomPillConfigs, expandPath, findAvailablePort, getMcpServer, getPluginInfo, getSystemMetrics, guardRpcHandler, isPluginEnabled, isPluginInstalled, isPluginRunning, isPortOpen, listPlugins, parseJsonc, pingHost, redactSecrets, registerMcpInjection, registerSettingsRpc, removeMcpServer, resolvePluginVersion, safeExec, safeSpawn, stampVersion, stripJsonComments, tryParseJsonc, upsertMcpServer };

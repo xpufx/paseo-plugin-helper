@@ -1431,11 +1431,90 @@ var CustomPillPoller = class {
   }
 };
 
+// src/shared/async.ts
+var TimeoutError = class extends Error {
+  timeoutMs;
+  constructor(message, timeoutMs) {
+    super(message);
+    this.name = "TimeoutError";
+    this.timeoutMs = timeoutMs;
+  }
+};
+async function withTimeout(promise, timeoutMs, label = "Operation") {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new TimeoutError(`${label} timed out after ${timeoutMs}ms`, timeoutMs));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer !== void 0) {
+      clearTimeout(timer);
+    }
+  }
+}
+
+// src/server/rpc-guard.ts
+function guardRpcHandler(handler, options = {}) {
+  const timeoutMs = options.timeoutMs ?? 5e3;
+  const maxInflight = options.maxInflight ?? 4;
+  let inflight = 0;
+  const guarded = (async (input) => {
+    if (inflight >= maxInflight) {
+      options.onSaturated?.({ maxInflight });
+      const stale = options.getStale?.();
+      if (stale != null) {
+        return stale;
+      }
+      throw new Error(
+        `RPC handler saturated (${inflight} inflight, cap ${maxInflight}): shedding load`
+      );
+    }
+    inflight += 1;
+    try {
+      return await withTimeout(
+        Promise.resolve().then(() => handler(input)),
+        timeoutMs,
+        "RPC handler"
+      );
+    } catch (err) {
+      if (err instanceof TimeoutError) {
+        options.onTimeout?.({ timeoutMs, inflight });
+      }
+      throw err;
+    } finally {
+      inflight -= 1;
+    }
+  });
+  guarded.inflight = () => inflight;
+  return guarded;
+}
+function createLoopWatchdog(options = {}) {
+  const thresholdMs = options.thresholdMs ?? 1e3;
+  const intervalMs = options.intervalMs ?? 1e3;
+  let last = Date.now();
+  const timer = setInterval(() => {
+    const now = Date.now();
+    const lagMs = now - last - intervalMs;
+    last = now;
+    if (lagMs >= thresholdMs) {
+      options.onLag?.(lagMs);
+    }
+  }, intervalMs);
+  if (typeof timer.unref === "function") {
+    timer.unref();
+  }
+  return () => clearInterval(timer);
+}
+
 exports.CpuSampler = CpuSampler;
 exports.CustomPillPoller = CustomPillPoller;
 exports.McpConfigPaths = McpConfigPaths;
 exports.PluginStorage = PluginStorage;
 exports.clearPluginCache = clearPluginCache;
+exports.createLoopWatchdog = createLoopWatchdog;
 exports.createPeriodicTask = createPeriodicTask;
 exports.createPluginLogger = createPluginLogger;
 exports.createSettingsHandlers = createSettingsHandlers;
@@ -1445,6 +1524,7 @@ exports.findAvailablePort = findAvailablePort;
 exports.getMcpServer = getMcpServer;
 exports.getPluginInfo = getPluginInfo;
 exports.getSystemMetrics = getSystemMetrics;
+exports.guardRpcHandler = guardRpcHandler;
 exports.isPluginEnabled = isPluginEnabled;
 exports.isPluginInstalled = isPluginInstalled;
 exports.isPluginRunning = isPluginRunning;
