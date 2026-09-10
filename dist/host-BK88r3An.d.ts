@@ -140,12 +140,38 @@ interface ComposerPillContribution {
     Component: ComponentType<HostPillProps>;
     onPress(): void | Promise<void>;
 }
+type ComposerPillButtonIcon = string | ComponentType<any>;
+interface ComposerPillButtonDescriptor {
+    title: string;
+    icon: ComposerPillButtonIcon;
+    label?: string;
+    visible?: boolean;
+    disabled?: boolean;
+    behavior: {
+        kind: "action";
+        onPress(): void | Promise<void>;
+    } | {
+        kind: "popover";
+        Content: ComponentType<any>;
+    };
+}
+interface ComposerPillButtonContribution {
+    id: string;
+    workspaceId: string;
+    agentId: string;
+    button: ComposerPillButtonDescriptor;
+}
+interface ComposerPillRegistrationHandle {
+    update(patch: Record<string, any>): void;
+    remove(): void;
+}
+type ComposerPillRegistration = PluginCleanup | ComposerPillRegistrationHandle;
 interface ComposerPillRegistrar {
-    addComposerPill(contribution: ComposerPillContribution): PluginCleanup;
+    addComposerPill(contribution: ComposerPillContribution | ComposerPillButtonContribution): ComposerPillRegistration;
     paseo: {
         agents: HostAgentsApi;
     };
 }
 declare function isClientHostInitialized(): boolean;
 
-export { initClientHelpers as A, isClientHostInitialized as B, type ComposerPillContribution as C, type HostAgentRef as H, type PluginCleanup as P, type HostSurfaceProps as a, type HostAgentUpdate as b, type HostLayout as c, type HostPillProps as d, type ComposerPillRegistrar as e, type HostAgentPanelProps as f, type HostWorkspacePanelProps as g, type HostToast as h, type HostIconProps as i, type ClientHostDeps as j, type HostAgentsApi as k, type HostCopyText as l, type HostFlatList as m, type HostIcon as n, type HostModal as o, type HostModalContentProps as p, type HostModalProps as q, type HostRpcContract as r, type HostScrollView as s, type HostTextInput as t, type HostTheme as u, type HostThemeColors as v, type HostUseRpc as w, type HostUseToast as x, getClientHost as y, getOptionalClientHost as z };
+export { type HostThemeColors as A, type HostUseRpc as B, type ComposerPillContribution as C, type HostUseToast as D, getClientHost as E, getOptionalClientHost as F, initClientHelpers as G, type HostAgentRef as H, isClientHostInitialized as I, type PluginCleanup as P, type HostSurfaceProps as a, type HostAgentUpdate as b, type HostLayout as c, type HostPillProps as d, type ComposerPillRegistrar as e, type HostAgentPanelProps as f, type HostWorkspacePanelProps as g, type HostToast as h, type HostIconProps as i, type ClientHostDeps as j, type ComposerPillButtonContribution as k, type ComposerPillButtonDescriptor as l, type ComposerPillButtonIcon as m, type ComposerPillRegistration as n, type ComposerPillRegistrationHandle as o, type HostAgentsApi as p, type HostCopyText as q, type HostFlatList as r, type HostIcon as s, type HostModal as t, type HostModalContentProps as u, type HostModalProps as v, type HostRpcContract as w, type HostScrollView as x, type HostTextInput as y, type HostTheme as z };

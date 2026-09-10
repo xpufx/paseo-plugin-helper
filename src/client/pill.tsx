@@ -1,9 +1,12 @@
-import React, { useEffect, useMemo, useState, type ReactNode } from "react";
+import React, { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   getClientHost,
   type ComposerPillRegistrar,
+  type ComposerPillRegistration,
+  type HostLayout,
   type HostPillProps,
+  type HostTheme,
   type PluginCleanup,
 } from "./host.js";
 import { PluginThemeProvider } from "./theme/provider.js";
@@ -21,6 +24,8 @@ export interface RenderModalProps<TPayload = any> extends HostPillProps {
   close: () => void;
   payload?: TPayload;
 }
+
+let probeSequence = 0;
 
 export interface RegisterComposerPillOptions<TPayload = any> {
   /**
@@ -91,13 +96,28 @@ export interface RegisterComposerPillOptions<TPayload = any> {
   /**
    * Renders the content inside the controlled modal.
    * Automatically wrapped with PluginThemeProvider and supplied with a `close()` helper and optional payload.
+   * On button-shaped hosts (Paseo 0.8+) the modal is replaced by an anchored
+   * popover rendering this same content; `open`/`toggle` from `renderPill`
+   * cannot drive host-owned popovers, so custom pill bodies only apply there
+   * as the static `label`.
    */
   renderModal: (props: RenderModalProps<TPayload>) => ReactNode;
+
+  /**
+   * Called when a pill cannot be registered on the current host (for example
+   * a host API mismatch). Reporting instead of throwing keeps the rest of the
+   * plugin client alive; render the message in your own panel to make it visible.
+   */
+  onError?: (info: { agentId: string; workspaceId: string; error: Error }) => void;
 }
 
 /**
  * Registers an agent-scoped composer pill and modal lifecycle.
  * Manages agent subscription events, unmount cleanup, and pill-to-modal activation.
+ *
+ * Works against both host generations: legacy `{Component, onPress}` pills
+ * (Paseo 0.7 and beta apps) and `button`-descriptor pills (Paseo 0.8+), detected
+ * once per call with a throwaway probe registration that is removed immediately.
  */
 export function registerComposerPill<TPayload = any>(
   client: ComposerPillRegistrar,
@@ -106,6 +126,29 @@ export function registerComposerPill<TPayload = any>(
   const { Icon, Modal } = getClientHost();
   const openers = new Map<string, (payload?: TPayload) => void>();
   const pills = new Map<string, () => void>();
+  let detectedShape: "button" | "legacy" | null = null;
+
+  function PillPopoverContent(props: {
+    agentId: string;
+    workspaceId: string;
+    theme: HostTheme;
+    layout: HostLayout;
+    host?: { id: string; label: string };
+    close: () => void;
+  }) {
+    const pillProps: HostPillProps = {
+      agentId: props.agentId,
+      workspaceId: props.workspaceId,
+      theme: props.theme,
+      layout: props.layout,
+      host: props.host ?? { id: "", label: "" },
+    };
+    return (
+      <PluginThemeProvider theme={props.theme} layout={props.layout} flair={options.flair}>
+        {options.renderModal({ ...pillProps, close: props.close })}
+      </PluginThemeProvider>
+    );
+  }
 
   function PillHost(props: HostPillProps) {
     const [open, setOpen] = useState(false);
@@ -193,23 +236,86 @@ export function registerComposerPill<TPayload = any>(
     );
   }
 
+  function toCleanup(registration: ComposerPillRegistration): PluginCleanup {
+    if (typeof registration === "function") return registration;
+    return () => registration.remove();
+  }
+
+  function reportError(agentId: string, workspaceId: string, error: unknown): void {
+    pills.set(agentId, () => {});
+    options.onError?.({
+      agentId,
+      workspaceId,
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
+  }
+
+  function detectShape(agentId: string, workspaceId: string): "button" | "legacy" {
+    probeSequence += 1;
+    const probeId = `php-probe-${probeSequence}`;
+    try {
+      const registration = client.addComposerPill({
+        id: probeId,
+        workspaceId,
+        agentId,
+        button: {
+          title: "probe",
+          icon: "Activity",
+          behavior: {
+            kind: "action",
+            onPress() {},
+          },
+        },
+      });
+      toCleanup(registration)();
+      return "button";
+    } catch {
+      return "legacy";
+    }
+  }
+
   function addPill(agentId: string, workspaceId: string) {
     if (pills.has(agentId)) return;
-    const cleanup = client.addComposerPill({
-      id: options.id,
-      title: options.title,
-      workspaceId,
-      agentId,
-      Component: PillHost,
-      onPress() {
-        const opener = openers.get(agentId);
-        if (opener) {
-          const defaultPayload = options.resolveDefaultPayload?.({ agentId, workspaceId });
-          opener(defaultPayload);
-        }
-      },
-    });
-    pills.set(agentId, cleanup);
+    try {
+      if (!detectedShape) {
+        detectedShape = detectShape(agentId, workspaceId);
+      }
+      if (detectedShape === "button") {
+        const registration = client.addComposerPill({
+          id: options.id,
+          workspaceId,
+          agentId,
+          button: {
+            title: options.title,
+            icon: options.icon ?? "Activity",
+            label: options.title,
+            behavior: {
+              kind: "popover",
+              Content: PillPopoverContent as ComponentType<any>,
+            },
+          },
+        });
+        pills.set(agentId, toCleanup(registration));
+        return;
+      }
+      const cleanup = client.addComposerPill({
+        id: options.id,
+        title: options.title,
+        workspaceId,
+        agentId,
+        Component: PillHost,
+        onPress() {
+          const opener = openers.get(agentId);
+          if (opener) {
+            const defaultPayload = options.resolveDefaultPayload?.({ agentId, workspaceId });
+            opener(defaultPayload);
+          }
+        },
+      });
+      pills.set(agentId, toCleanup(cleanup));
+    } catch (error) {
+      reportError(agentId, workspaceId, error);
+    }
   }
 
   function removePill(agentId: string) {

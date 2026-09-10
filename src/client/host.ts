@@ -198,8 +198,37 @@ export interface ComposerPillContribution {
   onPress(): void | Promise<void>;
 }
 
+export type ComposerPillButtonIcon = string | ComponentType<any>;
+
+export interface ComposerPillButtonDescriptor {
+  title: string;
+  icon: ComposerPillButtonIcon;
+  label?: string;
+  visible?: boolean;
+  disabled?: boolean;
+  behavior:
+    | { kind: "action"; onPress(): void | Promise<void> }
+    | { kind: "popover"; Content: ComponentType<any> };
+}
+
+export interface ComposerPillButtonContribution {
+  id: string;
+  workspaceId: string;
+  agentId: string;
+  button: ComposerPillButtonDescriptor;
+}
+
+export interface ComposerPillRegistrationHandle {
+  update(patch: Record<string, any>): void;
+  remove(): void;
+}
+
+export type ComposerPillRegistration = PluginCleanup | ComposerPillRegistrationHandle;
+
 export interface ComposerPillRegistrar {
-  addComposerPill(contribution: ComposerPillContribution): PluginCleanup;
+  addComposerPill(
+    contribution: ComposerPillContribution | ComposerPillButtonContribution,
+  ): ComposerPillRegistration;
   paseo: {
     agents: HostAgentsApi;
   };

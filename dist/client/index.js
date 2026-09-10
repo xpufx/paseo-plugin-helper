@@ -2856,10 +2856,22 @@ var styles19 = StyleSheet.create({
     marginTop: 2
   }
 });
+var probeSequence = 0;
 function registerComposerPill(client, options) {
   const { Icon: Icon2, Modal } = getClientHost();
   const openers = /* @__PURE__ */ new Map();
   const pills = /* @__PURE__ */ new Map();
+  let detectedShape = null;
+  function PillPopoverContent(props) {
+    const pillProps = {
+      agentId: props.agentId,
+      workspaceId: props.workspaceId,
+      theme: props.theme,
+      layout: props.layout,
+      host: props.host ?? { id: "", label: "" }
+    };
+    return /* @__PURE__ */ jsx(PluginThemeProvider, { theme: props.theme, layout: props.layout, flair: options.flair, children: options.renderModal({ ...pillProps, close: props.close }) });
+  }
   function PillHost(props) {
     const [open, setOpen] = useState(false);
     const [payload, setPayload] = useState(void 0);
@@ -2930,23 +2942,85 @@ function registerComposerPill(client, options) {
       )
     ] });
   }
+  function toCleanup(registration) {
+    if (typeof registration === "function") return registration;
+    return () => registration.remove();
+  }
+  function reportError(agentId, workspaceId, error) {
+    pills.set(agentId, () => {
+    });
+    options.onError?.({
+      agentId,
+      workspaceId,
+      error: error instanceof Error ? error : new Error(String(error))
+    });
+  }
+  function detectShape(agentId, workspaceId) {
+    probeSequence += 1;
+    const probeId = `php-probe-${probeSequence}`;
+    try {
+      const registration = client.addComposerPill({
+        id: probeId,
+        workspaceId,
+        agentId,
+        button: {
+          title: "probe",
+          icon: "Activity",
+          behavior: {
+            kind: "action",
+            onPress() {
+            }
+          }
+        }
+      });
+      toCleanup(registration)();
+      return "button";
+    } catch {
+      return "legacy";
+    }
+  }
   function addPill(agentId, workspaceId) {
     if (pills.has(agentId)) return;
-    const cleanup = client.addComposerPill({
-      id: options.id,
-      title: options.title,
-      workspaceId,
-      agentId,
-      Component: PillHost,
-      onPress() {
-        const opener = openers.get(agentId);
-        if (opener) {
-          const defaultPayload = options.resolveDefaultPayload?.({ agentId, workspaceId });
-          opener(defaultPayload);
-        }
+    try {
+      if (!detectedShape) {
+        detectedShape = detectShape(agentId, workspaceId);
       }
-    });
-    pills.set(agentId, cleanup);
+      if (detectedShape === "button") {
+        const registration = client.addComposerPill({
+          id: options.id,
+          workspaceId,
+          agentId,
+          button: {
+            title: options.title,
+            icon: options.icon ?? "Activity",
+            label: options.title,
+            behavior: {
+              kind: "popover",
+              Content: PillPopoverContent
+            }
+          }
+        });
+        pills.set(agentId, toCleanup(registration));
+        return;
+      }
+      const cleanup = client.addComposerPill({
+        id: options.id,
+        title: options.title,
+        workspaceId,
+        agentId,
+        Component: PillHost,
+        onPress() {
+          const opener = openers.get(agentId);
+          if (opener) {
+            const defaultPayload = options.resolveDefaultPayload?.({ agentId, workspaceId });
+            opener(defaultPayload);
+          }
+        }
+      });
+      pills.set(agentId, toCleanup(cleanup));
+    } catch (error) {
+      reportError(agentId, workspaceId, error);
+    }
   }
   function removePill(agentId) {
     pills.get(agentId)?.();

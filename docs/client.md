@@ -160,6 +160,8 @@ up immediately in development rather than as a silent blank pill.
 ### `registerComposerPill(client, options)`
 Handles the complete lifecycle of injecting a composer pill for each active agent, subscribing to agent updates, opening modals, and unmounting cleanly.
 
+Works on both host generations: legacy `{Component, onPress}` pills (Paseo 0.7 and beta apps) and `button`-descriptor pills with anchored popovers (Paseo 0.8+), detected once with a throwaway probe registration that is removed immediately. Pass `onError({ agentId, workspaceId, error })` to surface registration failures in your own UI instead of throwing out of plugin setup. On 0.8 hosts the modal becomes an anchored popover driven by the host, so `renderPill` custom bodies and programmatic `open`/`toggle` only apply on legacy hosts; `title`, `icon`, and `renderModal` work on both.
+
 Supports declarative **compact props** so default pills automatically shrink to fit narrow mobile/split-screen tracks without truncating:
 
 ```tsx
