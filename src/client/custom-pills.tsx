@@ -140,6 +140,8 @@ export function registerCustomPills(
       icon: pill.icon,
       compactIcon: pill.compactIcon,
       flair: options.flair,
+      resolveLabel: () =>
+        pill.displayValue ? `${pill.title} ${pill.displayValue}` : pill.title,
       renderPill: () => <CustomPillBody state={pill} />,
       renderModal: () => {
         const [refreshing, setRefreshing] = useState(false);

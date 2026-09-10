@@ -3603,6 +3603,7 @@ function registerCustomPills(client, options) {
       icon: pill.icon,
       compactIcon: pill.compactIcon,
       flair: options.flair,
+      resolveLabel: () => pill.displayValue ? `${pill.title} ${pill.displayValue}` : pill.title,
       renderPill: () => /* @__PURE__ */ jsx(CustomPillBody, { state: pill }),
       renderModal: () => {
         const [refreshing, setRefreshing] = useState(false);

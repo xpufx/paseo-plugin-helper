@@ -12,6 +12,8 @@ import {
   discoverCustomPillConfigs,
   CustomPillPoller,
 } from "../server/custom-pills.js";
+import { initClientHelpers, type ComposerPillRegistrar } from "../client/host.js";
+import { registerCustomPills } from "../client/custom-pills.js";
 
 describe("Custom Pills - Shared Logic", () => {
   it("validates full and minimal pill definitions", () => {
@@ -142,5 +144,95 @@ describe("Custom Pills - Server Discovery & Poller", () => {
     expect(updatedState?.modalOutput).toContain("Detailed breakdown of items");
 
     poller.stop();
+  });
+});
+
+describe("Custom Pills - Client Registration", () => {
+  function buttonRegistrar() {
+    const updates: Array<{ contribution: any; patch: any }> = [];
+    const subscribers = new Set<(update: any) => void>();
+    const client = {
+      addComposerPill(contribution: any) {
+        if (!contribution.button || typeof contribution.button !== "object") {
+          throw new TypeError("Cannot read properties of undefined (reading 'icon')");
+        }
+        return {
+          update: (patch: any) => {
+            updates.push({ contribution, patch });
+          },
+          remove: () => {},
+        };
+      },
+      paseo: {
+        agents: {
+          subscribe: (cb: (update: any) => void) => {
+            subscribers.add(cb);
+            return () => {
+              subscribers.delete(cb);
+            };
+          },
+          list: async () => ({ entries: [] }),
+        },
+      },
+      emit(update: any) {
+        for (const cb of subscribers) cb(update);
+      },
+    } as unknown as ComposerPillRegistrar & { emit(update: any): void };
+    return { client, updates };
+  }
+
+  beforeEach(() => {
+    initClientHelpers({
+      Icon: () => null,
+      Modal: Object.assign(() => null, { Content: () => null }),
+      useRpc: () => async () => ({}),
+      useToast: () => ({}),
+    });
+  });
+
+  it("pushes title plus displayValue as the button label", async () => {
+    const { client, updates } = buttonRegistrar();
+    const cleanup = registerCustomPills(client, {
+      pills: [
+        {
+          id: "disk",
+          title: "Disk",
+          rawValue: "42%",
+          displayValue: "42%",
+          status: "neutral",
+          lastUpdated: Date.now(),
+        },
+      ],
+    });
+
+    (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(updates).toHaveLength(1);
+    expect(updates[0].patch).toEqual({ label: "Disk 42%" });
+
+    cleanup();
+  });
+
+  it("falls back to title alone when displayValue is empty", async () => {
+    const { client, updates } = buttonRegistrar();
+    const cleanup = registerCustomPills(client, {
+      pills: [
+        {
+          id: "novalue",
+          title: "NoValue",
+          rawValue: "",
+          displayValue: "",
+          status: "neutral",
+          lastUpdated: Date.now(),
+        },
+      ],
+    });
+
+    (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(updates).toHaveLength(1);
+    expect(updates[0].patch).toEqual({ label: "NoValue" });
+
+    cleanup();
   });
 });
