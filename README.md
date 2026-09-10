@@ -125,9 +125,38 @@ export const contributeClient: PluginClientContribution = (client) => {
 };
 ```
 
----
+### 1b. Style Guide: Tokens Over Literals
 
-### 2. Zero-Dependency MCP Diagnostics
+```tsx
+import {
+  usePluginTheme,   // colors, fonts, padding, resolveRadius, isCompact
+  spacing,          // xxs:2 xs:4 sm:8 md:12 lg:16 xl:24
+  resolveElevation, // "none" | "sm" | "md" | "lg" -> shadow + elevation
+} from "paseo-plugin-helper/client";
+
+function Row() {
+  const { colors, padding, isCompact } = usePluginTheme();
+  return (
+    <View
+      style={{
+        backgroundColor: colors.surface1,   // never a hex literal
+        paddingHorizontal: padding.horizontal,
+        paddingVertical: isCompact ? spacing.xs : spacing.sm, // one rung down in compact
+        ...resolveElevation("sm"),          // no hand-rolled shadowColor
+      }}
+    />
+  );
+}
+```
+
+Rules: `Card`, `KeyValue`, `Tabs`, and `ModalBody` already follow this scale,
+so compose them instead of re-implementing wrappers. `PluginThemeProvider`
+merges static defaults, live Paseo 0.8 CSS variables (`--background`,
+`--foreground`, `--muted`, `--accent`, `--border`), and the injected host
+theme in that order, so surfaces track host dark/light switches with no
+plugin code.
+
+---
 
 ```ts
 import { McpClient } from "paseo-plugin-helper/mcp";

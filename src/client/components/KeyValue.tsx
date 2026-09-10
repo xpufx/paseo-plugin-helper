@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
+import { spacing } from "../theme/tokens.js";
 import { copyToClipboard } from "../utils/clipboard.js";
 
 export interface KeyValueProps {
@@ -37,7 +38,7 @@ export function KeyValue({
   valueStyle,
 }: KeyValueProps) {
   const { Icon, useToast } = getClientHost();
-  const { colors, flair, isCompact, touchTargetMin } = usePluginTheme();
+  const { colors, flair, isCompact, touchTargetMin, fonts } = usePluginTheme();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -56,7 +57,7 @@ export function KeyValue({
   };
 
   const fontFamily = mono
-    ? Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" })
+    ? fonts.mono ?? Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" })
     : undefined;
 
   const shouldStack = stackOnCompact && isCompact;
@@ -79,7 +80,14 @@ export function KeyValue({
 
   if (shouldStack) {
     return (
-      <View style={[styles.container, styles.stackedContainer, style]}>
+      <View
+        style={[
+          styles.container,
+          styles.stackedContainer,
+          { paddingVertical: isCompact ? spacing.xs : spacing.sm },
+          style,
+        ]}
+      >
         <View style={styles.stackedHeaderRow}>
           <Text
             style={[
@@ -133,7 +141,14 @@ export function KeyValue({
 
   // Horizontal layout for Desktop / Wide screens
   return (
-    <View style={[styles.container, styles.rowContainer, style]}>
+    <View
+      style={[
+        styles.container,
+        styles.rowContainer,
+        { paddingVertical: isCompact ? spacing.xs : spacing.sm },
+        style,
+      ]}
+    >
       <Text
         style={[
           styles.label,
@@ -186,7 +201,7 @@ export interface KeyValueGroupProps {
 export function KeyValueGroup({
   children,
   columns = 2,
-  gap = 12,
+  gap = spacing.md,
   style,
 }: KeyValueGroupProps) {
   const { isCompact } = usePluginTheme();
@@ -214,7 +229,7 @@ export function KeyValueGroup({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 5,
+    width: "100%",
   },
   rowContainer: {
     flexDirection: "row",

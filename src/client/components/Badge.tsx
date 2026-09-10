@@ -2,6 +2,7 @@ import React, { type ReactNode } from "react";
 import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
+import { FALLBACK_ACCENT_FOREGROUND } from "../theme/tokens.js";
 import type { StatusVariant } from "../../shared/types.js";
 
 export type BadgeStyle = "tinted" | "outline" | "solid";
@@ -44,7 +45,7 @@ export function Badge({
   } else if (styleVariant === "solid") {
     bg = solidColor;
     border = "transparent";
-    textColor = colors.accentForeground || "#ffffff";
+    textColor = colors.accentForeground || FALLBACK_ACCENT_FOREGROUND;
   }
 
   const renderIcon = () => {

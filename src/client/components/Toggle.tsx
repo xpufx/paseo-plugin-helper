@@ -9,6 +9,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { usePluginTheme } from "../theme/provider.js";
+import { resolveElevation } from "../theme/tokens.js";
 
 export interface ToggleProps {
   value: boolean;
@@ -145,10 +146,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   thumb: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 2,
+    ...resolveElevation("sm"),
   },
 });

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { getClientHost } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
+import { FALLBACK_ACCENT_FOREGROUND } from "../theme/tokens.js";
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -60,7 +61,7 @@ export function Button({
   switch (variant) {
     case "primary":
       bg = colors.accent;
-      textColor = colors.accentForeground || "#ffffff";
+      textColor = colors.accentForeground || FALLBACK_ACCENT_FOREGROUND;
       break;
     case "danger":
       bg = alpha(colors.statusDanger, 0.15);

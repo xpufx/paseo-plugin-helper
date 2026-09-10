@@ -88,7 +88,7 @@ export function CardHeader({
 }
 
 export function Card({ children, variant, style, noPadding = false }: CardProps) {
-  const { colors, flair, resolveRadius, isCompact, alpha } = usePluginTheme();
+  const { colors, flair, resolveRadius, padding, alpha } = usePluginTheme();
 
   const effectiveVariant = variant || flair.surfaceStyle;
   const radius = resolveRadius("md");
@@ -104,8 +104,6 @@ export function Card({ children, variant, style, noPadding = false }: CardProps)
     border = colors.border;
   }
 
-  const padding = noPadding ? 0 : isCompact ? 12 : 16;
-
   return (
     <View
       style={[
@@ -115,7 +113,8 @@ export function Card({ children, variant, style, noPadding = false }: CardProps)
           borderColor: border,
           borderRadius: radius,
           borderWidth: flair.borderWidth,
-          padding,
+          paddingHorizontal: noPadding ? 0 : padding.horizontal,
+          paddingVertical: noPadding ? 0 : padding.vertical,
         },
         style,
       ]}

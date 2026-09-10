@@ -15,6 +15,11 @@ import {
 } from "react-native";
 import { getClientHost, selectHostScrollView, type HostScrollView } from "../host.js";
 import { usePluginTheme } from "../theme/provider.js";
+import {
+  FALLBACK_ACCENT_FOREGROUND,
+  resolveElevation,
+  spacing,
+} from "../theme/tokens.js";
 
 export interface TabItem {
   id: string;
@@ -144,8 +149,8 @@ export function Tabs({
               : pressed
                 ? alpha(colors.surface2, 0.5)
                 : "transparent",
-            paddingHorizontal: shouldFit ? (isCompact ? 6 : 12) : 14,
-            paddingVertical: isCompact ? 5 : 7,
+            paddingHorizontal: shouldFit ? (isCompact ? spacing.sm : spacing.md) : spacing.md,
+            paddingVertical: isCompact ? spacing.xs : spacing.sm,
           },
         ]}
       >
@@ -182,9 +187,9 @@ export function Tabs({
               style={[
                 styles.badgeText,
                 {
-                  color: isActive
-                    ? colors.accentForeground || "#ffffff"
-                    : colors.foregroundMuted,
+                color: isActive
+                  ? colors.accentForeground || FALLBACK_ACCENT_FOREGROUND
+                  : colors.foregroundMuted,
                 },
               ]}
             >
@@ -349,10 +354,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     top: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+    ...resolveElevation("sm"),
   },
   arrowLeft: {
     left: 4,

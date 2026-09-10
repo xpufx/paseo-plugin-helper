@@ -5,11 +5,17 @@ import { Appearance } from "react-native";
 import { defaultFlair, resolveRadius, type VisualFlair } from "./flair.js";
 import { alpha, getContrastColor, getStatusColor, getVariantPalette } from "./color-utils.js";
 import { getTouchTargetMin, isMobilePlatform, resolvePadding } from "./responsive.js";
+import {
+  mergeThemeColors,
+  readHostThemeVariables,
+  type HostFontVariables,
+} from "./host-variables.js";
 import type { ResponsiveLayout, StatusVariant, ThemeColors } from "../../shared/types.js";
 
 export interface PluginThemeContextValue {
   theme: PluginTheme;
   colors: ThemeColors;
+  fonts: HostFontVariables;
   layout: ResponsiveLayout;
   flair: VisualFlair;
   isCompact: boolean;
@@ -77,6 +83,7 @@ const initialDefaultTheme = getDefaultTheme();
 const PluginThemeContext = createContext<PluginThemeContextValue>({
   theme: initialDefaultTheme,
   colors: initialDefaultTheme.colors,
+  fonts: {},
   layout: defaultLayout,
   flair: defaultFlair,
   isCompact: false,
@@ -105,10 +112,13 @@ export function PluginThemeProvider({
 }: PluginThemeProviderProps) {
   const value = useMemo<PluginThemeContextValue>(() => {
     const flair: VisualFlair = { ...defaultFlair, ...userFlair };
-    const effectiveColors: ThemeColors = {
-      ...theme.colors,
-      ...(flair.accentColor ? { accent: flair.accentColor } : {}),
-    };
+    const hostVariables = readHostThemeVariables();
+    const effectiveColors = mergeThemeColors(
+      getDefaultTheme().colors,
+      hostVariables.colors,
+      theme.colors,
+      flair.accentColor,
+    );
 
     const isCompact = Boolean(layout.compact);
     const isMobile = isMobilePlatform(layout.platform);
@@ -118,6 +128,7 @@ export function PluginThemeProvider({
     return {
       theme,
       colors: effectiveColors,
+      fonts: hostVariables.fonts,
       layout,
       flair,
       isCompact,
