@@ -51,8 +51,13 @@ function legacyRegistrar(): { client: ComposerPillRegistrar; pills: StoredPill[]
   return { client, pills };
 }
 
-function modernRegistrar(): { client: ComposerPillRegistrar; pills: StoredPill[] } {
+function modernRegistrar(): {
+  client: ComposerPillRegistrar;
+  pills: StoredPill[];
+  updates: Array<{ contribution: any; patch: any }>;
+} {
   const pills: StoredPill[] = [];
+  const updates: Array<{ contribution: any; patch: any }> = [];
   const subscribers = new Set<(update: any) => void>();
   const client = {
     addComposerPill(contribution: any) {
@@ -62,7 +67,9 @@ function modernRegistrar(): { client: ComposerPillRegistrar; pills: StoredPill[]
       const stored: StoredPill = { contribution, removed: false };
       pills.push(stored);
       return {
-        update: () => {},
+        update: (patch: any) => {
+          updates.push({ contribution, patch });
+        },
         remove: () => {
           stored.removed = true;
           const index = pills.indexOf(stored);
@@ -85,7 +92,7 @@ function modernRegistrar(): { client: ComposerPillRegistrar; pills: StoredPill[]
       for (const cb of subscribers) cb(update);
     },
   } as unknown as ComposerPillRegistrar & { emit(update: any): void };
-  return { client, pills };
+  return { client, pills, updates };
 }
 
 describe("registerComposerPill host shapes", () => {
@@ -175,8 +182,7 @@ describe("registerComposerPill host shapes", () => {
     expect(() => cleanup()).not.toThrow();
   });
 
-  it("surfaces duplicate-id failures without killing the plugin client", () => {
-    const { client } = modernRegistrar();
+  it("surfaces duplicate-id failures without killing the plugin client", () => {    const { client } = modernRegistrar();
     const seen: Error[] = [];
     registerComposerPill(client, {
       id: "dup-pill",
@@ -191,5 +197,109 @@ describe("registerComposerPill host shapes", () => {
     // Second registration with the same pill id for the same agent is a no-op (already tracked).
     (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
     expect(seen).toHaveLength(0);
+  });
+
+  it("pushes the resolved label through update() on button hosts", async () => {
+    const { client, updates } = modernRegistrar();
+    const cleanup = registerComposerPill(client, {
+      id: "live-pill",
+      title: "Live",
+      renderModal: () => null,
+      resolveLabel: ({ agentId }) => `CPU ${agentId}`,
+      refreshIntervalMs: 0,
+    });
+
+    (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(updates).toHaveLength(1);
+    expect(updates[0].patch).toEqual({ label: "CPU a1" });
+
+    cleanup();
+  });
+
+  it("polls resolveLabel on an interval and stops on removal", async () => {
+    const { client, pills, updates } = modernRegistrar();
+    const seen: string[] = [];
+    const cleanup = registerComposerPill(client, {
+      id: "poll-pill",
+      title: "Poll",
+      renderModal: () => null,
+      resolveLabel: () => {
+        seen.push("tick");
+        return `v${seen.length}`;
+      },
+      refreshIntervalMs: 10,
+    });
+
+    (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
+    await new Promise((resolve) => setTimeout(resolve, 45));
+    expect(seen.length).toBeGreaterThanOrEqual(2);
+    expect(updates.length).toBeGreaterThanOrEqual(2);
+    expect(updates[updates.length - 1].patch.label).toBe(`v${seen.length}`);
+
+    (client as any).emit({ kind: "remove", agentId: "a1" });
+    const frozen = updates.length;
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(updates).toHaveLength(frozen);
+    expect(pills).toHaveLength(0);
+
+    cleanup();
+  });
+
+  it("supports async resolvers and skips undefined labels", async () => {
+    const { client, updates } = modernRegistrar();
+    const cleanup = registerComposerPill(client, {
+      id: "async-pill",
+      title: "Async",
+      renderModal: () => null,
+      resolveLabel: async () => undefined,
+      refreshIntervalMs: 0,
+    });
+
+    (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(updates).toHaveLength(0);
+
+    cleanup();
+  });
+
+  it("reports resolver failures through onError instead of throwing", async () => {
+    const { client } = modernRegistrar();
+    const seen: Error[] = [];
+    const cleanup = registerComposerPill(client, {
+      id: "fail-pill",
+      title: "Fail",
+      renderModal: () => null,
+      resolveLabel: () => {
+        throw new Error("resolver boom");
+      },
+      refreshIntervalMs: 0,
+      onError: ({ error }) => {
+        seen.push(error);
+      },
+    });
+
+    (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(seen).toHaveLength(1);
+    expect(seen[0].message).toBe("resolver boom");
+
+    cleanup();
+  });
+
+  it("never calls update() when no resolveLabel is set", async () => {
+    const { client, updates } = modernRegistrar();
+    const cleanup = registerComposerPill(client, {
+      id: "static-pill",
+      title: "Static",
+      renderModal: () => null,
+    });
+
+    (client as any).emit({ kind: "upsert", agent: { id: "a1", workspaceId: "w1" } });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(updates).toHaveLength(0);
+
+    cleanup();
   });
 });

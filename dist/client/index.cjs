@@ -2876,7 +2876,7 @@ function registerComposerPill(client, options) {
       layout: props.layout,
       host: props.host ?? { id: "", label: "" }
     };
-    return /* @__PURE__ */ jsxRuntime.jsx(PluginThemeProvider, { theme: props.theme, layout: props.layout, flair: options.flair, children: options.renderModal({ ...pillProps, close: props.close }) });
+    return /* @__PURE__ */ jsxRuntime.jsx(PluginThemeProvider, { theme: props.theme, layout: props.layout, flair: options.flair, children: /* @__PURE__ */ jsxRuntime.jsx(reactNative.View, { style: styles20.popoverContainer, children: options.renderModal({ ...pillProps, close: props.close }) }) });
   }
   function PillHost(props) {
     const [open, setOpen] = React7.useState(false);
@@ -2953,12 +2953,29 @@ function registerComposerPill(client, options) {
     return () => registration.remove();
   }
   function reportError(agentId, workspaceId, error) {
-    pills.set(agentId, () => {
+    pills.set(agentId, {
+      dispose: () => {
+      }
     });
     options.onError?.({
       agentId,
       workspaceId,
       error: error instanceof Error ? error : new Error(String(error))
+    });
+  }
+  function resolveAndPushLabel(agentId, workspaceId, registration) {
+    if (typeof registration === "function") return;
+    if (!options.resolveLabel) return;
+    Promise.resolve().then(() => options.resolveLabel({ agentId, workspaceId })).then((label) => {
+      if (label !== void 0 && pills.has(agentId)) {
+        registration.update({ label });
+      }
+    }).catch((error) => {
+      options.onError?.({
+        agentId,
+        workspaceId,
+        error: error instanceof Error ? error : new Error(String(error))
+      });
     });
   }
   function detectShape(agentId, workspaceId) {
@@ -3006,7 +3023,19 @@ function registerComposerPill(client, options) {
             }
           }
         });
-        pills.set(agentId, toCleanup(registration));
+        const entry = {
+          dispose: toCleanup(registration)
+        };
+        pills.set(agentId, entry);
+        if (options.resolveLabel && typeof registration !== "function") {
+          resolveAndPushLabel(agentId, workspaceId, registration);
+          const intervalMs = options.refreshIntervalMs ?? 5e3;
+          if (intervalMs > 0) {
+            entry.timer = setInterval(() => {
+              resolveAndPushLabel(agentId, workspaceId, registration);
+            }, intervalMs);
+          }
+        }
         return;
       }
       const cleanup = client.addComposerPill({
@@ -3023,13 +3052,15 @@ function registerComposerPill(client, options) {
           }
         }
       });
-      pills.set(agentId, toCleanup(cleanup));
+      pills.set(agentId, { dispose: toCleanup(cleanup) });
     } catch (error) {
       reportError(agentId, workspaceId, error);
     }
   }
   function removePill(agentId) {
-    pills.get(agentId)?.();
+    const entry = pills.get(agentId);
+    if (entry?.timer) clearInterval(entry.timer);
+    entry?.dispose();
     pills.delete(agentId);
     openers.delete(agentId);
   }
@@ -3051,8 +3082,9 @@ function registerComposerPill(client, options) {
   });
   return () => {
     unsubscribe();
-    for (const dispose of pills.values()) {
-      dispose();
+    for (const entry of pills.values()) {
+      if (entry.timer) clearInterval(entry.timer);
+      entry.dispose();
     }
     pills.clear();
     openers.clear();
@@ -3079,6 +3111,9 @@ function DefaultPillBody({
   ] });
 }
 var styles20 = reactNative.StyleSheet.create({
+  popoverContainer: {
+    width: "100%"
+  },
   pillContainer: {
     flexDirection: "row",
     alignItems: "center",

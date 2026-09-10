@@ -25,6 +25,11 @@ export interface RenderModalProps<TPayload = any> extends HostPillProps {
   payload?: TPayload;
 }
 
+export interface PillLiveContext {
+  agentId: string;
+  workspaceId: string;
+}
+
 let probeSequence = 0;
 
 export interface RegisterComposerPillOptions<TPayload = any> {
@@ -94,12 +99,30 @@ export interface RegisterComposerPillOptions<TPayload = any> {
   renderPill?: (props: RenderPillProps<TPayload>) => ReactNode;
 
   /**
-   * Renders the content inside the controlled modal.
+    * Resolves the live pill label on button-shaped hosts (Paseo 0.8+), where the
+    * pill body is host-rendered from a static `label` string and `renderPill`
+    * never mounts. Called once at registration and then every
+    * `refreshIntervalMs`. Keep it cheap and synchronous when possible; async
+    * resolvers are awaited. Returning `undefined` leaves the current label.
+    * Cycle modes can advance rotation state on each call.
+    */
+  resolveLabel?: (context: PillLiveContext) => string | undefined | Promise<string | undefined>;
+
+  /**
+    * Poll interval for `resolveLabel` on button-shaped hosts. Defaults to 5000ms
+    * when `resolveLabel` is set. Set to 0 to resolve once at registration.
+    * Ignored on legacy hosts (their `renderPill` re-renders via React state).
+    */
+  refreshIntervalMs?: number;
+
+  /**
+    * Renders the content inside the controlled modal.
    * Automatically wrapped with PluginThemeProvider and supplied with a `close()` helper and optional payload.
-   * On button-shaped hosts (Paseo 0.8+) the modal is replaced by an anchored
-   * popover rendering this same content; `open`/`toggle` from `renderPill`
-   * cannot drive host-owned popovers, so custom pill bodies only apply there
-   * as the static `label`.
+    * On button-shaped hosts (Paseo 0.8+) the modal is replaced by an anchored
+    * popover rendering this same content at the host surface width (expect a
+    * narrow column, not a wide modal); keep content vertically stacked and
+    * reflowing. `open`/`toggle` from `renderPill` cannot drive host-owned
+    * popovers, so live pill text comes from `resolveLabel` instead.
    */
   renderModal: (props: RenderModalProps<TPayload>) => ReactNode;
 
@@ -125,7 +148,7 @@ export function registerComposerPill<TPayload = any>(
 ): PluginCleanup {
   const { Icon, Modal } = getClientHost();
   const openers = new Map<string, (payload?: TPayload) => void>();
-  const pills = new Map<string, () => void>();
+  const pills = new Map<string, { dispose: () => void; timer?: ReturnType<typeof setInterval> }>();
   let detectedShape: "button" | "legacy" | null = null;
 
   function PillPopoverContent(props: {
@@ -145,7 +168,9 @@ export function registerComposerPill<TPayload = any>(
     };
     return (
       <PluginThemeProvider theme={props.theme} layout={props.layout} flair={options.flair}>
-        {options.renderModal({ ...pillProps, close: props.close })}
+        <View style={styles.popoverContainer}>
+          {options.renderModal({ ...pillProps, close: props.close })}
+        </View>
       </PluginThemeProvider>
     );
   }
@@ -242,12 +267,37 @@ export function registerComposerPill<TPayload = any>(
   }
 
   function reportError(agentId: string, workspaceId: string, error: unknown): void {
-    pills.set(agentId, () => {});
+    pills.set(agentId, {
+      dispose: () => {},
+    });
     options.onError?.({
       agentId,
       workspaceId,
       error: error instanceof Error ? error : new Error(String(error)),
     });
+  }
+
+  function resolveAndPushLabel(
+    agentId: string,
+    workspaceId: string,
+    registration: ComposerPillRegistration,
+  ): void {
+    if (typeof registration === "function") return;
+    if (!options.resolveLabel) return;
+    Promise.resolve()
+      .then(() => options.resolveLabel!({ agentId, workspaceId }))
+      .then((label) => {
+        if (label !== undefined && pills.has(agentId)) {
+          registration.update({ label });
+        }
+      })
+      .catch((error) => {
+        options.onError?.({
+          agentId,
+          workspaceId,
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      });
   }
 
   function detectShape(agentId: string, workspaceId: string): "button" | "legacy" {
@@ -295,7 +345,19 @@ export function registerComposerPill<TPayload = any>(
             },
           },
         });
-        pills.set(agentId, toCleanup(registration));
+        const entry: { dispose: () => void; timer?: ReturnType<typeof setInterval> } = {
+          dispose: toCleanup(registration),
+        };
+        pills.set(agentId, entry);
+        if (options.resolveLabel && typeof registration !== "function") {
+          resolveAndPushLabel(agentId, workspaceId, registration);
+          const intervalMs = options.refreshIntervalMs ?? 5000;
+          if (intervalMs > 0) {
+            entry.timer = setInterval(() => {
+              resolveAndPushLabel(agentId, workspaceId, registration);
+            }, intervalMs);
+          }
+        }
         return;
       }
       const cleanup = client.addComposerPill({
@@ -312,14 +374,16 @@ export function registerComposerPill<TPayload = any>(
           }
         },
       });
-      pills.set(agentId, toCleanup(cleanup));
+      pills.set(agentId, { dispose: toCleanup(cleanup) });
     } catch (error) {
       reportError(agentId, workspaceId, error);
     }
   }
 
   function removePill(agentId: string) {
-    pills.get(agentId)?.();
+    const entry = pills.get(agentId);
+    if (entry?.timer) clearInterval(entry.timer);
+    entry?.dispose();
     pills.delete(agentId);
     openers.delete(agentId);
   }
@@ -346,8 +410,9 @@ export function registerComposerPill<TPayload = any>(
 
   return () => {
     unsubscribe();
-    for (const dispose of pills.values()) {
-      dispose();
+    for (const entry of pills.values()) {
+      if (entry.timer) clearInterval(entry.timer);
+      entry.dispose();
     }
     pills.clear();
     openers.clear();
@@ -399,6 +464,9 @@ function DefaultPillBody({
 }
 
 const styles = StyleSheet.create({
+  popoverContainer: {
+    width: "100%",
+  },
   pillContainer: {
     flexDirection: "row",
     alignItems: "center",

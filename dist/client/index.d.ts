@@ -6,8 +6,8 @@ export { j as ClientHostDeps, k as ComposerPillButtonContribution, l as Composer
 import { StyleProp, ViewStyle, TextStyle, KeyboardTypeOptions, ImageSourcePropType, ScrollView } from 'react-native';
 import { M as MetricThresholds } from '../formatters-BtMZotvg.js';
 import { P as PluginRpcContract, R as RpcInput, a as RpcOutput } from '../rpc-D27pph91.js';
-import * as _tanstack_react_query from '@tanstack/react-query';
 import { UseMutationOptions, UseQueryOptions, UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import * as _tanstack_query_core from '@tanstack/query-core';
 import 'zod';
 
 type RadiusStyle = "sharp" | "rounded" | "pill";
@@ -598,6 +598,10 @@ interface RenderModalProps<TPayload = any> extends HostPillProps {
     close: () => void;
     payload?: TPayload;
 }
+interface PillLiveContext {
+    agentId: string;
+    workspaceId: string;
+}
 interface RegisterComposerPillOptions<TPayload = any> {
     /**
      * Unique ID for the pill (e.g. "paseo-top", "mcp-monitor").
@@ -656,12 +660,28 @@ interface RegisterComposerPillOptions<TPayload = any> {
      */
     renderPill?: (props: RenderPillProps<TPayload>) => ReactNode;
     /**
-     * Renders the content inside the controlled modal.
+      * Resolves the live pill label on button-shaped hosts (Paseo 0.8+), where the
+      * pill body is host-rendered from a static `label` string and `renderPill`
+      * never mounts. Called once at registration and then every
+      * `refreshIntervalMs`. Keep it cheap and synchronous when possible; async
+      * resolvers are awaited. Returning `undefined` leaves the current label.
+      * Cycle modes can advance rotation state on each call.
+      */
+    resolveLabel?: (context: PillLiveContext) => string | undefined | Promise<string | undefined>;
+    /**
+      * Poll interval for `resolveLabel` on button-shaped hosts. Defaults to 5000ms
+      * when `resolveLabel` is set. Set to 0 to resolve once at registration.
+      * Ignored on legacy hosts (their `renderPill` re-renders via React state).
+      */
+    refreshIntervalMs?: number;
+    /**
+      * Renders the content inside the controlled modal.
      * Automatically wrapped with PluginThemeProvider and supplied with a `close()` helper and optional payload.
-     * On button-shaped hosts (Paseo 0.8+) the modal is replaced by an anchored
-     * popover rendering this same content; `open`/`toggle` from `renderPill`
-     * cannot drive host-owned popovers, so custom pill bodies only apply there
-     * as the static `label`.
+      * On button-shaped hosts (Paseo 0.8+) the modal is replaced by an anchored
+      * popover rendering this same content at the host surface width (expect a
+      * narrow column, not a wide modal); keep content vertically stacked and
+      * reflowing. `open`/`toggle` from `renderPill` cannot drive host-owned
+      * popovers, so live pill text comes from `resolveLabel` instead.
      */
     renderModal: (props: RenderModalProps<TPayload>) => ReactNode;
     /**
@@ -798,8 +818,8 @@ declare function useAutoRefreshQuery<TContract extends PluginRpcContract<any, an
     isRefetching: boolean;
     isStale: boolean;
     isEnabled: boolean;
-    refetch: (options?: _tanstack_react_query.RefetchOptions) => Promise<_tanstack_react_query.QueryObserverResult<TOutput, Error>>;
-    fetchStatus: _tanstack_react_query.FetchStatus;
+    refetch: (options?: _tanstack_query_core.RefetchOptions) => Promise<_tanstack_query_core.QueryObserverResult<TOutput, Error>>;
+    fetchStatus: _tanstack_query_core.FetchStatus;
 } | {
     rate: RefreshRate;
     setRate: React.Dispatch<React.SetStateAction<RefreshRate>>;
@@ -828,8 +848,8 @@ declare function useAutoRefreshQuery<TContract extends PluginRpcContract<any, an
     isRefetching: boolean;
     isStale: boolean;
     isEnabled: boolean;
-    refetch: (options?: _tanstack_react_query.RefetchOptions) => Promise<_tanstack_react_query.QueryObserverResult<TOutput, Error>>;
-    fetchStatus: _tanstack_react_query.FetchStatus;
+    refetch: (options?: _tanstack_query_core.RefetchOptions) => Promise<_tanstack_query_core.QueryObserverResult<TOutput, Error>>;
+    fetchStatus: _tanstack_query_core.FetchStatus;
 } | {
     rate: RefreshRate;
     setRate: React.Dispatch<React.SetStateAction<RefreshRate>>;
@@ -858,8 +878,8 @@ declare function useAutoRefreshQuery<TContract extends PluginRpcContract<any, an
     isRefetching: boolean;
     isStale: boolean;
     isEnabled: boolean;
-    refetch: (options?: _tanstack_react_query.RefetchOptions) => Promise<_tanstack_react_query.QueryObserverResult<TOutput, Error>>;
-    fetchStatus: _tanstack_react_query.FetchStatus;
+    refetch: (options?: _tanstack_query_core.RefetchOptions) => Promise<_tanstack_query_core.QueryObserverResult<TOutput, Error>>;
+    fetchStatus: _tanstack_query_core.FetchStatus;
 } | {
     rate: RefreshRate;
     setRate: React.Dispatch<React.SetStateAction<RefreshRate>>;
@@ -888,8 +908,8 @@ declare function useAutoRefreshQuery<TContract extends PluginRpcContract<any, an
     isRefetching: boolean;
     isStale: boolean;
     isEnabled: boolean;
-    refetch: (options?: _tanstack_react_query.RefetchOptions) => Promise<_tanstack_react_query.QueryObserverResult<TOutput, Error>>;
-    fetchStatus: _tanstack_react_query.FetchStatus;
+    refetch: (options?: _tanstack_query_core.RefetchOptions) => Promise<_tanstack_query_core.QueryObserverResult<TOutput, Error>>;
+    fetchStatus: _tanstack_query_core.FetchStatus;
 } | {
     rate: RefreshRate;
     setRate: React.Dispatch<React.SetStateAction<RefreshRate>>;
@@ -918,8 +938,8 @@ declare function useAutoRefreshQuery<TContract extends PluginRpcContract<any, an
     isRefetching: boolean;
     isStale: boolean;
     isEnabled: boolean;
-    refetch: (options?: _tanstack_react_query.RefetchOptions) => Promise<_tanstack_react_query.QueryObserverResult<TOutput, Error>>;
-    fetchStatus: _tanstack_react_query.FetchStatus;
+    refetch: (options?: _tanstack_query_core.RefetchOptions) => Promise<_tanstack_query_core.QueryObserverResult<TOutput, Error>>;
+    fetchStatus: _tanstack_query_core.FetchStatus;
 } | {
     rate: RefreshRate;
     setRate: React.Dispatch<React.SetStateAction<RefreshRate>>;
@@ -948,8 +968,8 @@ declare function useAutoRefreshQuery<TContract extends PluginRpcContract<any, an
     isRefetching: boolean;
     isStale: boolean;
     isEnabled: boolean;
-    refetch: (options?: _tanstack_react_query.RefetchOptions) => Promise<_tanstack_react_query.QueryObserverResult<TOutput, Error>>;
-    fetchStatus: _tanstack_react_query.FetchStatus;
+    refetch: (options?: _tanstack_query_core.RefetchOptions) => Promise<_tanstack_query_core.QueryObserverResult<TOutput, Error>>;
+    fetchStatus: _tanstack_query_core.FetchStatus;
 };
 
 interface UsePluginSettingsOptions<TSettings> {
@@ -1176,4 +1196,4 @@ declare function registerCustomPills(client: ComposerPillRegistrar, options: Reg
 
 declare function Icon(props: HostIconProps): React__default.JSX.Element;
 
-export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, ComposerPillRegistrar, type CopyToClipboardOptions, CustomPillBody, type CustomPillBodyProps, CustomPillModalContent, type CustomPillModalContentProps, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, type HelperSettingsCardProps, type HelperSettingsField, type HelperSettingsFieldKind, type HelperSettingsFieldOverrides, type HelperSettingsInputProps, type HelperSettingsRowBaseProps, type HelperSettingsScreenContribution, type HelperSettingsScreenRegistrar, type HelperSettingsSectionProps, type HelperSettingsSelectComponent, type HelperSettingsSelectProps, type HelperSettingsSwitchProps, type HelperSettingsUiBundle, HostAgentPanelProps, HostIconProps, HostLayout, HostPillProps, HostSurfaceProps, HostToast, HostWorkspacePanelProps, Icon, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, PluginCleanup, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterCustomPillsOptions, type RegisterHelperSettingsScreenOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, contractSchemaToFields, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerHelperSettingsScreen, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
+export { type AboutLink, AboutSection, type AboutSectionProps, ActionBar, type ActionBarProps, Badge, type BadgeProps, type BadgeStyle, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, CardHeader, type CardHeaderProps, type CardProps, CodeBlock, type CodeBlockProps, Collapsible, type CollapsibleProps, ComposerPillRegistrar, type CopyToClipboardOptions, CustomPillBody, type CustomPillBodyProps, CustomPillModalContent, type CustomPillModalContentProps, type DataColumn, DataTable, type DataTableProps, type DensityStyle, EmptyState, type EmptyStateProps, FormRow, type FormRowProps, type HapticFeedbackType, type HeadingTransform, type HelperSettingsCardProps, type HelperSettingsField, type HelperSettingsFieldKind, type HelperSettingsFieldOverrides, type HelperSettingsInputProps, type HelperSettingsRowBaseProps, type HelperSettingsScreenContribution, type HelperSettingsScreenRegistrar, type HelperSettingsSectionProps, type HelperSettingsSelectComponent, type HelperSettingsSelectProps, type HelperSettingsSwitchProps, type HelperSettingsUiBundle, HostAgentPanelProps, HostIconProps, HostLayout, HostPillProps, HostSurfaceProps, HostToast, HostWorkspacePanelProps, Icon, KeyValue, KeyValueGroup, type KeyValueGroupProps, type KeyValueProps, MetricGauge, type MetricGaugeProps, ModalBody, type ModalBodyProps, type PillLiveContext, PluginCleanup, type PluginThemeContextValue, PluginThemeProvider, type PluginThemeProviderProps, ProgressBar, type ProgressBarProps, REFRESH_INTERVALS, type RadiusStyle, type RefreshRate, type RegisterAgentPanelOptions, type RegisterComposerPillOptions, type RegisterCustomPillsOptions, type RegisterHelperSettingsScreenOptions, type RegisterSidebarSurfaceOptions, type RegisterWorkspacePanelOptions, type RenderModalProps, type RenderPillProps, Responsive, type ResponsiveProps, type ResponsiveSelectOptions, type RpcMutationOptions, type RpcQueryOptions, SearchInput, type SearchInputProps, type SidebarSurfaceRegistrar, StatusDot, type StatusDotProps, type SurfaceStyle, type TabItem, Tabs, type TabsProps, TextInput, type TextInputProps, Toggle, type ToggleProps, type UseAutoRefreshQueryOptions, type UsePluginSettingsOptions, type UsePluginSettingsResult, type UseResponsiveResult, type VisualFlair, type WorkspacePanelRegistrar, alpha, contractSchemaToFields, copyToClipboard, defaultDarkTheme, defaultFlair, defaultLightTheme, getContrastColor, getDefaultTheme, getLuminance, getStatusColor, getTouchTargetMin, getVariantPalette, isMobilePlatform, registerAgentPanel, registerComposerPill, registerCustomPills, registerHelperSettingsScreen, registerSidebarSurface, registerWorkspacePanel, resolvePadding, resolveRadius, responsiveSelect, responsiveValue, triggerHaptic, useAutoRefreshQuery, usePluginSettings, usePluginTheme, useResponsive, useRpcMutation, useRpcQuery };
