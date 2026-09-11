@@ -142,7 +142,7 @@ export function AboutSection({
   style,
 }: AboutSectionProps) {
   const { Icon } = getClientHost();
-  const { colors, flair, resolveRadius } = usePluginTheme();
+  const { colors, resolveRadius } = usePluginTheme();
   const { isCompact, platform } = useResponsive();
   const [copied, setCopied] = useState(false);
 
@@ -252,29 +252,26 @@ export function AboutSection({
   return (
     <View style={[styles.container, style]}>
       {/* Header Banner Card */}
-      <Card variant={flair.surfaceStyle}>
+      <Card variant="elevated">
+        <Card.Header
+          title={name}
+          subtitle={description}
+          badge={<Badge variant="accent" label={`v${version}`} />}
+        />
         <View style={styles.headerRow}>
           {resolvedLogoNode}
 
           <View style={styles.metaColumn}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.nameText, { color: colors.foreground }]}>
-                {name}
-              </Text>
-              <Badge variant="accent" label={`v${version}`} />
-              {license ? <Badge variant="neutral" label={license} /> : null}
-            </View>
-
             {author ? (
               <Text style={[styles.authorText, { color: colors.foregroundMuted }]}>
                 by {author}
               </Text>
             ) : null}
 
-            {description ? (
-              <Text style={[styles.descText, { color: colors.foregroundMuted }]}>
-                {description}
-              </Text>
+            {license ? (
+              <View style={styles.titleRow}>
+                <Badge variant="neutral" label={license} />
+              </View>
             ) : null}
           </View>
         </View>
@@ -305,7 +302,7 @@ export function AboutSection({
       </Card>
 
       {/* Environment & Extra Diagnostics Details */}
-      <Card variant={flair.surfaceStyle}>
+      <Card variant="elevated">
         <Card.Header
           title="Runtime Environment"
           subtitle="Diagnostics for issue reports and system verification"
@@ -361,17 +358,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 6,
   },
-  nameText: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
   authorText: {
     fontSize: 11,
-  },
-  descText: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 2,
   },
   actionsRow: {
     flexDirection: "row",
