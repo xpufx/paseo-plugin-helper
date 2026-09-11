@@ -40,7 +40,7 @@ fgjx api repos/xpufx/paseo-plugin-helper/issues/<NUMBER> --hostname forge.mrs.aa
 > **Clean Markdown & Backticks**: When posting comments via shell or heredocs, do NOT double-escape backticks with backslashes (e.g. avoid `\`\`\`` or `\`code\``). Backslashes display literally on the Forgejo web UI. Use unescaped single quotes, heredocs (`cat << 'EOF'`), or raw file input (`-F file` or python) to preserve clean triple backticks (` ``` `).
 
 > [!NOTE]
-> Forgejo hosts the **issues board only** for orchestration and observability. Code repositories live on GitHub or in local checkouts/worktrees.
+> Forgejo (`forge.mrs.aager.de`) is the **primary git remote (`origin`) and issues tracker**. All code pushes go to `origin` on Forgejo, which automatically mirrors branches and tags downstream to GitHub (`github.com/xpufx/paseo-plugin-helper`) via Forgejo's automated push mirror.
 
 ---
 
@@ -56,10 +56,9 @@ When referencing issues in comments, commit messages, or chat harness:
 ## 3. Commit Tracking: Explicit Code Host & Commit SHAs
 
 If an issue fix includes a code commit:
-1. **Always record the exact commit SHA and the hosting repo URL** (e.g. GitHub origin or worktree).
-2. Format as a clickable commit link if public/remote, or list the repository origin remote + branch + SHA:
-   `commit: abc1234 on branch v0.8 in github.com/xpufx/paseo-x-comms`
-3. Never assume Forgejo holds the code (Forgejo is issues-only). State precisely where the commit was made and where it pushes.
+1. **Always record the exact commit SHA and branch**:
+   `commit: abc1234 on branch v8 in forge.mrs.aager.de/xpufx/paseo-plugin-helper`
+2. **Automatic Mirroring**: Pushing to `origin` (Forgejo) automatically mirrors to `github.com/xpufx/paseo-plugin-helper` asynchronously. For external repositories (like `paseo-x-comms`), state the repository origin remote + branch + SHA explicitly.
 
 ---
 
@@ -133,33 +132,6 @@ When code is implemented and verified locally:
    - Updated checklist showing completed items.
    - Branch name and commit hash(es).
    - Confirmation that typechecks and tests passed.
-   - **Mandatory Deployment Status**: Explicitly state runtime requirements (e.g., whether the user needs to run `paseo plugin update <name>`, restart the daemon, or reload the client).
 3. **Remove the `wip` label** and attach **`agent-finished`** (keeping `agent-attention`), and signal handoff to the **`Orchestrator`** for review (`ready-for-review`), or tag `verify` for on-device/human verification (`fgjx issue edit <number> --remove-label wip --add-label agent-finished --add-label verify`).
 4. **Do NOT close the issue**: Agents and the Orchestrator do not close issues upon completion. The issue must remain `open` with `agent-finished` and `verify` (and/or `ready-for-review`) attached so the human operator can verify and close it.
 5. Stand by for fast review from the `Orchestrator` or testing by human user `oktay`.
-
----
-
-## 7. Chat-to-Issue Promotion (No Unlinked "Cowboy" Commits)
-
-When a human user or peer agent gives an informal instruction, tweak, or bug report directly in chat/composer:
-- **Do NOT immediately edit and push unlinked code directly to production branches.**
-- **Find or File**: Check if an existing Forgejo issue covers the request. If none exists, file a concise issue (`fgjx issue create -t "..." -b "..." -l "agent-attention,wip"`) before making commits.
-- **Audit Trail**: Every change committed to git must be linked to an issue and self-stamped via `--envelope`. This ensures that regression investigations and changelogs always have a documented rationale.
-
----
-
-## 8. Paseo Workspace & Git Worktree Isolation
-
-- **Shell Branch Hazard**: In Paseo, multiple agents may share the same project directory. If an agent executes `git checkout -b <branch>` or `git checkout <branch>` directly in the shell within a shared directory, **every agent and editor attached to that directory will have their active branch swapped without warning**.
-- **Dedicated Worktrees Only**:
-  - Never switch branches in a shared root workspace.
-  - Isolated branch work must use Paseo-backed Workspaces or dedicated git worktrees (e.g. `~/.paseo/worktrees/<id>/<name>`) tracking non-local branches.
-  - When working on shared main/v8 branches, ensure tests and builds are hermetic and uncommitted workspace dirt is not inadvertently swept into commits.
-
----
-
-## 9. Empirical Verification vs. Assumption-Based Diagnoses
-
-- **No Speculative Conclusions**: When diagnosing runtime failures or data omissions, do not rely solely on reading log snippets or inspecting recent git commits to assume "it was already fixed upstream."
-- **Empirical Proof**: Reproduce the behavior locally or inspect the running process/socket. If you conclude an upstream update is needed, explain the exact mechanism that proves it and provide the exact command for the user to pick up the fix (e.g. `paseo plugin update <name>`).
